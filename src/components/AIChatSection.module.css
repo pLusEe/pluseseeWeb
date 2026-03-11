@@ -1,7 +1,7 @@
 /* ── Section wrapper ── */
 .section {
   min-height: 100vh;
-  background: #ffffff;
+  background: transparent; /* Changed from #ffffff to show global glitch background */
   display: flex;
   justify-content: center;
   align-items: center; /* Centered by default for empty state */
