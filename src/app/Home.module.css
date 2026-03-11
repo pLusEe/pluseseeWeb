@@ -1,0 +1,42 @@
+.container {
+  width: 100%;
+}
+
+.hero {
+  height: 80vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  background-color: #fff;
+}
+
+.heroText {
+  font-size: 8rem;
+  line-height: 0.9;
+  letter-spacing: -0.05em;
+  font-weight: 900;
+}
+
+.role {
+  display: inline-block;
+  min-width: 300px;
+  animation: fadeUp 0.5s ease;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 1024px) {
+  .heroText {
+    font-size: 5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .heroText {
+    font-size: 3rem;
+  }
+}

@@ -1,0 +1,47 @@
+.cursor {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  background-color: #000;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease, background-color 0.3s ease, opacity 0.3s ease;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0; /* Hidden until first move */
+}
+
+.visible {
+  opacity: 1;
+}
+
+.active {
+  width: 120px;
+  height: 120px;
+  background-color: #000;
+  color: #fff;
+  mix-blend-mode: normal;
+}
+
+.text {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 10px;
+  opacity: 0;
+  animation: fadeIn 0.2s forwards 0.1s;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+@media (max-width: 768px) {
+  .cursor {
+    display: none;
+  }
+}

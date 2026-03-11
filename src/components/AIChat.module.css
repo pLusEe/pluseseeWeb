@@ -1,0 +1,113 @@
+.chatContainer {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 1000;
+  font-family: var(--font-sans);
+}
+
+.chatBubble {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #000;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
+}
+
+.chatWindow {
+  width: 320px;
+  height: 450px;
+  background-color: #fff;
+  border: 2px solid #000;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 10px 10px 0px #000;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.header {
+  padding: 12px 16px;
+  background-color: #000;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-weight: 900;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.closeBtn {
+  color: #fff;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.messagesBox {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.message {
+  max-width: 90%;
+  padding: 10px;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.user {
+  align-self: flex-end;
+  background-color: #000;
+  color: #fff;
+}
+
+.bot {
+  align-self: flex-start;
+  background-color: #eee;
+  color: #000;
+}
+
+.inputArea {
+  display: flex;
+  border-top: 2px solid #000;
+  padding: 8px;
+}
+
+.inputField {
+  flex: 1;
+  border: none;
+  padding: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  outline: none;
+}
+
+.sendBtn {
+  padding: 8px 16px;
+  background-color: #000;
+  color: #fff;
+  font-weight: 900;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}

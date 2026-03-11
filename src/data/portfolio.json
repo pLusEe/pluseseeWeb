@@ -1,0 +1,42 @@
+[
+  {
+    "id": "1",
+    "title": "R7-TN2",
+    "category": "personal",
+    "description": "A man in a futuristic capsule.",
+    "imageUrl": "/placeholder1.jpg",
+    "prompt": "NIJI 6 STYLE RAW"
+  },
+  {
+    "id": "2",
+    "title": "QX-42L",
+    "category": "commercial",
+    "description": "A futuristic cube structure with people.",
+    "imageUrl": "/placeholder2.jpg",
+    "prompt": "NIJI 6 STYLE RAW"
+  },
+  {
+    "id": "3",
+    "title": "ZX-01A",
+    "category": "personal",
+    "description": "A man defending against bulls.",
+    "imageUrl": "/placeholder3.jpg",
+    "prompt": "NIJI 6 STYLE RAW"
+  },
+  {
+    "id": "4",
+    "title": "V8-EX9",
+    "category": "others",
+    "description": "A man caught by bulls in a capsule.",
+    "imageUrl": "/placeholder4.jpg",
+    "prompt": "NIJI 6 STYLE RAW"
+  },
+  {
+    "id": "5",
+    "title": "CY-99B",
+    "category": "personal",
+    "description": "A man in his 20's, dressed in all white, in a futuristic Time Machine capsule being slowly pulled apart by two oxen, surrounded by angry people from his past staring at him, in the style of Matthew Barney.",
+    "imageUrl": "/placeholder5.jpg",
+    "prompt": "NIJI 6 STYLE RAW"
+  }
+]
