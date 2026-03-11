@@ -5,7 +5,7 @@ import { motion, useMotionValue, useTransform, AnimatePresence, useSpring, useMo
 import styles from "./RingCarousel.module.css";
 
 export default function RingCarousel({ items }) {
-  const [hoveredItem, setHoveredItem] = useState(null);
+  const [hoveredIndex, setHoveredIndex] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
   const [dim, setDim] = useState({ w: 1200, h: 800 });
 
@@ -26,11 +26,23 @@ export default function RingCarousel({ items }) {
   const translateZ = useTransform(smoothY, [0, dim.h], [40, -40]);
   const rotationZ = useTransform(smoothX, [0, dim.w], [-2, 2]);
 
-  const wheelAngle = useMotionValue(0);
-  const smoothWheelAngle = useSpring(wheelAngle, { damping: 50, stiffness: 200 });
+  // Start with a rotation and far away for entry animation
+  const wheelAngle = useMotionValue(90);
+  const smoothWheelAngle = useSpring(wheelAngle, { damping: 25, stiffness: 60 }); // 1.2s spin (fast to slow)
   const rotationY = useTransform(() => rotationYFromMouse.get() + smoothWheelAngle.get());
 
-  const containerTransform = useMotionTemplate`translateZ(${translateZ}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg) rotateZ(${rotationZ}deg)`;
+  const entryZ = useMotionValue(-4000);
+  const smoothEntryZ = useSpring(entryZ, { damping: 25, stiffness: 50 }); // 1.2s zoom-in (graceful ease-out)
+
+  useEffect(() => {
+    // Fly in and spin to 0 on mount
+    wheelAngle.set(0);
+    entryZ.set(0);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const dynamicTranslateZ = useTransform(() => translateZ.get() + smoothEntryZ.get());
+
+  const containerTransform = useMotionTemplate`translateZ(${dynamicTranslateZ}px) rotateX(${rotationX}deg) rotateY(${rotationY}deg) rotateZ(${rotationZ}deg)`;
 
   const handleMouseMove = (e) => {
     mouseX.set(e.clientX);
@@ -85,36 +97,103 @@ export default function RingCarousel({ items }) {
     );
   }
 
+  const sceneRef = useRef(null);
+  
+  // Continuous scroll counter differentiates 'exploring' from 'swiping away'
+  const continuousDownScroll = useRef(0);
+  const scrollEnergy = useMotionValue(0); 
+  const smoothEnergy = useSpring(scrollEnergy, { damping: 30, stiffness: 150 });
+  
+  // Scale the ENTIRE scene down instead of the 3D inner ring to avoid 3D clipping bugs in browsers
+  const sceneScale = useTransform(smoothEnergy, [0, 400], [1, 0.55]);
+  const sceneOpacity = useTransform(smoothEnergy, [0, 400], [1, 0]);
+
+  const isTransitioning = useRef(false);
+
+  useEffect(() => {
+    const scene = sceneRef.current;
+    if (!scene) return;
+
+    const handleWheel = (e) => {
+      // Allow detail view to handle its own scrolling if open
+      if (document.querySelector(`.${styles.detailView}`)) return;
+      
+      e.preventDefault(); // Stop native scroll snap while in the ring
+      if (isTransitioning.current) return;
+
+      if (e.deltaY > 0) {
+        // User scrolling down: Accumulate permanently
+        continuousDownScroll.current += e.deltaY;
+
+        // Phase 1: Pure rotation (first 200px of accumulated downward scroll)
+        if (continuousDownScroll.current < 200) {
+          wheelAngle.set(wheelAngle.get() - e.deltaY * 0.15);
+        } 
+        // Phase 2: Push away & Snap (scroll > 200px)
+        else {
+          // Still rotate very slightly for flavor
+          wheelAngle.set(wheelAngle.get() - e.deltaY * 0.05);
+
+          const newEnergy = scrollEnergy.get() + e.deltaY;
+          scrollEnergy.set(Math.min(newEnergy, 500)); // Visual cap
+          
+          // Threshold to snap (400)
+          if (newEnergy > 400) {
+            isTransitioning.current = true;
+            
+            const chatElement = document.getElementById("ai-chat");
+            if (chatElement) {
+              chatElement.scrollIntoView({ behavior: "smooth" });
+            }
+            
+            // Reset state after animation finishes
+            setTimeout(() => {
+              scrollEnergy.set(0); 
+              continuousDownScroll.current = 0;
+              isTransitioning.current = false;
+            }, 1000);
+          }
+        }
+      } else {
+        // User scrolling UP: smoothly pull the ring back toward them
+        continuousDownScroll.current = Math.max(0, continuousDownScroll.current + e.deltaY);
+        scrollEnergy.set(Math.max(0, scrollEnergy.get() + e.deltaY));
+        wheelAngle.set(wheelAngle.get() - e.deltaY * 0.15); // normal up-spin
+      }
+    };
+
+    scene.addEventListener("wheel", handleWheel, { passive: false });
+    return () => scene.removeEventListener("wheel", handleWheel);
+  }, [selectedItem]); // re-bind if selectedItem changes so we know if detail is open
+
   return (
-    <div
+    <motion.div
+      ref={sceneRef}
       className={styles.scene}
       onMouseMove={handleMouseMove}
-      onWheel={(e) => {
-        e.preventDefault();
-        wheelAngle.set(wheelAngle.get() - e.deltaY * 0.2);
-      }}
+      style={{ scale: sceneScale, opacity: sceneOpacity }}
     >
       {/* Hovered item center preview */}
       <div className={styles.centerPreview}>
         <AnimatePresence mode="wait">
-          {hoveredItem && (
+          {hoveredIndex !== null && displayItems[hoveredIndex] && (
             <motion.div
-              key={hoveredItem.id}
+              key={hoveredIndex}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.2 }}
               className={styles.centerContent}
             >
-              <h3 className={styles.centerTitle}>{hoveredItem.title}</h3>
+              <h3 className={styles.centerTitle}>{displayItems[hoveredIndex].title}</h3>
               <motion.img
-                layoutId={`img-${hoveredItem.id}`}
-                src={hoveredItem.imageUrl}
-                alt={hoveredItem.title}
+                layoutId={`img-${hoveredIndex}`}
+                src={displayItems[hoveredIndex].imageUrl}
+                alt={displayItems[hoveredIndex].title}
                 className={styles.centerImage}
               />
-              {hoveredItem.category && (
-                <p className={styles.centerCategory}>{hoveredItem.category}</p>
+              {displayItems[hoveredIndex].category && (
+                <p className={styles.centerCategory}>{displayItems[hoveredIndex].category}</p>
               )}
             </motion.div>
           )}
@@ -124,7 +203,10 @@ export default function RingCarousel({ items }) {
       {/* 3D Ring Container */}
       <motion.div
         className={styles.ring}
-        style={{ transformStyle: "preserve-3d", transform: containerTransform }}
+        style={{ 
+          transformStyle: "preserve-3d", 
+          transform: containerTransform 
+        }}
       >
         {displayItems.map((item, i) => {
           const angle = (i / displayItems.length) * 360;
@@ -137,18 +219,21 @@ export default function RingCarousel({ items }) {
                 transformStyle: "preserve-3d",
               }}
               onClick={() => setSelectedItem(item)}
-              onMouseEnter={() => setHoveredItem(item)}
-              onMouseLeave={() => setHoveredItem(null)}
+              onMouseEnter={() => setHoveredIndex(i)}
+              onMouseLeave={() => setHoveredIndex(null)}
             >
+              <div className={`${styles.ringTitle} ${hoveredIndex === i ? styles.active : ""}`}>
+                {item.title}
+              </div>
               <img
                 src={item.imageUrl}
                 alt={item.title}
-                className={`${styles.ringImage} ${hoveredItem?.id === item.id ? styles.active : ""}`}
+                className={`${styles.ringImage} ${hoveredIndex === i ? styles.active : ""}`}
               />
             </div>
           );
         })}
       </motion.div>
-    </div>
+    </motion.div>
   );
 }

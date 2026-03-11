@@ -12,7 +12,7 @@
 
 .centerPreview {
   position: absolute;
-  top: 50%;
+  top: 40%;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 10;
@@ -28,7 +28,7 @@
 }
 
 .centerTitle {
-  font-size: clamp(1.5rem, 3vw, 3.5rem);
+  font-size: clamp(0.75rem, 1.5vw, 1.75rem); /* Reduced by half (was 1.5, 3, 3.5) */
   font-weight: 900;
   letter-spacing: -0.04em;
   margin: 0;
@@ -36,10 +36,10 @@
 }
 
 .centerImage {
-  width: clamp(200px, 35vw, 460px);
-  height: clamp(120px, 20vw, 260px);
+  width: clamp(300px, 52.5vw, 690px); /* Increased by 1.5x */
+  height: clamp(180px, 30vw, 390px); /* Increased by 1.5x */
   object-fit: cover;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
 }
 
 .centerCategory {
@@ -55,13 +55,14 @@
   position: absolute;
   width: 0;
   height: 0;
-  top: 50%;
+  top: 40%;
   left: 50%;
 }
 
 .ringItem {
   position: absolute;
-  width: clamp(120px, 15vw, 200px);
+  width: clamp(144px, 18vw, 240px);
+  /* Increased by 1.2x from original */
   aspect-ratio: 16/9;
   cursor: pointer;
 }
@@ -71,7 +72,7 @@
   height: 100%;
   object-fit: cover;
   opacity: 0.65;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
@@ -79,7 +80,29 @@
 .ringItem:hover .ringImage {
   opacity: 1;
   transform: scale(1.12) translateY(-8px);
-  box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+}
+
+.ringTitle {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  /* Position above the image */
+  left: 50%;
+  transform: translateX(-50%);
+  color: #111;
+  font-size: 0.55rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  opacity: 0.65;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+}
+
+.ringTitle.active,
+.ringItem:hover .ringTitle {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-8px);
 }
 
 /* Detail view */
