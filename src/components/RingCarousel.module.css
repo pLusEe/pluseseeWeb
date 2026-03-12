@@ -61,7 +61,7 @@
 
 .ringItem {
   position: absolute;
-  width: clamp(80px, 16vmin, 250px); /* vmin scales with smallest viewport dimension, always fits */
+  width: clamp(88px, 17.6vmin, 275px); /* +10% from previous */
   aspect-ratio: 16/9;
   cursor: pointer;
 }

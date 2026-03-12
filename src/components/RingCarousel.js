@@ -18,7 +18,7 @@ export default function RingCarousel({ items }) {
 
   // Dynamic ring radius: accounts for perspective projection distortion
   // Front-most items appear at ~1.4x radius on screen, so 0.5 * 1.4 * 2 ≈ 1.4 viewport width
-  const ringRadius = Math.min(dim.w, dim.h) * 0.5;
+  const ringRadius = Math.min(dim.w, dim.h) * 0.6;
   // Perspective scales proportionally with ring radius to maintain consistent 3D depth
   const ringPerspective = ringRadius * 4;
 
@@ -56,7 +56,7 @@ export default function RingCarousel({ items }) {
   };
 
   // Ensure enough items around the ring (min 24 for a dense ring)
-  const minItems = 24;
+  const minItems = 29;
   let displayItems = [...items];
   if (items.length > 0) {
     while (displayItems.length < minItems) {
