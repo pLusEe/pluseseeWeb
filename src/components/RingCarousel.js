@@ -16,6 +16,12 @@ export default function RingCarousel({ items }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // Dynamic ring radius: accounts for perspective projection distortion
+  // Front-most items appear at ~1.4x radius on screen, so 0.5 * 1.4 * 2 ≈ 1.4 viewport width
+  const ringRadius = Math.min(dim.w, dim.h) * 0.5;
+  // Perspective scales proportionally with ring radius to maintain consistent 3D depth
+  const ringPerspective = ringRadius * 4;
+
   const mouseX = useMotionValue(dim.w / 2);
   const mouseY = useMotionValue(dim.h / 2);
   const smoothX = useSpring(mouseX, { damping: 50, stiffness: 200 });
@@ -171,7 +177,12 @@ export default function RingCarousel({ items }) {
       ref={sceneRef}
       className={styles.scene}
       onMouseMove={handleMouseMove}
-      style={{ scale: sceneScale, opacity: sceneOpacity }}
+      style={{ 
+        scale: sceneScale, 
+        opacity: sceneOpacity,
+        // Pass perspective as a CSS variable so it scales with the ring
+        "--ring-perspective": `${ringPerspective}px`,
+      }}
     >
       {/* Hovered item center preview */}
       <div className={styles.centerPreview}>
@@ -217,7 +228,7 @@ export default function RingCarousel({ items }) {
               role="button"
               tabIndex={0}
               style={{
-                transform: `rotateY(${angle}deg) translateZ(850px) rotateY(90deg)`,
+                transform: `rotateY(${angle}deg) translateZ(${ringRadius}px) rotateY(90deg)`,
                 transformStyle: "preserve-3d",
               }}
               onClick={() => setSelectedItem(item)}

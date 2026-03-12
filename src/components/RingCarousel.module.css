@@ -7,7 +7,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  perspective: 2500px;
+  perspective: var(--ring-perspective, 2500px); /* Dynamic perspective that scales with ring radius */
 }
 
 .centerPreview {
@@ -61,7 +61,7 @@
 
 .ringItem {
   position: absolute;
-  width: clamp(173px, 21.6vw, 288px);
+  width: clamp(80px, 16vmin, 250px); /* vmin scales with smallest viewport dimension, always fits */
   aspect-ratio: 16/9;
   cursor: pointer;
 }

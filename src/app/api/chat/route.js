@@ -4,34 +4,44 @@ export async function POST(req) {
   try {
     const { messages } = await req.json();
     
-    // Check if the API key is configured
-    if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your_api_key_here') {
+    const apiKey = process.env.MODELSCOPE_API_KEY;
+    
+    if (!apiKey || apiKey === 'your_api_key_here') {
       return NextResponse.json({ 
         role: "assistant", 
-        content: "I'm currently running in offline mode because the OPENAI_API_KEY is not set in `.env.local` or Vercel Environment Variables. Please set up your key to chat with me!"
+        content: "AI is currently offline (MODELSCOPE_API_KEY not set in .env.local)."
       });
     }
 
-    // Call OpenAI API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    // Call ModelScope API (OpenAI-compatible)
+    const response = await fetch('https://api-inference.modelscope.cn/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo', // You can change this to gpt-4 or Claude/DeepSeek if using compatible endpoints
+        model: 'Qwen/Qwen3-8B', // Qwen3 series — actively supported on ModelScope API-Inference (2025)
         messages: [
-          { role: "system", content: "You are a helpful AI assistant residing on the portfolio website of d3adrabbit. You should answer questions playfully and concisely." },
+          { 
+            role: "system", 
+            content: "You are a helpful AI assistant on the portfolio website of plusesee — a designer and creative. You MUST always reply in Chinese (Simplified). Keep your responses concise, friendly, and creative." 
+          },
           ...messages
         ],
+        stream: false,
+        enable_thinking: false, // Required for Qwen3 non-streaming calls
       }),
     });
 
     const data = await response.json();
     
     if (!response.ok) {
-       return NextResponse.json({ role: "assistant", content: `Error from LLM API: ${data.error?.message || 'Unknown Error'}` });
+      console.error('ModelScope API error:', data);
+      return NextResponse.json({ 
+        role: "assistant", 
+        content: `API Error: ${data.error?.message || JSON.stringify(data)}` 
+      });
     }
 
     return NextResponse.json(data.choices[0].message);
