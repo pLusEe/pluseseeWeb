@@ -19,7 +19,14 @@ export default function RootLayout({ children }) {
             <nav className="nav">
               <a href="#">personal design</a>
               <a href="#">commercial design</a>
-              <a href="#">other works</a>
+              <div className="nav-item nav-dropdown">
+                <a href="#" className="nav-link">other works</a>
+                <div className="dropdown-menu">
+                  <a href="#">soundart</a>
+                  <a href="#">media art</a>
+                  <a href="#">photography</a>
+                </div>
+              </div>
               <a href="/admin" className="admin-link">管理后台</a>
             </nav>
           </header>

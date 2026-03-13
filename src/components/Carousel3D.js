@@ -13,6 +13,13 @@ const ROLES = [
   "CLOU."
 ];
 
+const getThumb = (item) => {
+  if (item.thumbUrl) return item.thumbUrl;
+  if ((item.mediaType || "image") === "image" && item.mediaUrl) return item.mediaUrl;
+  if (item.imageUrl) return item.imageUrl;
+  return "/placeholder1.jpg";
+};
+
 function CarouselItem({ item, index, totalItems, smoothAngle, onSelect, activeIndex }) {
   const baseAngle = (index / totalItems) * Math.PI * 2;
   
@@ -54,7 +61,7 @@ function CarouselItem({ item, index, totalItems, smoothAngle, onSelect, activeIn
       <motion.div className={styles.imageWrapper}>
         <motion.img 
           layoutId={`image-${item.id}`} 
-          src={item.imageUrl} 
+          src={getThumb(item)} 
           alt={item.title} 
           className={styles.image} 
         />
@@ -187,12 +194,12 @@ export default function Carousel3D({ items }) {
             
             <div className={styles.detailContent}>
               <motion.div className={styles.detailImageContainer}>
-                <motion.img 
-                  layoutId={`image-${selectedItem.id}`}
-                  src={selectedItem.imageUrl} 
-                  alt={selectedItem.title} 
-                  className={styles.detailHeroImage}
-                />
+              <motion.img 
+                layoutId={`image-${selectedItem.id}`}
+                src={getThumb(selectedItem)} 
+                alt={selectedItem.title} 
+                className={styles.detailHeroImage}
+              />
               </motion.div>
               
               <motion.div 
