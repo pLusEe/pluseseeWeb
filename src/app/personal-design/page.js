@@ -14,6 +14,9 @@ const getThumb = (item) => {
 const toSafeUrl = (url) => encodeURI(url || "");
 
 export default function PersonalDesignPage() {
+  const normalFlipMs = 600;
+  const fastFlipMinMs = 300;
+  const fastFlipMaxMs = 700;
   const items = Array.isArray(portfolio) ? portfolio : [];
   const personalItems = useMemo(
     () => items.filter((item) => item.category === "personal design"),
@@ -57,6 +60,10 @@ export default function PersonalDesignPage() {
       { start: 5, end: 6 },
       { start: 7, end: 10 },
       { start: 11, end: 18 },
+      { start: 19, end: 26 },
+      { start: 27, end: 34 },
+      { start: 35, end: 42 },
+      { start: 43, end: 50 },
     ];
 
     return ranges.map((range) => {
@@ -76,6 +83,8 @@ export default function PersonalDesignPage() {
   const navTokenRef = useRef(0);
   const performFlipRef = useRef(null);
   const [currentSpreadStart, setCurrentSpreadStart] = useState(1);
+  const normalEase = "cubic-bezier(0.37, 0, 0.63, 1)";
+  const fastEase = "cubic-bezier(0.4, 0, 0.2, 1)";
 
   const updateZIndexes = useCallback(() => {
     const pageEls = pagesRef.current;
@@ -131,7 +140,12 @@ export default function PersonalDesignPage() {
       return -1;
     };
 
-    const performFlip = (action, targetIndex) =>
+    const performFlip = (
+      action,
+      targetIndex,
+      durationMs = normalFlipMs,
+      timingFunction = normalEase
+    ) =>
       new Promise((resolve) => {
         if (flipLock.current) return resolve(false);
         const page = pageEls[targetIndex];
@@ -139,6 +153,8 @@ export default function PersonalDesignPage() {
 
         flipLock.current = true;
         page.classList.add(styles.flipping);
+        page.style.transitionDuration = `${durationMs}ms`;
+        page.style.transitionTimingFunction = timingFunction;
         if (action === "turn") {
           page.style.transform = "rotateY(-180deg)";
         } else {
@@ -150,7 +166,6 @@ export default function PersonalDesignPage() {
         const handleEnd = (event) => {
           if (event.propertyName !== "transform") return;
           flipLock.current = false;
-          updateZIndexes();
           page.classList.remove(styles.flipping);
           if (action === "turn") {
             page.classList.add(styles.turned);
@@ -158,6 +173,7 @@ export default function PersonalDesignPage() {
             page.classList.remove(styles.turned);
           }
           page.style.transform = "";
+          updateZIndexes();
           page.removeEventListener("transitionend", handleEnd);
           resolve(true);
         };
@@ -167,16 +183,16 @@ export default function PersonalDesignPage() {
         setTimeout(() => {
           if (flipLock.current) {
             flipLock.current = false;
-            updateZIndexes();
             if (action === "turn") {
               page.classList.add(styles.turned);
             } else {
               page.classList.remove(styles.turned);
             }
             page.style.transform = "";
+            updateZIndexes();
             resolve(true);
           }
-        }, 700);
+        }, durationMs + 200);
       });
 
     performFlipRef.current = performFlip;
@@ -202,7 +218,7 @@ export default function PersonalDesignPage() {
       }
 
       if (!targetPage) return;
-      performFlip(action, idx);
+      performFlip(action, idx, normalFlipMs, normalEase);
     };
 
     const handlers = pageEls.map((_, idx) => handleClickFactory(idx));
@@ -223,11 +239,11 @@ export default function PersonalDesignPage() {
       if (delta > 0 && firstUnturned !== -1) {
         event.preventDefault();
         inputLock.current = now;
-        performFlip("turn", firstUnturned);
+        performFlip("turn", firstUnturned, normalFlipMs, normalEase);
       } else if (delta < 0 && lastTurned !== -1) {
         event.preventDefault();
         inputLock.current = now;
-        performFlip("unturn", lastTurned);
+        performFlip("unturn", lastTurned, normalFlipMs, normalEase);
       }
     };
 
@@ -244,10 +260,10 @@ export default function PersonalDesignPage() {
 
       if (isNext && firstUnturned !== -1) {
         event.preventDefault();
-        performFlip("turn", firstUnturned);
+        performFlip("turn", firstUnturned, normalFlipMs, normalEase);
       } else if (isPrev && lastTurned !== -1) {
         event.preventDefault();
-        performFlip("unturn", lastTurned);
+        performFlip("unturn", lastTurned, normalFlipMs, normalEase);
       }
     };
 
@@ -285,15 +301,49 @@ export default function PersonalDesignPage() {
       navAnimatingRef.current = true;
 
       const run = async () => {
+        const totalSteps = Math.max(1, Math.abs(targetSheet - currentSheet));
+        const targetTotalMs = 1500;
+        const getFactor = (t) => {
+          if (t <= 0.25) return 0.15 + (0.6 - 0.15) * (t / 0.25); // slow -> slightly faster
+          if (t <= 0.5) return 0.6 + (1.0 - 0.6) * ((t - 0.25) / 0.25); // -> fast
+          if (t <= 0.75) return 1.0 + (0.6 - 1.0) * ((t - 0.5) / 0.25); // -> slightly fast
+          return 0.6 + (0.0 - 0.6) * ((t - 0.75) / 0.25); // -> very slow
+        };
+
+        const rawDurations = Array.from({ length: totalSteps }, (_, stepIndex) => {
+          if (totalSteps === 1) return fastFlipMaxMs;
+          const t = stepIndex / (totalSteps - 1); // 0..1
+          const factor = Math.min(1, Math.max(0, getFactor(t)));
+          return fastFlipMaxMs - (fastFlipMaxMs - fastFlipMinMs) * factor;
+        });
+        const rawTotal = rawDurations.reduce((sum, v) => sum + v, 0) || 1;
+        const lastWeight = rawDurations[rawDurations.length - 1];
+        const lastShare = lastWeight / rawTotal;
+        const desiredLastShare = 0.5;
+        const boost = lastShare >= desiredLastShare ? 1 : desiredLastShare / lastShare;
+
+        const boosted = rawDurations.map((value, idx) =>
+          idx === rawDurations.length - 1 ? value * boost : value
+        );
+        const boostedTotal = boosted.reduce((sum, v) => sum + v, 0) || 1;
+        const scale = targetTotalMs / boostedTotal;
+
+        const getStepDuration = (stepIndex) =>
+          Math.max(60, Math.round(boosted[stepIndex] * scale));
+
         if (targetSheet > currentSheet) {
+          let step = 0;
           for (let i = currentSheet; i < targetSheet; i += 1) {
             if (navTokenRef.current !== token) return;
-            await performFlip("turn", i);
+            await performFlip("turn", i, getStepDuration(step), fastEase);
+            step += 1;
           }
         } else {
+          let step = 0;
           for (let i = currentSheet - 1; i >= targetSheet; i -= 1) {
             if (navTokenRef.current !== token) return;
-            await performFlip("unturn", i);
+            await performFlip("unturn", i, getStepDuration(step), fastEase);
+            step += 1;
           }
         }
       };

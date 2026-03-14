@@ -334,6 +334,7 @@
   transform-style: preserve-3d;
   transform-origin: left center;
   transition: transform 0.5s ease-in-out;
+  transition-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
   box-shadow: none;
   cursor: pointer;
   overflow: visible;
