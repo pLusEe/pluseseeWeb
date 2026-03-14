@@ -21,6 +21,30 @@ export default function PersonalDesignPage() {
   const safeItems = pageItems.length > 0 ? pageItems : [{ id: "placeholder" }];
   const total = safeItems.length;
 
+  const projects = useMemo(() => {
+    const groups = [];
+    const indexByName = new Map();
+
+    const normalizeTitle = (title) =>
+      String(title || "Untitled")
+        .replace(/\s+[IVXLCDM]+$/i, "")
+        .replace(/\s+\d+$/, "")
+        .trim();
+
+    safeItems.forEach((item, idx) => {
+      const name = normalizeTitle(item.title);
+      if (!indexByName.has(name)) {
+        indexByName.set(name, groups.length);
+        groups.push({ name, start: idx + 1, end: idx + 1 });
+      } else {
+        const g = groups[indexByName.get(name)];
+        g.end = idx + 1;
+      }
+    });
+
+    return groups;
+  }, [safeItems]);
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const wheelLock = useRef(false);
   const pageRef = useRef(null);
@@ -61,57 +85,46 @@ export default function PersonalDesignPage() {
     return () => page.removeEventListener("wheel", handleWheel);
   }, [turnPage]);
 
-  const handleClick = useCallback(
-    (event) => {
-      const page = pageRef.current;
-      if (!page) return;
-      const rect = page.getBoundingClientRect();
-      const clickX = event.clientX - rect.left;
-      const isRight = clickX > rect.width / 2;
-      turnPage(isRight ? 1 : -1);
+  const jumpToPage = useCallback(
+    (start) => {
+      if (total <= 1) return;
+      const nextIndex = Math.max(0, Math.min(total - 1, start - 1));
+      setCurrentIndex(nextIndex);
     },
-    [turnPage]
+    [total]
   );
 
   return (
-    <div ref={pageRef} className={styles.bookPage} onClick={handleClick}>
+    <div ref={pageRef} className={styles.bookPage}>
       <div className={styles.gridBg} />
 
       <div className={styles.bookSpread}>
         <aside className={styles.leftPage}>
           <div className={styles.sidebarInner}>
-            <a className={styles.sidebarLogo} href="/">
-              PLUSESEE
-            </a>
+            <div className={styles.sidebarTitle}>personal design</div>
 
-            <div className={styles.sidebarNav}>
-              <div className={styles.sidebarLabel}>Work</div>
-              <a className={styles.sidebarLink} href="/">
-                Home
-              </a>
-              <a className={styles.sidebarLink} href="/personal-design">
-                Personal Design
-              </a>
-            </div>
-
-            <div className={styles.sidebarIndex}>
-              <div className={styles.indexLabel}>Index</div>
-              <button className={`${styles.indexItem} ${styles.indexActive}`} type="button">
-                01
-              </button>
-              <button className={styles.indexItem} type="button">
-                02
-              </button>
+            <div className={styles.projectList}>
+              {projects.map((project, idx) => (
+                <div key={`${project.name}-${project.start}`} className={styles.projectItem}>
+                  <div className={styles.projectMeta}>
+                    <span className={styles.projectLabel}>project {String(idx + 1).padStart(2, "0")}</span>
+                    <span className={styles.projectName}>{project.name}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className={styles.projectRange}
+                    onClick={() => jumpToPage(project.start)}
+                  >
+                    {project.start}-{project.end}
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         </aside>
 
-        <div className={styles.spine}>
-          <div className={styles.spineImage} />
-        </div>
-
         <div className={styles.pagesStage}>
-          <section className={styles.rightPage}>
+          <section className={styles.rightPage} onClick={() => turnPage(-1)}>
             <div className={styles.pageFill}>
               <img
                 src={getThumb(leftItem)}
@@ -124,7 +137,7 @@ export default function PersonalDesignPage() {
             </div>
           </section>
 
-          <section className={styles.rightLeaf}>
+          <section className={styles.rightLeaf} onClick={() => turnPage(1)}>
             <div className={styles.pageFill}>
               <img
                 src={getThumb(rightItem)}
