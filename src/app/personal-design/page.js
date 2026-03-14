@@ -71,6 +71,7 @@ export default function PersonalDesignPage() {
   const bookRef = useRef(null);
   const pagesRef = useRef([]);
   const flipLock = useRef(false);
+  const inputLock = useRef(0);
   const [currentSpreadStart, setCurrentSpreadStart] = useState(1);
 
   const updateZIndexes = useCallback(() => {
@@ -122,6 +123,39 @@ export default function PersonalDesignPage() {
       return -1;
     };
 
+    const performFlip = (action, targetIndex) => {
+      if (flipLock.current) return;
+      const page = pageEls[targetIndex];
+      if (!page) return;
+
+      flipLock.current = true;
+      page.classList.add(styles.flipping);
+      if (action === "turn") {
+        page.classList.add(styles.turned);
+      } else {
+        page.classList.remove(styles.turned);
+      }
+
+      updateZIndexes();
+
+      const handleEnd = (event) => {
+        if (event.propertyName !== "transform") return;
+        flipLock.current = false;
+        updateZIndexes();
+        page.classList.remove(styles.flipping);
+        page.removeEventListener("transitionend", handleEnd);
+      };
+
+      page.addEventListener("transitionend", handleEnd);
+
+      setTimeout(() => {
+        if (flipLock.current) {
+          flipLock.current = false;
+          updateZIndexes();
+        }
+      }, 1700);
+    };
+
     const handleClickFactory = (idx) => () => {
       if (flipLock.current) return;
       const page = pageEls[idx];
@@ -143,33 +177,7 @@ export default function PersonalDesignPage() {
       }
 
       if (!targetPage) return;
-
-      flipLock.current = true;
-      targetPage.classList.add(styles.flipping);
-      if (action === "turn") {
-        targetPage.classList.add(styles.turned);
-      } else {
-        targetPage.classList.remove(styles.turned);
-      }
-
-      updateZIndexes();
-
-      const handleEnd = (event) => {
-        if (event.propertyName !== "transform") return;
-        flipLock.current = false;
-        updateZIndexes();
-        targetPage.classList.remove(styles.flipping);
-        targetPage.removeEventListener("transitionend", handleEnd);
-      };
-
-      targetPage.addEventListener("transitionend", handleEnd);
-
-      setTimeout(() => {
-        if (flipLock.current) {
-          flipLock.current = false;
-          updateZIndexes();
-        }
-      }, 1700);
+      performFlip(action, idx);
     };
 
     const handlers = pageEls.map((_, idx) => handleClickFactory(idx));
@@ -178,6 +186,47 @@ export default function PersonalDesignPage() {
       page.addEventListener("transitionend", updateZIndexes);
     });
 
+    const handleWheel = (event) => {
+      const now = Date.now();
+      if (now - inputLock.current < 500) return;
+      const delta = event.deltaY;
+      if (Math.abs(delta) < 10) return;
+      const firstUnturned = getFirstUnturned();
+      const lastTurned = getLastTurned();
+
+      if (delta > 0 && firstUnturned !== -1) {
+        event.preventDefault();
+        inputLock.current = now;
+        performFlip("turn", firstUnturned);
+      } else if (delta < 0 && lastTurned !== -1) {
+        event.preventDefault();
+        inputLock.current = now;
+        performFlip("unturn", lastTurned);
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.repeat) return;
+      const key = event.key;
+      const isNext = key === "ArrowRight" || key === "ArrowDown" || key === "PageDown";
+      const isPrev = key === "ArrowLeft" || key === "ArrowUp" || key === "PageUp";
+      if (!isNext && !isPrev) return;
+
+      const firstUnturned = getFirstUnturned();
+      const lastTurned = getLastTurned();
+
+      if (isNext && firstUnturned !== -1) {
+        event.preventDefault();
+        performFlip("turn", firstUnturned);
+      } else if (isPrev && lastTurned !== -1) {
+        event.preventDefault();
+        performFlip("unturn", lastTurned);
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("keydown", handleKeyDown);
+
     updateZIndexes();
 
     return () => {
@@ -185,6 +234,8 @@ export default function PersonalDesignPage() {
         page.removeEventListener("click", handlers[idx]);
         page.removeEventListener("transitionend", updateZIndexes);
       });
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("keydown", handleKeyDown);
     };
   }, [pages, updateZIndexes]);
 
