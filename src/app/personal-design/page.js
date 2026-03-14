@@ -1,6 +1,6 @@
- "use client";
+"use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "./PersonalDesign.module.css";
 import portfolio from "../../data/portfolio.json";
 
@@ -19,24 +19,33 @@ export default function PersonalDesignPage() {
   );
   const pageItems = personalItems.length > 0 ? personalItems : items;
   const safeItems = pageItems.length > 0 ? pageItems : [{ id: "placeholder" }];
+  const total = safeItems.length;
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [targetIndex, setTargetIndex] = useState(0);
-  const [flipDirection, setFlipDirection] = useState(1);
-  const [isFlipping, setIsFlipping] = useState(false);
   const wheelLock = useRef(false);
   const pageRef = useRef(null);
-  const rightLeafRef = useRef(null);
 
-  const currentItem = safeItems[currentIndex % safeItems.length];
-  const nextIndex = (currentIndex + 1) % safeItems.length;
-  const prevIndex = (currentIndex - 1 + safeItems.length) % safeItems.length;
-  const rightItem =
-    isFlipping && flipDirection < 0
-      ? safeItems[prevIndex]
-      : isFlipping
-        ? safeItems[nextIndex]
-        : safeItems[nextIndex];
+  const leftItem = safeItems[currentIndex % total];
+  const rightItem = safeItems[(currentIndex + 1) % total];
+  const leftPageNum = ((currentIndex % total) + total) % total + 1;
+  const rightPageNum = ((currentIndex + 1) % total) + 1;
+
+  const turnPage = useCallback(
+    (direction) => {
+      if (wheelLock.current || total <= 1) return;
+      const step = 2;
+      const next =
+        direction > 0
+          ? (currentIndex + step) % total
+          : (currentIndex - step + total) % total;
+      wheelLock.current = true;
+      setCurrentIndex(next);
+      setTimeout(() => {
+        wheelLock.current = false;
+      }, 250);
+    },
+    [currentIndex, total]
+  );
 
   useEffect(() => {
     const page = pageRef.current;
@@ -44,58 +53,28 @@ export default function PersonalDesignPage() {
 
     const handleWheel = (event) => {
       event.preventDefault();
-      if (wheelLock.current || isFlipping || safeItems.length <= 1) return;
-
       const direction = event.deltaY > 0 ? 1 : -1;
-      const next =
-        direction > 0 ? (currentIndex + 1) % safeItems.length : (currentIndex - 1 + safeItems.length) % safeItems.length;
-
-      wheelLock.current = true;
-      setFlipDirection(direction);
-      setTargetIndex(next);
-      setIsFlipping(true);
+      turnPage(direction);
     };
 
     page.addEventListener("wheel", handleWheel, { passive: false });
     return () => page.removeEventListener("wheel", handleWheel);
-  }, [currentIndex, isFlipping, safeItems.length]);
+  }, [turnPage]);
 
-  useEffect(() => {
-    if (!isFlipping) return;
-    const page = rightLeafRef.current;
-    if (!page) return;
-
-    let rafId;
-    const duration = 900;
-    const start = performance.now();
-    const direction = flipDirection;
-
-    const easeInOut = (t) =>
-      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
-    const animate = (time) => {
-      const progress = Math.min(1, (time - start) / duration);
-      const eased = easeInOut(progress);
-      const angle = (direction > 0 ? -180 : 180) * eased;
-      const lift = Math.sin(Math.PI * eased) * 6;
-      page.style.transform = `rotateY(${angle}deg) translateZ(${lift}px)`;
-
-      if (progress < 1) {
-        rafId = requestAnimationFrame(animate);
-      } else {
-        page.style.transform = "rotateY(0deg)";
-        setCurrentIndex(targetIndex);
-        setIsFlipping(false);
-        wheelLock.current = false;
-      }
-    };
-
-    rafId = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(rafId);
-  }, [isFlipping, flipDirection, targetIndex]);
+  const handleClick = useCallback(
+    (event) => {
+      const page = pageRef.current;
+      if (!page) return;
+      const rect = page.getBoundingClientRect();
+      const clickX = event.clientX - rect.left;
+      const isRight = clickX > rect.width / 2;
+      turnPage(isRight ? 1 : -1);
+    },
+    [turnPage]
+  );
 
   return (
-    <div ref={pageRef} className={styles.bookPage}>
+    <div ref={pageRef} className={styles.bookPage} onClick={handleClick}>
       <div className={styles.gridBg} />
 
       <div className={styles.bookSpread}>
@@ -131,32 +110,37 @@ export default function PersonalDesignPage() {
           <div className={styles.spineImage} />
         </div>
 
-        <section className={styles.rightPage}>
-          <div className={styles.pageFill}>
-            <img
-              src={getThumb(currentItem)}
-              alt={currentItem?.title || "Personal design image"}
-              className={styles.pageImage}
-            />
-          </div>
-        </section>
+        <div className={styles.pagesStage}>
+          <section className={styles.rightPage}>
+            <div className={styles.pageFill}>
+              <img
+                src={getThumb(leftItem)}
+                alt={leftItem?.title || "Personal design image"}
+                className={styles.pageImage}
+              />
+              <span className={`${styles.pageNumber} ${styles.pageNumberLeft}`}>
+                {String(leftPageNum).padStart(2, "0")}
+              </span>
+            </div>
+          </section>
+
+          <section className={styles.rightLeaf}>
+            <div className={styles.pageFill}>
+              <img
+                src={getThumb(rightItem)}
+                alt={rightItem?.title || "Personal design image"}
+                className={styles.pageImage}
+              />
+              <span className={`${styles.pageNumber} ${styles.pageNumberRight}`}>
+                {String(rightPageNum).padStart(2, "0")}
+              </span>
+            </div>
+          </section>
+        </div>
 
         <div className={`${styles.spine} ${styles.spineSecondary}`}>
           <div className={styles.spineImage} />
         </div>
-
-        <section
-          ref={rightLeafRef}
-          className={`${styles.rightLeaf} ${isFlipping ? styles.isFlipping : ""}`}
-        >
-          <div className={styles.pageFill}>
-            <img
-              src={getThumb(rightItem)}
-              alt={rightItem?.title || "Personal design image"}
-              className={styles.pageImage}
-            />
-          </div>
-        </section>
       </div>
     </div>
   );

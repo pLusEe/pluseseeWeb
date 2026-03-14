@@ -150,7 +150,7 @@
   width: 100%;
   height: 100%;
   background: url(/crease-multiply.png) center center / 100% 100% no-repeat;
-  opacity: 0.8;
+  opacity: 0.7;
   mix-blend-mode: multiply;
 }
 
@@ -166,6 +166,18 @@
   position: relative;
   min-height: 0;
   z-index: 1;
+  transform-style: preserve-3d;
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.pagesStage {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  overflow: hidden;
 }
 
 .spineSecondary {
@@ -189,11 +201,10 @@
 
 .pageFill {
   flex: 1;
-  display: flex;
-  align-items: stretch;
-  justify-content: stretch;
+  position: relative;
   width: 100%;
   height: 100%;
+  overflow: hidden;
   transform-style: preserve-3d;
   backface-visibility: hidden;
   will-change: transform;
@@ -206,9 +217,40 @@
   display: block;
 }
 
-.isFlipping .pageFill {
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+.pageNumber {
+  position: absolute;
+  bottom: 1.2rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: #fff;
+  padding: 0.2rem 0.6rem;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 999px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
+
+.pageNumberLeft {
+  left: 1.2rem;
+}
+
+.pageNumberRight {
+  right: 1.2rem;
+}
+
+/* 单页的前后两面，用来实现“右页翻到左侧”的真实翻页 */
+.pageSideFront,
+.pageSideBack {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+}
+
+.pageSideBack {
+  transform: rotateY(180deg);
+}
+
+
 /* Running heads - extreme corners */
 .runningHead {
   display: flex;
