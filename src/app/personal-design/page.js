@@ -11,6 +11,8 @@ const getThumb = (item) => {
   return "/placeholder1.jpg";
 };
 
+const toSafeUrl = (url) => encodeURI(url || "");
+
 export default function PersonalDesignPage() {
   const items = Array.isArray(portfolio) ? portfolio : [];
   const personalItems = useMemo(
@@ -18,84 +20,193 @@ export default function PersonalDesignPage() {
     [items]
   );
   const pageItems = personalItems.length > 0 ? personalItems : items;
-  const safeItems = pageItems.length > 0 ? pageItems : [{ id: "placeholder" }];
-  const total = safeItems.length;
+  const safeItems = pageItems.length > 0 ? pageItems : [{ id: "placeholder", title: "Placeholder" }];
+
+  const pages = useMemo(() => {
+    const result = [];
+    for (let i = 0; i < safeItems.length; i += 2) {
+      const frontItem = safeItems[i];
+      const backItem = safeItems[i + 1] || safeItems[i];
+      result.push({
+        front: {
+          title: frontItem.title || `Page ${i + 1}`,
+          text: frontItem.description || "",
+          background: toSafeUrl(getThumb(frontItem)),
+          pageNum: i + 1,
+        },
+        back: {
+          title: backItem.title || `Page ${i + 2}`,
+          text: backItem.description || "",
+          background: toSafeUrl(getThumb(backItem)),
+          pageNum: i + 2,
+        },
+      });
+    }
+    return result;
+  }, [safeItems]);
 
   const projects = useMemo(() => {
-    const groups = [];
-    const indexByName = new Map();
-
     const normalizeTitle = (title) =>
       String(title || "Untitled")
         .replace(/\s+[IVXLCDM]+$/i, "")
         .replace(/\s+\d+$/, "")
         .trim();
 
-    safeItems.forEach((item, idx) => {
-      const name = normalizeTitle(item.title);
-      if (!indexByName.has(name)) {
-        indexByName.set(name, groups.length);
-        groups.push({ name, start: idx + 1, end: idx + 1 });
+    const ranges = [
+      { start: 1, end: 4 },
+      { start: 5, end: 6 },
+      { start: 7, end: 10 },
+      { start: 11, end: 18 },
+    ];
+
+    return ranges.map((range) => {
+      const item = safeItems[Math.max(0, Math.min(range.start - 1, safeItems.length - 1))];
+      return {
+        ...range,
+        name: normalizeTitle(item?.title),
+      };
+    });
+  }, [safeItems]);
+
+  const bookRef = useRef(null);
+  const pagesRef = useRef([]);
+  const flipLock = useRef(false);
+  const [currentSpreadStart, setCurrentSpreadStart] = useState(1);
+
+  const updateZIndexes = useCallback(() => {
+    const pageEls = pagesRef.current;
+    if (!pageEls.length) return;
+    const total = pageEls.length;
+    pageEls.forEach((page, idx) => {
+      if (page.classList.contains(styles.turned)) {
+        page.style.zIndex = String(idx + 1);
       } else {
-        const g = groups[indexByName.get(name)];
-        g.end = idx + 1;
+        page.style.zIndex = String(total - idx);
       }
     });
 
-    return groups;
-  }, [safeItems]);
+    const firstUnturned = pageEls.findIndex((page) => !page.classList.contains(styles.turned));
+    let lastTurned = -1;
+    for (let i = pageEls.length - 1; i >= 0; i -= 1) {
+      if (pageEls[i].classList.contains(styles.turned)) {
+        lastTurned = i;
+        break;
+      }
+    }
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const wheelLock = useRef(false);
-  const pageRef = useRef(null);
+    pageEls.forEach((page) => page.classList.remove(styles.pageActive));
+    if (firstUnturned !== -1) {
+      pageEls[firstUnturned].classList.add(styles.pageActive);
+    }
+    if (lastTurned !== -1) {
+      pageEls[lastTurned].classList.add(styles.pageActive);
+    }
 
-  const leftItem = safeItems[currentIndex % total];
-  const rightItem = safeItems[(currentIndex + 1) % total];
-  const leftPageNum = ((currentIndex % total) + total) % total + 1;
-  const rightPageNum = ((currentIndex + 1) % total) + 1;
-
-  const turnPage = useCallback(
-    (direction) => {
-      if (wheelLock.current || total <= 1) return;
-      const step = 2;
-      const next =
-        direction > 0
-          ? (currentIndex + step) % total
-          : (currentIndex - step + total) % total;
-      wheelLock.current = true;
-      setCurrentIndex(next);
-      setTimeout(() => {
-        wheelLock.current = false;
-      }, 250);
-    },
-    [currentIndex, total]
-  );
+    const totalPages = pageEls.length * 2;
+    const spreadStart = firstUnturned === -1 ? Math.max(1, totalPages - 1) : firstUnturned * 2 + 1;
+    setCurrentSpreadStart(spreadStart);
+  }, []);
 
   useEffect(() => {
-    const page = pageRef.current;
-    if (!page) return;
+    const book = bookRef.current;
+    if (!book) return;
 
-    const handleWheel = (event) => {
-      event.preventDefault();
-      const direction = event.deltaY > 0 ? 1 : -1;
-      turnPage(direction);
+    const pageEls = Array.from(book.querySelectorAll(`.${styles.page}`));
+    pagesRef.current = pageEls;
+
+    const getFirstUnturned = () => pageEls.findIndex((page) => !page.classList.contains(styles.turned));
+    const getLastTurned = () => {
+      for (let i = pageEls.length - 1; i >= 0; i -= 1) {
+        if (pageEls[i].classList.contains(styles.turned)) return i;
+      }
+      return -1;
     };
 
-    page.addEventListener("wheel", handleWheel, { passive: false });
-    return () => page.removeEventListener("wheel", handleWheel);
-  }, [turnPage]);
+    const handleClickFactory = (idx) => () => {
+      if (flipLock.current) return;
+      const page = pageEls[idx];
+      if (!page.classList.contains(styles.pageActive)) return;
+      const isTurned = page.classList.contains(styles.turned);
+      const firstUnturned = getFirstUnturned();
+      const lastTurned = getLastTurned();
+      const total = pageEls.length;
+
+      let targetPage = null;
+      let action = "";
+
+      if (!isTurned && idx === firstUnturned) {
+        targetPage = page;
+        action = "turn";
+      } else if (isTurned && idx === lastTurned) {
+        targetPage = page;
+        action = "unturn";
+      }
+
+      if (!targetPage) return;
+
+      flipLock.current = true;
+      targetPage.classList.add(styles.flipping);
+      if (action === "turn") {
+        targetPage.classList.add(styles.turned);
+      } else {
+        targetPage.classList.remove(styles.turned);
+      }
+
+      updateZIndexes();
+
+      const handleEnd = (event) => {
+        if (event.propertyName !== "transform") return;
+        flipLock.current = false;
+        updateZIndexes();
+        targetPage.classList.remove(styles.flipping);
+        targetPage.removeEventListener("transitionend", handleEnd);
+      };
+
+      targetPage.addEventListener("transitionend", handleEnd);
+
+      setTimeout(() => {
+        if (flipLock.current) {
+          flipLock.current = false;
+          updateZIndexes();
+        }
+      }, 1700);
+    };
+
+    const handlers = pageEls.map((_, idx) => handleClickFactory(idx));
+    pageEls.forEach((page, idx) => {
+      page.addEventListener("click", handlers[idx]);
+      page.addEventListener("transitionend", updateZIndexes);
+    });
+
+    updateZIndexes();
+
+    return () => {
+      pageEls.forEach((page, idx) => {
+        page.removeEventListener("click", handlers[idx]);
+        page.removeEventListener("transitionend", updateZIndexes);
+      });
+    };
+  }, [pages, updateZIndexes]);
 
   const jumpToPage = useCallback(
     (start) => {
-      if (total <= 1) return;
-      const nextIndex = Math.max(0, Math.min(total - 1, start - 1));
-      setCurrentIndex(nextIndex);
+      const pageEls = pagesRef.current;
+      if (!pageEls.length) return;
+      const targetSheet = Math.max(0, Math.floor((start - 1) / 2));
+      pageEls.forEach((page, idx) => {
+        if (idx < targetSheet) {
+          page.classList.add(styles.turned);
+        } else {
+          page.classList.remove(styles.turned);
+        }
+      });
+      updateZIndexes();
     },
-    [total]
+    [updateZIndexes]
   );
 
   return (
-    <div ref={pageRef} className={styles.bookPage}>
+    <div className={styles.bookPage}>
       <div className={styles.gridBg} />
 
       <div className={styles.bookSpread}>
@@ -104,51 +215,67 @@ export default function PersonalDesignPage() {
             <div className={styles.sidebarTitle}>personal design</div>
 
             <div className={styles.projectList}>
-              {projects.map((project, idx) => (
+              {projects.map((project, idx) => {
+                const isActive =
+                  project.end >= currentSpreadStart && project.start <= currentSpreadStart + 1;
+                return (
                 <div key={`${project.name}-${project.start}`} className={styles.projectItem}>
-                  <div className={styles.projectMeta}>
-                    <span className={styles.projectLabel}>project {String(idx + 1).padStart(2, "0")}</span>
-                    <span className={styles.projectName}>{project.name}</span>
-                  </div>
-                  <button
-                    type="button"
-                    className={styles.projectRange}
-                    onClick={() => jumpToPage(project.start)}
+                  <div
+                    className={`${styles.projectRow} ${isActive ? styles.projectRowActive : ""}`}
                   >
-                    {project.start}-{project.end}
-                  </button>
+                    <button
+                      type="button"
+                      className={styles.projectJump}
+                      onClick={() => jumpToPage(project.start)}
+                    >
+                      <span className={styles.projectLabel}>project {String(idx + 1).padStart(2, "0")}</span>
+                      <span className={styles.projectName}>{project.name}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.projectRange}
+                      onClick={() => jumpToPage(project.start)}
+                    >
+                      {project.start}-{project.end}
+                    </button>
+                  </div>
                 </div>
-              ))}
+              )})}
             </div>
           </div>
         </aside>
 
         <div className={styles.pagesStage}>
-          <section className={styles.rightPage} onClick={() => turnPage(-1)}>
-            <div className={styles.pageFill}>
-              <img
-                src={getThumb(leftItem)}
-                alt={leftItem?.title || "Personal design image"}
-                className={styles.pageImage}
-              />
-              <span className={`${styles.pageNumber} ${styles.pageNumberLeft}`}>
-                {String(leftPageNum).padStart(2, "0")}
-              </span>
-            </div>
-          </section>
-
-          <section className={styles.rightLeaf} onClick={() => turnPage(1)}>
-            <div className={styles.pageFill}>
-              <img
-                src={getThumb(rightItem)}
-                alt={rightItem?.title || "Personal design image"}
-                className={styles.pageImage}
-              />
-              <span className={`${styles.pageNumber} ${styles.pageNumberRight}`}>
-                {String(rightPageNum).padStart(2, "0")}
-              </span>
-            </div>
-          </section>
+          <div ref={bookRef} className={styles.book}>
+            {pages.map((page, idx) => (
+              <div key={`page-${idx}`} className={styles.page} data-index={idx}>
+                <div
+                  className={styles.front}
+                  style={{ backgroundImage: `url("${page.front.background}")` }}
+                >
+                  <div className={styles.pageContent}>
+                    <div className={styles.pageTitle}>{page.front.title}</div>
+                    {page.front.text && <div className={styles.pageText}>{page.front.text}</div>}
+                  </div>
+                  <span className={`${styles.pageNumber} ${styles.pageNumberRight}`}>
+                    {String(page.front.pageNum).padStart(2, "0")}
+                  </span>
+                </div>
+                <div
+                  className={styles.back}
+                  style={{ backgroundImage: `url("${page.back.background}")` }}
+                >
+                  <div className={styles.pageContent}>
+                    <div className={styles.pageTitle}>{page.back.title}</div>
+                    {page.back.text && <div className={styles.pageText}>{page.back.text}</div>}
+                  </div>
+                  <span className={`${styles.pageNumber} ${styles.pageNumberLeft}`}>
+                    {String(page.back.pageNum).padStart(2, "0")}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className={`${styles.spine} ${styles.spineSecondary}`}>
