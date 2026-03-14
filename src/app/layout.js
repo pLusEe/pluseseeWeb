@@ -17,7 +17,7 @@ export default function RootLayout({ children }) {
               <a href="/" className="logo">plusesee.me</a>
             </div>
             <nav className="nav">
-              <a href="#">personal design</a>
+              <a href="/personal-design">personal design</a>
               <a href="#">commercial design</a>
               <div className="nav-item nav-dropdown">
                 <a href="#" className="nav-link">other works</a>

@@ -1,0 +1,305 @@
+/* Book-like physical presence - open spread on dotted grid */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+
+.bookPage {
+  min-height: 100vh;
+  background: #ffffff;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  padding: 6rem 2rem 2rem; /* top padding for fixed header */
+  position: relative;
+}
+
+/* Grid hidden - pure white background */
+.gridBg {
+  display: none;
+}
+
+/* Book spread - centered */
+.bookSpread {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  max-width: 1400px;
+  margin: 0 auto;
+  min-height: calc(100vh - 4rem);
+  background: #fff;
+}
+
+/* ─── Left page - fixed functional sidebar ───────────────────── */
+.leftPage {
+  width: 280px;
+  flex-shrink: 0;
+  border: 0;
+  border-right: none;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.04),
+    0 12px 24px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
+}
+
+.sidebarInner {
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.sidebarLogo {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #000;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+
+.sidebarLogo:hover {
+  opacity: 0.7;
+}
+
+.sidebarNav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sidebarLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.sidebarLink {
+  font-size: 0.9rem;
+  color: #000;
+  text-decoration: none;
+  line-height: 1.5;
+}
+
+.sidebarLink:hover {
+  text-decoration: underline;
+}
+
+.sidebarIndex {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: auto;
+}
+
+.indexLabel {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #666;
+}
+
+.indexItem {
+  font-size: 0.85rem;
+  background: none;
+  border: none;
+  padding: 0.25rem 0;
+  cursor: pointer;
+  color: #666;
+  text-align: left;
+  font-family: inherit;
+}
+
+.indexItem:hover {
+  color: #000;
+}
+
+.indexActive {
+  color: #000;
+  font-weight: 600;
+}
+
+/* ─── Book spine - crease image (true alpha PNG) ─── */
+.spine {
+  width: 32px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+}
+
+.spineImage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url(/crease-spine-alpha.png) center center / 100% 100% no-repeat;
+  opacity: 0.35;
+}
+
+/* ─── Right page - floating white paper ──────────────────────── */
+.rightPage {
+  flex: 1;
+  min-width: 0;
+  background: #ffffff;
+  border: 0;
+  box-shadow: 
+    0 4px 6px rgba(0, 0, 0, 0.04),
+    0 12px 24px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(0, 0, 0, 0.02);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Running heads - extreme corners */
+.runningHead {
+  display: flex;
+  justify-content: space-between;
+  padding: 1.5rem 2.5rem 0;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #000;
+}
+
+.folioLeft {
+  order: 1;
+}
+
+.folioRight {
+  order: 2;
+}
+
+/* Paper content - generous leading */
+.paperContent {
+  flex: 1;
+  padding: 2rem 2.5rem 3rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.paperSection {
+  position: absolute;
+  inset: 2rem 2.5rem 3rem 2rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.paperSection.paperActive {
+  position: relative;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Gallery grid - tactile, book-like */
+.galleryGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  line-height: 1.65; /* generous leading */
+}
+
+.galleryItem {
+  margin: 0;
+}
+
+.galleryImage {
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.galleryImage img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.galleryCaption {
+  font-size: 0.95rem;
+  color: #000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.galleryCaption strong {
+  font-weight: 600;
+}
+
+.galleryDesc {
+  font-size: 0.85rem;
+  color: #444;
+  font-weight: 400;
+}
+
+/* Page folio - bottom */
+.pageFolio {
+  padding: 1rem 2.5rem 1.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #666;
+  border-top: 1px solid #eee;
+}
+
+.folioNum {
+  display: block;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .bookPage {
+    padding: 1rem;
+  }
+
+  .bookSpread {
+    flex-direction: column;
+  }
+
+  .leftPage {
+    width: 100%;
+    border-right: 0;
+    border-bottom: none;
+  }
+
+  .sidebarInner {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  .sidebarIndex {
+    margin-top: 0;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .spine {
+    width: 100%;
+    height: 24px;
+  }
+
+  .spineImage {
+    background-size: 100% 100%;
+  }
+
+  .galleryGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .runningHead,
+  .paperContent,
+  .pageFolio {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
