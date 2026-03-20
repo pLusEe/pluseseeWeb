@@ -146,7 +146,7 @@ function CameraRig({ activeLayout, focusActive, radius }) {
       const eased = focusProgress.current * focusProgress.current * (3 - 2 * focusProgress.current);
       const focusX = 0;
       const focusY = GROUP_POSITION.y + activeLayout.position.y - 0.15;
-      const focusCameraZ = radius + 10.5;
+      const focusCameraZ = radius + 8;
       const focusLookZ = radius - 1.1;
       desiredPosition.current.set(
         THREE.MathUtils.lerp(CAMERA_START.x, focusX, eased),
@@ -229,17 +229,17 @@ function RingScene({ displayItems, selectedIndex, hoveredIndex, rotationTarget, 
         const frontness = (Math.cos(relativeAngle) + 1) / 2;
         const focusDistance = Math.abs(relativeAngle) / Math.PI;
         const focusBoost = 1 - focusDistance;
-        const backgroundDepth = selected
-          ? 0
-          : radius * 0.1 + focusBoost * radius * 0.08 + frontness * radius * 0.02;
+        // Flat Z-offset: every unselected card sits at the exact same depth behind the selected card.
+        // This guarantees ZERO depth shuffling when scrolling through cards.
+        const backgroundDepth = selected ? 0 : radius * 0.3;
 
         position = new THREE.Vector3(
           Math.sin(relativeAngle) * radius * 0.94,
           (frontness - 0.5) * 0.16 + (selected ? 0.08 : focusBoost * 0.015),
           Math.cos(relativeAngle) * radius - backgroundDepth
         );
-        scale = selected ? 1.06 : 0.55 + frontness * 0.36;
-        opacity = selected ? 1 : 0.15 + frontness * 0.35;
+        scale = selected ? 1.06 : 0.4 + frontness * 0.32;
+        opacity = selected ? 1 : 0.1 + frontness * 0.4;
         tint = selected
           ? new THREE.Color("#ffffff")
           : new THREE.Color(0.64 + frontness * 0.12, 0.64 + frontness * 0.12, 0.67 + frontness * 0.1);
