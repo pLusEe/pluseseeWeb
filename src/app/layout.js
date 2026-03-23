@@ -21,6 +21,7 @@ export default function RootLayout({ children }) {
             <nav className="nav">
               <a href="/commercial-design">commercial design</a>
               <a href="/personal-design">personal design</a>
+              <a href="/bio">bio</a>
               <div className="nav-item nav-dropdown">
                 <a href="#" className="nav-link">other works</a>
                 <div className="dropdown-menu">

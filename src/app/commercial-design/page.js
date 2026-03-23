@@ -22,6 +22,7 @@ export default function CommercialDesignPage() {
   const img3 = getThumb(safeItems[2] || safeItems[0]);
   const img4 = getThumb(safeItems[3] || safeItems[0]);
   const img5 = getThumb(safeItems[4] || safeItems[0]);
+  const img6 = getThumb(safeItems[5] || safeItems[0]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -54,6 +55,7 @@ export default function CommercialDesignPage() {
     { id: "sites-in-use", label: "Sites In Use" },
     { id: "graphic-design", label: "Graphic Design" },
     { id: "style", label: "Style" },
+    { id: "across-spread", label: "Across Spread" },
     { id: "arch-design", label: "Arch. & Design" },
     { id: "art", label: "Art" },
     { id: "photo", label: "Photo" },
@@ -102,9 +104,8 @@ export default function CommercialDesignPage() {
         <section id="all" className={styles.spread}>
           <div className={styles.leftPage}>
           </div>
-          <div className={`${styles.rightPage} ${styles.flexCenter} ${styles.flushLeft}`}>
-            <img src={img1} alt="Project 1" className={`${styles.containedImg} ${styles.shadowedImg}`} />
-            <div className={styles.caption}>Sir Grayson Perry CBE RA</div>
+          <div className={`${styles.rightPage} ${styles.fullBleed}`}>
+            <img src={img1} alt="Project 1" className={`${styles.fullBleedImg} ${styles.heroRightImg}`} />
           </div>
         </section>
 
@@ -149,6 +150,13 @@ export default function CommercialDesignPage() {
           </div>
           <div className={styles.rightPage}>
           </div>
+        </section>
+
+        {/* Spread: One image across both pages */}
+        <section id="across-spread" className={`${styles.spread} ${styles.acrossSpread}`}>
+          <img src={img6} alt="Across spread project" className={styles.acrossSpreadImg} />
+          <div className={styles.leftPage}></div>
+          <div className={styles.rightPage}></div>
         </section>
         
         {/* Spread 5: Arch & Design placeholder */}

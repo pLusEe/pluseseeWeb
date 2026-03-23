@@ -138,12 +138,25 @@
   background:
     linear-gradient(
       270deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.12) 1%,
-      rgba(255, 255, 255, 0.32) 3%,
-      rgba(255, 255, 255, 0.1) 4.7%,
-      rgba(255, 255, 255, 0.03) 6%,
-      rgba(255, 255, 255, 0) 6.1%
+      rgba(255, 255, 255, 0.015) 0%,
+      rgba(255, 255, 255, 0.03) 0.25%,
+      rgba(255, 255, 255, 0.065) 0.55%,
+      rgba(255, 255, 255, 0.11) 0.9%,
+      rgba(255, 255, 255, 0.17) 1.5%,
+      rgba(255, 255, 255, 0.22) 2%,
+      rgba(255, 255, 255, 0.16) 2.6%,
+      rgba(255, 255, 255, 0.11) 3.3%,
+      rgba(255, 255, 255, 0.085) 4.1%,
+      rgba(255, 255, 255, 0.065) 5%,
+      rgba(255, 255, 255, 0.045) 6%,
+      rgba(255, 255, 255, 0.03) 7.1%,
+      rgba(255, 255, 255, 0.02) 8.3%,
+      rgba(255, 255, 255, 0.012) 9.6%,
+      rgba(255, 255, 255, 0.006) 10.8%,
+      rgba(255, 255, 255, 0.0035) 12%,
+      rgba(255, 255, 255, 0.002) 13.4%,
+      rgba(255, 255, 255, 0.001) 14.8%,
+      rgba(255, 255, 255, 0) 16.2%
     );
 }
 
@@ -151,12 +164,25 @@
   background:
     linear-gradient(
       90deg,
-      rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, 0.12) 1%,
-      rgba(255, 255, 255, 0.32) 3%,
-      rgba(255, 255, 255, 0.1) 4.7%,
-      rgba(255, 255, 255, 0.03) 6%,
-      rgba(255, 255, 255, 0) 6.1%
+      rgba(255, 255, 255, 0.015) 0%,
+      rgba(255, 255, 255, 0.03) 0.25%,
+      rgba(255, 255, 255, 0.065) 0.55%,
+      rgba(255, 255, 255, 0.11) 0.9%,
+      rgba(255, 255, 255, 0.17) 1.5%,
+      rgba(255, 255, 255, 0.22) 2%,
+      rgba(255, 255, 255, 0.16) 2.6%,
+      rgba(255, 255, 255, 0.11) 3.3%,
+      rgba(255, 255, 255, 0.085) 4.1%,
+      rgba(255, 255, 255, 0.065) 5%,
+      rgba(255, 255, 255, 0.045) 6%,
+      rgba(255, 255, 255, 0.03) 7.1%,
+      rgba(255, 255, 255, 0.02) 8.3%,
+      rgba(255, 255, 255, 0.012) 9.6%,
+      rgba(255, 255, 255, 0.006) 10.8%,
+      rgba(255, 255, 255, 0.0035) 12%,
+      rgba(255, 255, 255, 0.002) 13.4%,
+      rgba(255, 255, 255, 0.001) 14.8%,
+      rgba(255, 255, 255, 0) 16.2%
     );
 }
 
@@ -219,6 +245,30 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+/* Guardrail: the hero image must stay center-cropped even if flush classes are added by mistake */
+.rightPage .heroRightImg {
+  object-position: center center !important;
+}
+
+.acrossSpread {
+  overflow: hidden;
+}
+
+.acrossSpreadImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+}
+
+.acrossSpread .leftPage,
+.acrossSpread .rightPage {
+  padding: 0;
+  background-color: transparent;
 }
 
 .containedImg {
@@ -298,6 +348,15 @@
   }
   .fullBleed {
     height: 60vh;
+  }
+
+  .acrossSpreadImg {
+    position: absolute;
+  }
+
+  .acrossSpread .leftPage,
+  .acrossSpread .rightPage {
+    padding: 0 !important;
   }
 
   .flushRight .containedImg,

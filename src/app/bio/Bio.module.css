@@ -1,0 +1,163 @@
+.page {
+  min-height: 100vh;
+  background: #fdfdfc;
+  color: #111;
+  position: relative;
+  overflow: hidden;
+}
+
+.gridNoise {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(circle at center, black 35%, transparent 100%);
+  opacity: 0.18;
+  z-index: 0;
+}
+
+.main {
+  position: relative;
+  z-index: 1;
+  width: min(1200px, 92vw);
+  margin: 0 auto;
+  padding: 9rem 0 4rem;
+}
+
+.hero {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.14);
+  padding-bottom: 2.25rem;
+}
+
+.kicker {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: #555;
+  margin-bottom: 1rem;
+}
+
+.title {
+  max-width: 15ch;
+  font-size: clamp(2rem, 5vw, 4.2rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  text-transform: none;
+  margin-bottom: 1.25rem;
+}
+
+.lead {
+  max-width: 58ch;
+  font-size: 1rem;
+  line-height: 1.75;
+  color: #2c2c2c;
+}
+
+.content {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 3rem;
+  margin-top: 2.5rem;
+}
+
+.sideMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  padding-top: 0.25rem;
+}
+
+.metaBlock {
+  border-top: 1px solid rgba(0, 0, 0, 0.14);
+  padding-top: 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metaLabel {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #666;
+}
+
+.metaValue,
+.metaLink {
+  font-size: 0.95rem;
+  color: #111;
+  text-decoration: none;
+}
+
+.metaLink:hover {
+  text-decoration: underline;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+}
+
+.block {
+  border-top: 1px solid rgba(0, 0, 0, 0.18);
+  padding-top: 0.8rem;
+}
+
+.block h2 {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 0.85rem;
+}
+
+.block p {
+  font-size: 0.95rem;
+  line-height: 1.78;
+  color: #242424;
+  margin-bottom: 0.9rem;
+}
+
+.block ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.block li {
+  font-size: 0.92rem;
+  line-height: 1.75;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 0.25rem 0;
+}
+
+@media (max-width: 1024px) {
+  .content {
+    grid-template-columns: 1fr;
+    gap: 1.8rem;
+  }
+
+  .columns {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .main {
+    width: 92vw;
+    padding-top: 8.5rem;
+  }
+
+  .title {
+    max-width: 100%;
+  }
+
+  .columns {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
