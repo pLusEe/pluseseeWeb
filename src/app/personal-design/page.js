@@ -6,6 +6,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import styles from "./PersonalDesignLibrary.module.css";
+import defaultSiteContent from "../../data/site-content.json";
 
 const MEDIA_IMAGES_BASE = "/media/images";
 const DEFAULT_BOOK_COVER = `${MEDIA_IMAGES_BASE}/youshenyouren4.jpg`;
@@ -21,12 +22,14 @@ const normalizeImageUrl = (url, fallback = DEFAULT_FALLBACK_IMAGE) => {
   return `${MEDIA_IMAGES_BASE}/${trimmed}`;
 };
 
-const fallingImages = [
+const DEFAULT_FALLING_IMAGES = [
   { src: "portfolio1.jpg", rotate: 270, width: 1279, height: 1865 },
   { src: "portfolio2.jpg", rotate: 0, width: 1279, height: 1993 },
   { src: "portfolio3.jpg", rotate: 270, width: 1279, height: 1706 },
   { src: "portfolio4.jpg", rotate: 0, width: 1279, height: 1706 },
-].map((item) => ({ ...item, src: normalizeImageUrl(item.src) }));
+];
+
+const DEFAULT_LIBRARY_CONFIG = defaultSiteContent.personalDesign.library;
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -140,15 +143,70 @@ export default function PersonalDesignLibraryPage() {
     vy: 0,
   });
   const [cards, setCards] = useState([]);
+  const [libraryConfig, setLibraryConfig] = useState(DEFAULT_LIBRARY_CONFIG);
 
-  const book = {
-    title: "PERSONAL DESIGN ARCHIVE",
-    type: "PERSONAL PORTFOLIO",
-    size: "DIGITAL ARCHIVE",
-    year: "2019-2024",
-    href: "/personal-design/2019-2024",
-    cover: DEFAULT_BOOK_COVER,
-  };
+  useEffect(() => {
+    fetch("/api/content")
+      .then((r) => r.json())
+      .then((data) => {
+        const nextLibrary = data?.personalDesign?.library;
+        if (nextLibrary && typeof nextLibrary === "object") {
+          setLibraryConfig({
+            ...DEFAULT_LIBRARY_CONFIG,
+            ...nextLibrary,
+            book: {
+              ...DEFAULT_LIBRARY_CONFIG.book,
+              ...(nextLibrary.book || {}),
+            },
+            fallingImages:
+              Array.isArray(nextLibrary.fallingImages) && nextLibrary.fallingImages.length > 0
+                ? nextLibrary.fallingImages
+                : DEFAULT_LIBRARY_CONFIG.fallingImages,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const book = useMemo(
+    () => ({
+      title: libraryConfig?.book?.title || DEFAULT_LIBRARY_CONFIG.book.title,
+      type: libraryConfig?.book?.type || DEFAULT_LIBRARY_CONFIG.book.type,
+      size: libraryConfig?.book?.size || DEFAULT_LIBRARY_CONFIG.book.size,
+      year: libraryConfig?.book?.year || DEFAULT_LIBRARY_CONFIG.book.year,
+      href: libraryConfig?.book?.href || DEFAULT_LIBRARY_CONFIG.book.href,
+      cover: normalizeImageUrl(
+        libraryConfig?.book?.coverUrl || DEFAULT_LIBRARY_CONFIG.book.coverUrl,
+        DEFAULT_BOOK_COVER
+      ),
+      openLabel: libraryConfig?.book?.openLabel || DEFAULT_LIBRARY_CONFIG.book.openLabel,
+    }),
+    [libraryConfig]
+  );
+
+  const fallingImages = useMemo(() => {
+    const base =
+      Array.isArray(libraryConfig?.fallingImages) && libraryConfig.fallingImages.length > 0
+        ? libraryConfig.fallingImages
+        : DEFAULT_FALLING_IMAGES;
+
+    return base.map((item, index) => ({
+      src: normalizeImageUrl(item?.src, DEFAULT_FALLBACK_IMAGE),
+      rotate: Number.isFinite(item?.rotate) ? item.rotate : index % 2 ? 0 : 270,
+      width: Number.isFinite(item?.width) ? item.width : 1279,
+      height: Number.isFinite(item?.height) ? item.height : 1706,
+    }));
+  }, [libraryConfig]);
+
+  const rightNote = useMemo(() => {
+    if (Array.isArray(libraryConfig?.rightNote) && libraryConfig.rightNote.length >= 2) {
+      return libraryConfig.rightNote;
+    }
+    return DEFAULT_LIBRARY_CONFIG.rightNote;
+  }, [libraryConfig]);
+
+  const leftCopyright =
+    libraryConfig?.leftCopyright || DEFAULT_LIBRARY_CONFIG.leftCopyright || "© 2026 plusesee.me";
 
   const getLocalPoint = useCallback((event) => {
     const stage = stageRef.current;
@@ -158,7 +216,7 @@ export default function PersonalDesignLibraryPage() {
       x: event.clientX - rect.left,
       y: event.clientY - rect.top,
     };
-  }, []);
+  }, [fallingImages]);
 
   const buildCards = useCallback(() => {
     const stage = stageRef.current;
@@ -203,7 +261,7 @@ export default function PersonalDesignLibraryPage() {
 
     cardsRef.current = next;
     setCards(next);
-  }, []);
+  }, [fallingImages]);
 
   useEffect(() => {
     buildCards();
@@ -421,19 +479,19 @@ export default function PersonalDesignLibraryPage() {
               </div>
 
               <Link href={book.href} className={styles.openBtn}>
-                OPEN PORTFOLIO
+                {book.openLabel}
               </Link>
             </section>
           </article>
         </section>
 
         <p className={styles.rightNote} aria-hidden="true">
-          <span>welcome to the</span>
-          <span>archive</span>
+          <span>{rightNote[0]}</span>
+          <span>{rightNote[1]}</span>
         </p>
 
         <p className={styles.leftCopyright} aria-hidden="true">
-          &copy; 2026 plusesee.me
+          {leftCopyright}
         </p>
       </main>
     </div>

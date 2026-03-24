@@ -1,90 +1,125 @@
-"use client";
+﻿"use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "./CommercialDesign.module.css";
-import portfolio from "../../data/portfolio.json";
+import defaultSiteContent from "../../data/site-content.json";
+
+const FALLBACK_IMAGE = "/media/images/placeholder1.jpg";
 
 const getThumb = (item) => {
   if (item?.thumbUrl) return item.thumbUrl;
   if ((item?.mediaType || "image") === "image" && item?.mediaUrl) return item.mediaUrl;
   if (item?.imageUrl) return item.imageUrl;
-  return "/media/images/placeholder1.jpg";
+  return FALLBACK_IMAGE;
 };
+
+const toStyleObject = (value) => (value && typeof value === "object" && !Array.isArray(value) ? value : {});
+
+const resolveImage = (safeItems, section, key, fallbackIndex) => {
+  const urlKey = `${key}Url`;
+  const indexKey = `${key}Index`;
+  const rawUrl = String(section?.[urlKey] || "").trim();
+  if (rawUrl) return rawUrl;
+
+  const idx = Number.isInteger(section?.[indexKey]) ? section[indexKey] : fallbackIndex;
+  return getThumb(safeItems[idx] || safeItems[fallbackIndex] || null);
+};
+
+const defaultCommercial = defaultSiteContent.commercialDesign;
 
 export default function CommercialDesignPage() {
   const [activeSection, setActiveSection] = useState("all");
-  
-  const safeItems = Array.isArray(portfolio) && portfolio.length > 0 ? portfolio : Array(10).fill({ title: "Placeholder" });
-  
-  // Use images from portfolio.json for the layout demo
-  const img1 = getThumb(safeItems[0]);
-  const img2 = getThumb(safeItems[1] || safeItems[0]);
-  const img3 = getThumb(safeItems[2] || safeItems[0]);
-  const img4 = getThumb(safeItems[3] || safeItems[0]);
-  const img5 = getThumb(safeItems[4] || safeItems[0]);
-  const img6 = getThumb(safeItems[5] || safeItems[0]);
+  const [items, setItems] = useState([]);
+  const [commercial, setCommercial] = useState(defaultCommercial);
+
+  useEffect(() => {
+    fetch("/api/portfolio")
+      .then((r) => r.json())
+      .then((data) => setItems(Array.isArray(data) ? data : []))
+      .catch(() => setItems([]));
+
+    fetch("/api/content")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.commercialDesign && typeof data.commercialDesign === "object") {
+          setCommercial({
+            ...defaultCommercial,
+            ...data.commercialDesign,
+            sections: {
+              ...defaultCommercial.sections,
+              ...(data.commercialDesign.sections || {}),
+            },
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const safeItems = useMemo(() => {
+    if (Array.isArray(items) && items.length > 0) return items;
+    return [{ title: "Placeholder", mediaUrl: FALLBACK_IMAGE, thumbUrl: FALLBACK_IMAGE }];
+  }, [items]);
+
+  const sections = commercial?.sections || defaultCommercial.sections;
+  const navItems = Array.isArray(commercial?.navItems) && commercial.navItems.length > 0
+    ? commercial.navItems
+    : defaultCommercial.navItems;
+
+  const allHero = resolveImage(safeItems, sections.all, "rightImage", 0);
+  const sitesLeft = resolveImage(safeItems, sections.sitesInUse, "leftImage", 1);
+  const sitesRight = resolveImage(safeItems, sections.sitesInUse, "rightImage", 2);
+  const graphicRight = resolveImage(safeItems, sections.graphicDesign, "rightImage", 3);
+  const styleLeft = resolveImage(safeItems, sections.style, "leftImage", 4);
+  const acrossImage = resolveImage(safeItems, sections.acrossSpread, "image", 5);
+  const archRight = resolveImage(safeItems, sections.archDesign, "rightImage", 0);
+  const artLeft = resolveImage(safeItems, sections.art, "leftImage", 1);
+  const artRight = resolveImage(safeItems, sections.art, "rightImage", 2);
+  const photoLeft = resolveImage(safeItems, sections.photo, "leftImage", 3);
+  const shopsRight = resolveImage(safeItems, sections.shops, "rightImage", 4);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id);
-          }
+          if (entry.isIntersecting) setActiveSection(entry.target.id);
         });
       },
-      { rootMargin: "-40% 0px -40% 0px" } 
+      { rootMargin: "-40% 0px -40% 0px" }
     );
-    
+
     const spreads = document.querySelectorAll(`.${styles.spread}`);
     spreads.forEach((section) => observer.observe(section));
-    
+
     return () => observer.disconnect();
   }, []);
 
   const handleNavClick = (e, id) => {
     e.preventDefault();
     const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
+    if (element) element.scrollIntoView({ behavior: "smooth" });
   };
-
-  const navItems = [
-    { id: "all", label: "All" },
-    { id: "sites-in-use", label: "Sites In Use" },
-    { id: "graphic-design", label: "Graphic Design" },
-    { id: "style", label: "Style" },
-    { id: "across-spread", label: "Across Spread" },
-    { id: "arch-design", label: "Arch. & Design" },
-    { id: "art", label: "Art" },
-    { id: "photo", label: "Photo" },
-    { id: "shops", label: "Shops" }
-  ];
 
   return (
     <div className={styles.pageWrapper}>
       <div className={styles.bookContainer}>
-        {/* Center Spine Shadow Container */}
         <div className={styles.spineOverlayContainer} aria-hidden="true">
           <img
-            src="/ui/crease-multiply2.png"
+            src={commercial?.spineImageUrl || defaultCommercial.spineImageUrl}
             alt=""
             className={styles.spineMultiply}
             draggable="false"
           />
         </div>
-        
-        {/* Left Sticky Navigation */}
+
         <aside className={styles.sidebar}>
           <div className={styles.navGroup}>
             <div className={styles.navTitle}>User Work</div>
             <ul className={styles.navList}>
-              {navItems.map(item => (
+              {navItems.map((item) => (
                 <li key={item.id} className={styles.navItem}>
-                  <a 
-                    href={`#${item.id}`} 
-                    className={`${styles.navLink} ${activeSection === item.id ? styles.navLinkActive : ''}`}
+                  <a
+                    href={`#${item.id}`}
+                    className={`${styles.navLink} ${activeSection === item.id ? styles.navLinkActive : ""}`}
                     onClick={(e) => handleNavClick(e, item.id)}
                   >
                     {item.label}
@@ -93,125 +128,165 @@ export default function CommercialDesignPage() {
               ))}
             </ul>
             <a href="#extra" className={styles.navExtra}>
-              Extra Material <span>↓</span>
+              {sections?.extra?.linkLabel || "Extra Material"} <span>→</span>
             </a>
           </div>
         </aside>
 
-        {/* Scrollable Content Spreads */}
-        
-        {/* Spread 1: Intro (Right Image matching the Sir Grayson Perry screenshot) */}
         <section id="all" className={styles.spread}>
-          <div className={styles.leftPage}>
-          </div>
+          <div className={styles.leftPage}></div>
           <div className={`${styles.rightPage} ${styles.fullBleed}`}>
-            <img src={img1} alt="Project 1" className={`${styles.fullBleedImg} ${styles.heroRightImg}`} />
+            <img
+              src={allHero}
+              alt="Project 1"
+              className={`${styles.fullBleedImg} ${styles.heroRightImg}`}
+              style={toStyleObject(sections?.all?.rightImageStyle)}
+            />
           </div>
         </section>
 
-        {/* Spread 2: Double Images */}
         <section id="sites-in-use" className={styles.spread}>
           <div className={`${styles.leftPage} ${styles.flexCenter} ${styles.flushRight}`}>
-            <img src={img2} alt="Project 2 Left" className={styles.containedImg} />
+            <img
+              src={sitesLeft}
+              alt="Project 2 Left"
+              className={styles.containedImg}
+              style={toStyleObject(sections?.sitesInUse?.leftImageStyle)}
+            />
           </div>
           <div className={`${styles.rightPage} ${styles.flexCenter} ${styles.flushLeft}`}>
-             <img src={img3} alt="Project 2 Right" className={styles.containedImg} />
+            <img
+              src={sitesRight}
+              alt="Project 2 Right"
+              className={styles.containedImg}
+              style={toStyleObject(sections?.sitesInUse?.rightImageStyle)}
+            />
           </div>
         </section>
 
-        {/* Spread 3: Left Text, Right Image */}
         <section id="graphic-design" className={styles.spread}>
           <div className={`${styles.leftPage} ${styles.flexCenter}`}>
             <div className={styles.textBlock}>
-              <h2 className={styles.textTitle}>Graphic & Print</h2>
-              <p className={styles.textBody}>
-                This editorial layout mimics the structural rhythm of a high-end photography book. The rigid center spine and the generous whitespace allow the imagery to breathe, presenting visual systems with a quiet, confident authority.
-              </p>
-              <p className={styles.textBody}>
-                The typography relies on tight letter-spacing and structural hierarchy, avoiding unnecessary ornaments.
-              </p>
-              <div className={styles.creditBottom}>
-                Photography <strong>Plusesee Studio</strong>
-              </div>
+              <h2 className={styles.textTitle}>{sections?.graphicDesign?.title || "Graphic & Print"}</h2>
+              <p className={styles.textBody}>{sections?.graphicDesign?.body1 || ""}</p>
+              {sections?.graphicDesign?.body2 ? <p className={styles.textBody}>{sections.graphicDesign.body2}</p> : null}
+              {sections?.graphicDesign?.credit ? (
+                <div className={styles.creditBottom}>{sections.graphicDesign.credit}</div>
+              ) : null}
             </div>
           </div>
           <div className={`${styles.rightPage} ${styles.fullBleed}`}>
-             <img src={img4} alt="Project 4" className={styles.fullBleedImg} />
+            <img
+              src={graphicRight}
+              alt="Project 4"
+              className={styles.fullBleedImg}
+              style={toStyleObject(sections?.graphicDesign?.rightImageStyle)}
+            />
           </div>
         </section>
 
-        {/* Spread 4: Full Bleed Left Image (Matching second screenshot, Le Fool Collective) */}
         <section id="style" className={styles.spread}>
           <div className={`${styles.leftPage} ${styles.fullBleed} ${styles.flushRight}`}>
-             <img src={img5} alt="Project 5" className={styles.fullBleedImg} />
-             <div style={{ position: 'absolute', bottom: '2rem', left: '2rem', fontSize: '0.65rem', color: '#fff' }}>
-                Le Fool Collective<br/>@le_fool_club
-             </div>
+            <img
+              src={styleLeft}
+              alt="Project 5"
+              className={styles.fullBleedImg}
+              style={toStyleObject(sections?.style?.leftImageStyle)}
+            />
+            {sections?.style?.overlayText ? (
+              <div style={{ position: "absolute", ...toStyleObject(sections?.style?.overlayStyle) }}>
+                {String(sections.style.overlayText)
+                  .split("\n")
+                  .map((line, idx) => (
+                    <div key={`${line}-${idx}`}>{line}</div>
+                  ))}
+              </div>
+            ) : null}
           </div>
-          <div className={styles.rightPage}>
-          </div>
+          <div className={styles.rightPage}></div>
         </section>
 
-        {/* Spread: One image across both pages */}
         <section id="across-spread" className={`${styles.spread} ${styles.acrossSpread}`}>
-          <img src={img6} alt="Across spread project" className={styles.acrossSpreadImg} />
+          <img
+            src={acrossImage}
+            alt="Across spread project"
+            className={styles.acrossSpreadImg}
+            style={toStyleObject(sections?.acrossSpread?.imageStyle)}
+          />
           <div className={styles.leftPage}></div>
           <div className={styles.rightPage}></div>
         </section>
-        
-        {/* Spread 5: Arch & Design placeholder */}
+
         <section id="arch-design" className={styles.spread}>
           <div className={`${styles.leftPage} ${styles.flexCenter}`}>
             <div className={styles.textBlock}>
-              <h2 className={styles.textTitle}>Architecture & Space</h2>
-              <p className={styles.textBody}>
-                A study in spatial relationships and structural harmony.
-              </p>
+              <h2 className={styles.textTitle}>{sections?.archDesign?.title || "Architecture & Space"}</h2>
+              <p className={styles.textBody}>{sections?.archDesign?.body || ""}</p>
             </div>
           </div>
           <div className={`${styles.rightPage} ${styles.flexCenter} ${styles.flushLeft}`}>
-            <img src={img1} alt="Project Arch" className={styles.containedImg} />
+            <img
+              src={archRight}
+              alt="Project Arch"
+              className={styles.containedImg}
+              style={toStyleObject(sections?.archDesign?.rightImageStyle)}
+            />
           </div>
         </section>
-        
-        {/* Spread 6: Art placeholder */}
+
         <section id="art" className={styles.spread}>
           <div className={`${styles.leftPage} ${styles.flexCenter} ${styles.flushRight}`}>
-            <img src={img2} alt="Project Art" className={`${styles.containedImg} ${styles.shadowedImg}`} />
+            <img
+              src={artLeft}
+              alt="Project Art"
+              className={`${styles.containedImg} ${styles.shadowedImg}`}
+              style={toStyleObject(sections?.art?.leftImageStyle)}
+            />
           </div>
           <div className={`${styles.rightPage} ${styles.flexCenter} ${styles.flushLeft}`}>
-             <img src={img3} alt="Project Art Right" className={`${styles.containedImg} ${styles.shadowedImg}`} />
+            <img
+              src={artRight}
+              alt="Project Art Right"
+              className={`${styles.containedImg} ${styles.shadowedImg}`}
+              style={toStyleObject(sections?.art?.rightImageStyle)}
+            />
           </div>
         </section>
 
-        {/* Spread 7: Photo placeholder */}
         <section id="photo" className={styles.spread}>
           <div className={`${styles.leftPage} ${styles.flexCenter} ${styles.flushRight}`}>
-            <img src={img4} alt="Project Photo" className={styles.containedImg} />
+            <img
+              src={photoLeft}
+              alt="Project Photo"
+              className={styles.containedImg}
+              style={toStyleObject(sections?.photo?.leftImageStyle)}
+            />
           </div>
-          <div className={styles.rightPage}>
-          </div>
+          <div className={styles.rightPage}></div>
         </section>
 
-        {/* Spread 8: Shops placeholder */}
         <section id="shops" className={styles.spread}>
           <div className={styles.leftPage}></div>
           <div className={`${styles.rightPage} ${styles.flexCenter} ${styles.flushLeft}`}>
-            <img src={img5} alt="Project Shop" className={`${styles.containedImg} ${styles.shadowedImg}`} />
-            <div className={styles.caption}>Retail Concepts</div>
+            <img
+              src={shopsRight}
+              alt="Project Shop"
+              className={`${styles.containedImg} ${styles.shadowedImg}`}
+              style={toStyleObject(sections?.shops?.rightImageStyle)}
+            />
+            {sections?.shops?.caption ? <div className={styles.caption}>{sections.shops.caption}</div> : null}
           </div>
         </section>
-        
+
         <section id="extra" className={styles.spread}>
           <div className={`${styles.leftPage} ${styles.flexCenter}`}>
             <div className={styles.textBlock}>
-              <h2 className={styles.textTitle}>Extra Material</h2>
-              <p className={styles.textBody}>Additional resources and references.</p>
+              <h2 className={styles.textTitle}>{sections?.extra?.title || "Extra Material"}</h2>
+              <p className={styles.textBody}>{sections?.extra?.body || ""}</p>
             </div>
           </div>
           <div className={`${styles.rightPage} ${styles.flexCenter}`}></div>
         </section>
-
       </div>
     </div>
   );

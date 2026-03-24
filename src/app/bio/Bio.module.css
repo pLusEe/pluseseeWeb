@@ -28,8 +28,28 @@
 }
 
 .hero {
+  display: grid;
+  grid-template-columns: 1fr minmax(200px, 300px);
+  gap: 2rem;
+  align-items: start;
   border-bottom: 1px solid rgba(0, 0, 0, 0.14);
   padding-bottom: 2.25rem;
+}
+
+.heroText {
+  min-width: 0;
+}
+
+.heroMedia {
+  justify-self: end;
+  width: 100%;
+}
+
+.portrait {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border: 1px solid rgba(0, 0, 0, 0.16);
 }
 
 .kicker {
@@ -98,7 +118,7 @@
 
 .columns {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 2rem;
 }
 
@@ -136,13 +156,22 @@
 }
 
 @media (max-width: 1024px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .heroMedia {
+    justify-self: start;
+    width: min(320px, 58vw);
+  }
+
   .content {
     grid-template-columns: 1fr;
     gap: 1.8rem;
   }
 
   .columns {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
 }
 

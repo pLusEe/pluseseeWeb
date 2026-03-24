@@ -1,74 +1,90 @@
+﻿"use client";
+
+import { useEffect, useMemo, useState } from "react";
 import styles from "./Bio.module.css";
+import defaultSiteContent from "../../data/site-content.json";
 
-const services = [
-  "Visual Identity Systems",
-  "Art Direction",
-  "Editorial Design",
-  "Digital Experience",
-  "Image Narrative",
-];
-
-const collaborators = [
-  "Independent brands",
-  "Cultural spaces",
-  "Fashion studios",
-  "Music projects",
-  "Creative founders",
-];
+const defaultBio = defaultSiteContent.bio;
 
 export default function BioPage() {
+  const [bio, setBio] = useState(defaultBio);
+
+  useEffect(() => {
+    fetch("/api/content")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.bio && typeof data.bio === "object") {
+          setBio({
+            ...defaultBio,
+            ...data.bio,
+            meta: Array.isArray(data.bio.meta) ? data.bio.meta : defaultBio.meta,
+            aboutParagraphs: Array.isArray(data.bio.aboutParagraphs)
+              ? data.bio.aboutParagraphs
+              : defaultBio.aboutParagraphs,
+            services: Array.isArray(data.bio.services) ? data.bio.services : defaultBio.services,
+            collaborators: Array.isArray(data.bio.collaborators)
+              ? data.bio.collaborators
+              : defaultBio.collaborators,
+            projectExperience: Array.isArray(data.bio.projectExperience)
+              ? data.bio.projectExperience
+              : defaultBio.projectExperience,
+            workExperience: Array.isArray(data.bio.workExperience)
+              ? data.bio.workExperience
+              : defaultBio.workExperience,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const metaItems = useMemo(() => (Array.isArray(bio.meta) ? bio.meta : []), [bio.meta]);
+
   return (
     <div className={styles.page}>
       <div className={styles.gridNoise} aria-hidden="true"></div>
 
       <main className={styles.main}>
         <section className={styles.hero}>
-          <p className={styles.kicker}>plusesee / bio</p>
-          <h1 className={styles.title}>
-            Multidisciplinary designer shaping visual rhythm across image, text, and space.
-          </h1>
-          <p className={styles.lead}>
-            I build identities and visual worlds with editorial clarity, emotional precision,
-            and strong structural balance.
-          </p>
+          <div className={styles.heroText}>
+            <p className={styles.kicker}>{bio.kicker}</p>
+            <h1 className={styles.title}>{bio.title}</h1>
+            <p className={styles.lead}>{bio.lead}</p>
+          </div>
+          {bio.photoUrl ? (
+            <div className={styles.heroMedia}>
+              <img src={bio.photoUrl} alt="Bio portrait" className={styles.portrait} />
+            </div>
+          ) : null}
         </section>
 
         <section className={styles.content}>
           <aside className={styles.sideMeta}>
-            <div className={styles.metaBlock}>
-              <span className={styles.metaLabel}>Base</span>
-              <span className={styles.metaValue}>China</span>
-            </div>
-            <div className={styles.metaBlock}>
-              <span className={styles.metaLabel}>Focus</span>
-              <span className={styles.metaValue}>Brand / Editorial / Digital</span>
-            </div>
-            <div className={styles.metaBlock}>
-              <span className={styles.metaLabel}>Contact</span>
-              <a className={styles.metaLink} href="mailto:hello@plusesee.me">
-                hello@plusesee.me
-              </a>
-            </div>
+            {metaItems.map((item, idx) => (
+              <div key={`${item.label}-${idx}`} className={styles.metaBlock}>
+                <span className={styles.metaLabel}>{item.label}</span>
+                {item.href ? (
+                  <a className={styles.metaLink} href={item.href}>
+                    {item.value}
+                  </a>
+                ) : (
+                  <span className={styles.metaValue}>{item.value}</span>
+                )}
+              </div>
+            ))}
           </aside>
 
           <div className={styles.columns}>
             <article className={styles.block}>
               <h2>About</h2>
-              <p>
-                My work combines system thinking with a tactile sense of composition. I am
-                interested in contrast, pacing, and the way typography and imagery create a
-                narrative voice.
-              </p>
-              <p>
-                Every project starts with structure: what must remain consistent, what can
-                change, and where expression should feel alive.
-              </p>
+              {(bio.aboutParagraphs || []).map((paragraph, idx) => (
+                <p key={`about-${idx}`}>{paragraph}</p>
+              ))}
             </article>
 
             <article className={styles.block}>
               <h2>Services</h2>
               <ul>
-                {services.map((item) => (
+                {(bio.services || []).map((item) => (
                   <li key={item}>{item}</li>
                 ))}
               </ul>
@@ -77,11 +93,33 @@ export default function BioPage() {
             <article className={styles.block}>
               <h2>Selected Collaborations</h2>
               <ul>
-                {collaborators.map((item) => (
+                {(bio.collaborators || []).map((item) => (
                   <li key={item}>{item}</li>
                 ))}
               </ul>
             </article>
+
+            {(bio.projectExperience || []).length > 0 ? (
+              <article className={styles.block}>
+                <h2>Project Experience</h2>
+                <ul>
+                  {(bio.projectExperience || []).map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </article>
+            ) : null}
+
+            {(bio.workExperience || []).length > 0 ? (
+              <article className={styles.block}>
+                <h2>Work Experience</h2>
+                <ul>
+                  {(bio.workExperience || []).map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </article>
+            ) : null}
           </div>
         </section>
       </main>

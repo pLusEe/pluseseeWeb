@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import styles from "../PersonalDesign.module.css";
-import portfolio from "../../../data/portfolio.json";
+import defaultSiteContent from "../../../data/site-content.json";
 
 const getThumb = (item) => {
   if (item?.thumbUrl) return item.thumbUrl;
@@ -12,12 +12,37 @@ const getThumb = (item) => {
 };
 
 const toSafeUrl = (url) => encodeURI(url || "");
+const DEFAULT_BOOK_CONFIG = defaultSiteContent.personalDesign.book2019;
 
 export default function PersonalDesignPage() {
   const normalFlipMs = 600;
   const fastFlipMinMs = 300;
   const fastFlipMaxMs = 700;
-  const items = Array.isArray(portfolio) ? portfolio : [];
+  const [items, setItems] = useState([]);
+  const [bookConfig, setBookConfig] = useState(DEFAULT_BOOK_CONFIG);
+
+  useEffect(() => {
+    fetch("/api/portfolio")
+      .then((r) => r.json())
+      .then((data) => setItems(Array.isArray(data) ? data : []))
+      .catch(() => setItems([]));
+
+    fetch("/api/content")
+      .then((r) => r.json())
+      .then((data) => {
+        const nextBook = data?.personalDesign?.book2019;
+        if (nextBook && typeof nextBook === "object") {
+          setBookConfig({
+            ...DEFAULT_BOOK_CONFIG,
+            ...nextBook,
+            pages: Array.isArray(nextBook.pages) ? nextBook.pages : DEFAULT_BOOK_CONFIG.pages,
+            projects: Array.isArray(nextBook.projects) ? nextBook.projects : DEFAULT_BOOK_CONFIG.projects,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const personalItems = useMemo(
     () => items.filter((item) => item.category === "personal design"),
     [items]
@@ -26,6 +51,25 @@ export default function PersonalDesignPage() {
   const safeItems = pageItems.length > 0 ? pageItems : [{ id: "placeholder", title: "Placeholder" }];
 
   const pages = useMemo(() => {
+    if (Array.isArray(bookConfig?.pages) && bookConfig.pages.length > 0) {
+      return bookConfig.pages.map((page, idx) => ({
+        front: {
+          title: page?.front?.title || `Page ${idx * 2 + 1}`,
+          text: page?.front?.text || "",
+          background: toSafeUrl(page?.front?.background || getThumb(safeItems[idx * 2] || safeItems[0])),
+          pageNum: Number.isFinite(page?.front?.pageNum) ? page.front.pageNum : idx * 2 + 1,
+        },
+        back: {
+          title: page?.back?.title || `Page ${idx * 2 + 2}`,
+          text: page?.back?.text || "",
+          background: toSafeUrl(
+            page?.back?.background || getThumb(safeItems[idx * 2 + 1] || safeItems[idx * 2] || safeItems[0])
+          ),
+          pageNum: Number.isFinite(page?.back?.pageNum) ? page.back.pageNum : idx * 2 + 2,
+        },
+      }));
+    }
+
     const result = [];
     for (let i = 0; i < safeItems.length; i += 2) {
       const frontItem = safeItems[i];
@@ -46,9 +90,17 @@ export default function PersonalDesignPage() {
       });
     }
     return result;
-  }, [safeItems]);
+  }, [bookConfig, safeItems]);
 
   const projects = useMemo(() => {
+    if (Array.isArray(bookConfig?.projects) && bookConfig.projects.length > 0) {
+      return bookConfig.projects.map((project, idx) => ({
+        start: Number.isFinite(project?.start) ? project.start : idx * 2 + 1,
+        end: Number.isFinite(project?.end) ? project.end : idx * 2 + 2,
+        name: String(project?.name || `Project ${idx + 1}`),
+      }));
+    }
+
     const normalizeTitle = (title) =>
       String(title || "Untitled")
         .replace(/\s+[IVXLCDM]+$/i, "")
@@ -73,7 +125,7 @@ export default function PersonalDesignPage() {
         name: normalizeTitle(item?.title),
       };
     });
-  }, [safeItems]);
+  }, [bookConfig, safeItems]);
 
   const bookRef = useRef(null);
   const pagesRef = useRef([]);
@@ -270,9 +322,10 @@ export default function PersonalDesignPage() {
     window.addEventListener("wheel", handleWheel, { passive: false });
     window.addEventListener("keydown", handleKeyDown);
 
-    updateZIndexes();
+    const zIndexRaf = window.requestAnimationFrame(updateZIndexes);
 
     return () => {
+      window.cancelAnimationFrame(zIndexRaf);
       pageEls.forEach((page, idx) => {
         page.removeEventListener("click", handlers[idx]);
         page.removeEventListener("transitionend", updateZIndexes);

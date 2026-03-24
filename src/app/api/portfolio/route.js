@@ -32,6 +32,42 @@ export async function POST(request) {
       return NextResponse.json({ success: true });
     }
 
+    if (body.action === 'update') {
+      const targetId = String(body.id || '');
+      const index = items.findIndex((item) => String(item.id) === targetId);
+      if (index < 0) {
+        return NextResponse.json({ error: 'Item not found' }, { status: 404 });
+      }
+
+      const previous = items[index];
+      const nextMediaType = body.mediaType || previous.mediaType || 'image';
+      const incomingMediaUrl = sanitizeUrl(body.mediaUrl);
+      const nextMediaUrl = isInvalidUrl(incomingMediaUrl)
+        ? previous.mediaUrl || ''
+        : incomingMediaUrl;
+      const incomingThumbUrl = sanitizeUrl(body.thumbUrl);
+      const nextThumbUrl = !isInvalidUrl(incomingThumbUrl)
+        ? incomingThumbUrl
+        : nextMediaType === 'image' && !isInvalidUrl(nextMediaUrl)
+          ? nextMediaUrl
+          : previous.thumbUrl || fallbackThumbUrl;
+
+      const nextItem = {
+        ...previous,
+        title: body.title ?? previous.title ?? 'Untitled',
+        category: body.category ?? previous.category ?? 'personal design',
+        description: body.description ?? previous.description ?? '',
+        date: body.date ?? previous.date ?? '',
+        mediaType: nextMediaType,
+        mediaUrl: nextMediaUrl,
+        thumbUrl: nextThumbUrl,
+      };
+
+      items[index] = nextItem;
+      await writeFile(dataFilePath, JSON.stringify(items, null, 2));
+      return NextResponse.json(nextItem);
+    }
+
     const normalizedId = String(Date.now());
     const normalizedMediaType = body.mediaType || 'image';
     const normalizedMediaUrl = sanitizeUrl(body.mediaUrl);
