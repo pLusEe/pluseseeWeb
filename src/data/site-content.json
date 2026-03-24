@@ -56,9 +56,14 @@
     "spineImageUrl": "/ui/crease-multiply2.png",
     "sections": {
       "all": {
-        "rightImageIndex": 0,
-        "rightImageUrl": "",
-        "rightImageStyle": {}
+        "rightImageIndex": 1,
+        "rightImageUrl": "/media/images/wandering-souls-08.jpg",
+        "rightImageStyle": {
+          "width": "78%",
+          "height": "100%",
+          "objectPosition": "right center"
+        },
+        "layoutType": "focus-right"
       },
       "sitesInUse": {
         "leftImageIndex": 1,
