@@ -99,7 +99,7 @@ export default function AIChatSection() {
         {!isChatStarted ? (
           <div className={styles.heroCenter}>
             <video 
-              src="/logo.webm" 
+              src="/media/videos/logo.webm" 
               autoPlay 
               loop 
               muted 

@@ -15,7 +15,7 @@ const getThumb = (item) => {
   if (item.thumbUrl) return item.thumbUrl;
   if ((item.mediaType || "image") === "image" && item.mediaUrl) return item.mediaUrl;
   if (item.imageUrl) return item.imageUrl;
-  return "/placeholder1.jpg";
+  return "/media/images/placeholder1.jpg";
 };
 
 const getDisplayItems = (items) => {

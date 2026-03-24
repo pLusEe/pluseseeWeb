@@ -8,7 +8,7 @@ const getThumb = (item) => {
   if (item?.thumbUrl) return item.thumbUrl;
   if ((item?.mediaType || "image") === "image" && item?.mediaUrl) return item.mediaUrl;
   if (item?.imageUrl) return item.imageUrl;
-  return "/placeholder1.jpg";
+  return "/media/images/placeholder1.jpg";
 };
 
 export default function CommercialDesignPage() {
@@ -68,7 +68,7 @@ export default function CommercialDesignPage() {
         {/* Center Spine Shadow Container */}
         <div className={styles.spineOverlayContainer} aria-hidden="true">
           <img
-            src="/crease-multiply2.png"
+            src="/ui/crease-multiply2.png"
             alt=""
             className={styles.spineMultiply}
             draggable="false"

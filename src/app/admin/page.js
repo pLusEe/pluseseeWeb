@@ -22,7 +22,7 @@ const initialForm = {
 const getThumb = (item) => {
   if (item.thumbUrl) return item.thumbUrl;
   if (item.mediaType === "image" && item.mediaUrl) return item.mediaUrl;
-  return "/placeholder1.jpg";
+  return "/media/images/placeholder1.jpg";
 };
 
 export default function AdminPage() {
