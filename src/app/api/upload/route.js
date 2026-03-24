@@ -14,15 +14,21 @@ export async function POST(request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Save to public/uploads/
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    await mkdir(uploadsDir, { recursive: true });
-
     const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-    const filePath = path.join(uploadsDir, filename);
+
+    // Determine folder by file type
+    const mime = file.type || '';
+    let category = 'images';
+    if (mime.startsWith('video/')) category = 'videos';
+    else if (mime.startsWith('audio/')) category = 'audios';
+
+    const targetDir = path.join(process.cwd(), 'public', 'media', category);
+    await mkdir(targetDir, { recursive: true });
+
+    const filePath = path.join(targetDir, filename);
     await writeFile(filePath, buffer);
 
-    return NextResponse.json({ url: `/uploads/${filename}` });
+    return NextResponse.json({ url: `/media/${category}/${filename}` });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

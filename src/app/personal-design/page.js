@@ -7,18 +7,33 @@ import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
 import styles from "./PersonalDesignLibrary.module.css";
 
+const MEDIA_IMAGES_BASE = "/media/images";
+const DEFAULT_BOOK_COVER = `${MEDIA_IMAGES_BASE}/youshenyouren4.jpg`;
+const DEFAULT_FALLBACK_IMAGE = `${MEDIA_IMAGES_BASE}/placeholder1.jpg`;
+
+const normalizeImageUrl = (url, fallback = DEFAULT_FALLBACK_IMAGE) => {
+  if (typeof url !== "string") return fallback;
+  const trimmed = url.trim();
+  if (!trimmed || trimmed === "." || trimmed === "/." || trimmed.endsWith("/.")) return fallback;
+  if (/^(https?:|data:)/.test(trimmed)) return trimmed;
+  if (trimmed.startsWith(`${MEDIA_IMAGES_BASE}/`)) return trimmed;
+  if (trimmed.startsWith("/")) return `${MEDIA_IMAGES_BASE}${trimmed}`;
+  return `${MEDIA_IMAGES_BASE}/${trimmed}`;
+};
+
 const fallingImages = [
-  { src: "/portfolio1.jpg", rotate: 270, width: 1279, height: 1865 },
-  { src: "/portfolio2.jpg", rotate: 0, width: 1279, height: 1993 },
-  { src: "/portfolio3.jpg", rotate: 270, width: 1279, height: 1706 },
-  { src: "/portfolio4.jpg", rotate: 0, width: 1279, height: 1706 },
-];
+  { src: "portfolio1.jpg", rotate: 270, width: 1279, height: 1865 },
+  { src: "portfolio2.jpg", rotate: 0, width: 1279, height: 1993 },
+  { src: "portfolio3.jpg", rotate: 270, width: 1279, height: 1706 },
+  { src: "portfolio4.jpg", rotate: 0, width: 1279, height: 1706 },
+].map((item) => ({ ...item, src: normalizeImageUrl(item.src) }));
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
 function RotatingBook({ coverUrl }) {
   const groupRef = useRef(null);
-  const frontTexture = useTexture(coverUrl);
+  const safeCoverUrl = useMemo(() => normalizeImageUrl(coverUrl, DEFAULT_BOOK_COVER), [coverUrl]);
+  const frontTexture = useTexture(safeCoverUrl);
 
   const preparedTexture = useMemo(() => {
     if (!frontTexture) return null;
@@ -132,7 +147,7 @@ export default function PersonalDesignLibraryPage() {
     size: "DIGITAL ARCHIVE",
     year: "2019-2024",
     href: "/personal-design/2019-2024",
-    cover: "/youshenyouren4.jpg",
+    cover: DEFAULT_BOOK_COVER,
   };
 
   const getLocalPoint = useCallback((event) => {

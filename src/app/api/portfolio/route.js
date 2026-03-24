@@ -21,6 +21,10 @@ export async function POST(request) {
     const fileContents = await fs.readFile(dataFilePath, 'utf8');
     const normalized = fileContents.replace(/^\uFEFF/, '');
     const items = JSON.parse(normalized);
+    const fallbackThumbUrl = '/media/images/placeholder1.jpg';
+    const sanitizeUrl = (value) => (typeof value === 'string' ? value.trim() : '');
+    const isInvalidUrl = (value) =>
+      !value || value === '.' || value === '/.' || value.endsWith('/.');
 
     if (body.action === 'delete') {
       const updated = items.filter(item => item.id !== body.id);
@@ -30,10 +34,13 @@ export async function POST(request) {
 
     const normalizedId = String(Date.now());
     const normalizedMediaType = body.mediaType || 'image';
-    const normalizedMediaUrl = body.mediaUrl || '';
-    const normalizedThumbUrl =
-      body.thumbUrl ||
-      (normalizedMediaType === 'image' ? normalizedMediaUrl : '/placeholder1.jpg');
+    const normalizedMediaUrl = sanitizeUrl(body.mediaUrl);
+    const requestedThumbUrl = sanitizeUrl(body.thumbUrl);
+    const normalizedThumbUrl = !isInvalidUrl(requestedThumbUrl)
+      ? requestedThumbUrl
+      : normalizedMediaType === 'image' && !isInvalidUrl(normalizedMediaUrl)
+        ? normalizedMediaUrl
+        : fallbackThumbUrl;
 
     // Create new item
     const newItem = {
