@@ -182,6 +182,33 @@ const COMMERCIAL_TEXT_STANDARD = {
   color: "#111111",
   textAlign: "left",
 };
+const MIN_MEDIA_SCALE = 10;
+const MAX_MEDIA_SCALE = 1600;
+const MAX_MEDIA_SIZE = 360;
+const CANVAS_SNAP_PX = 26;
+const dedupeSnapTargets = (targets) => {
+  const map = new Map();
+  toArray(targets).forEach((target) => {
+    const left = toNumberSafe(target?.left, Number.NaN);
+    const guide = toNumberSafe(target?.guide, Number.NaN);
+    if (!Number.isFinite(left) || !Number.isFinite(guide)) return;
+    const key = `${left.toFixed(4)}|${guide.toFixed(4)}`;
+    if (!map.has(key)) map.set(key, { left, guide });
+  });
+  return Array.from(map.values());
+};
+const pickSnapTarget = (value, targets, thresholdPercent) => {
+  let best = null;
+  dedupeSnapTargets(targets).forEach((target) => {
+    const distance = Math.abs(value - target.left);
+    if (distance > thresholdPercent) return;
+    if (!best || distance < best.distance) {
+      best = { ...target, distance };
+    }
+  });
+  if (!best) return { value, guide: null };
+  return { value: best.left, guide: best.guide };
+};
 const estimateCommercialTextBoxSize = (text) => {
   const source = toStringSafe(text).replace(/\r\n/g, "\n");
   const lines = source.split("\n");
@@ -199,21 +226,88 @@ const estimateCommercialTextBoxSize = (text) => {
   const height = clampNumber(10 + wrappedLines * 6.4, 12, 82);
   return { width, height };
 };
+const resolveMediaScale = (rawScale) =>
+  clampNumber(toNumberSafe(rawScale, 100), MIN_MEDIA_SCALE, MAX_MEDIA_SCALE);
+const resolveMediaAspect = (rawAspect, rawWidth, rawHeight) => {
+  const aspect = toNumberSafe(rawAspect, 0);
+  if (aspect > 0.05) return clampNumber(aspect, 0.2, 5);
+  const width = toNumberSafe(rawWidth, 0);
+  const height = toNumberSafe(rawHeight, 0);
+  if (width > 0 && height > 0) return clampNumber(width / height, 0.2, 5);
+  return 1;
+};
+const resolveMediaBase = (rawBase, rawWidth, rawHeight) => {
+  const parsed = toNumberSafe(rawBase, 0);
+  if (parsed > 1) return clampNumber(parsed, 10, 48);
+  const width = clampNumber(toNumberSafe(rawWidth, 84), 5, 100);
+  const height = clampNumber(toNumberSafe(rawHeight, 84), 5, 100);
+  return clampNumber(Math.min(width, height) * 0.38, 10, 48);
+};
+const getCommercialMediaRenderSize = (rawAspect, rawScale, rawBase, rawWidth, rawHeight) => {
+  const aspect = resolveMediaAspect(rawAspect, rawWidth, rawHeight);
+  const scale = resolveMediaScale(rawScale) / 100;
+  const baseShort = resolveMediaBase(rawBase, rawWidth, rawHeight) * scale;
+  if (aspect >= 1) {
+    return {
+      width: clampNumber(baseShort * aspect, 2, MAX_MEDIA_SIZE),
+      height: clampNumber(baseShort, 2, MAX_MEDIA_SIZE),
+    };
+  }
+  return {
+    width: clampNumber(baseShort, 2, MAX_MEDIA_SIZE),
+    height: clampNumber(baseShort / aspect, 2, MAX_MEDIA_SIZE),
+  };
+};
+const getCommercialCanvasBounds = (element) => {
+  const width = clampNumber(toNumberSafe(element?.width, 20), 2, MAX_MEDIA_SIZE);
+  const height = clampNumber(toNumberSafe(element?.height, 20), 2, MAX_MEDIA_SIZE);
+  const type = toStringSafe(element?.type).toLowerCase();
+  if (type === "media") {
+    return {
+      minX: -width,
+      maxX: 100,
+      minY: -height,
+      maxY: 100,
+    };
+  }
+  return {
+    minX: 0,
+    maxX: 100 - width,
+    minY: 0,
+    maxY: 100 - height,
+  };
+};
 const normalizeCommercialCanvasElement = (raw, fallbackId = "element") => {
   const type = toStringSafe(raw?.type).toLowerCase() === "text" ? "text" : "media";
   const page = "both";
   const text = toStringSafe(raw?.text);
   const autoTextBox = estimateCommercialTextBoxSize(text);
+  const mediaScale = type === "media" ? resolveMediaScale(raw?.mediaScale) : 100;
+  const mediaAspect =
+    type === "media" ? resolveMediaAspect(raw?.mediaAspect, raw?.width, raw?.height) : 1;
+  const mediaBase =
+    type === "media" ? resolveMediaBase(raw?.mediaBase, raw?.width, raw?.height) : 0;
+  const mediaSize =
+    type === "media"
+      ? getCommercialMediaRenderSize(
+          mediaAspect,
+          mediaScale,
+          mediaBase,
+          raw?.width,
+          raw?.height
+        )
+      : null;
   const width =
     type === "text"
       ? autoTextBox.width
-      : clampNumber(toNumberSafe(raw?.width, 84), 5, 100);
+      : mediaSize.width;
   const height =
     type === "text"
       ? autoTextBox.height
-      : clampNumber(toNumberSafe(raw?.height, 84), 5, 100);
-  const x = clampNumber(toNumberSafe(raw?.x, type === "text" ? 10 : 8), 0, 100 - width);
-  const y = clampNumber(toNumberSafe(raw?.y, type === "text" ? 22 : 8), 0, 100 - height);
+      : mediaSize.height;
+  const bounds = getCommercialCanvasBounds({ type, width, height });
+  const x = clampNumber(toNumberSafe(raw?.x, type === "text" ? 10 : 8), bounds.minX, bounds.maxX);
+  const y = clampNumber(toNumberSafe(raw?.y, type === "text" ? 22 : 8), bounds.minY, bounds.maxY);
   const opacity = 100;
   const zIndex = clampNumber(toNumberSafe(raw?.zIndex, type === "text" ? 10 : 6), 1, 99);
   const fit = "contain";
@@ -232,6 +326,9 @@ const normalizeCommercialCanvasElement = (raw, fallbackId = "element") => {
     fit,
     mediaUrl,
     mediaType,
+    mediaScale,
+    mediaAspect,
+    mediaBase,
     text,
     color: COMMERCIAL_TEXT_STANDARD.color,
     fontFamily: COMMERCIAL_TEXT_STANDARD.fontFamily,
@@ -730,6 +827,10 @@ export default function AdminPage() {
   const [activeCommercialPageId, setActiveCommercialPageId] = useState("");
   const [selectedCommercialElementId, setSelectedCommercialElementId] = useState("");
   const [expandedCommercialProjects, setExpandedCommercialProjects] = useState({});
+  const [commercialCanvasScale, setCommercialCanvasScale] = useState(1);
+  const [commercialViewportRatio, setCommercialViewportRatio] = useState(16 / 9);
+  const [commercialSpinePercent, setCommercialSpinePercent] = useState(50);
+  const [commercialSnapGuides, setCommercialSnapGuides] = useState({ x: null, y: null });
   const commercialCanvasRef = useRef(null);
   const commercialDragRef = useRef(null);
   const commercialInitTrimRef = useRef(false);
@@ -754,6 +855,7 @@ export default function AdminPage() {
   };
 
   const hasTag = (item, tagId) => {
+    if (!tagId || tagId === "all" || tagId === "allImages") return true;
     const tags = normalizeTags(item?.categories, item?.category);
     if (tagId === "personalLibrary") {
       return tags.includes("personalLibrary") || tags.includes("personalBook");
@@ -796,6 +898,16 @@ export default function AdminPage() {
   useEffect(() => {
     fetchItems();
     fetchContent();
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      fetch("/api/portfolio")
+        .then((res) => res.json())
+        .then((data) => setItems(Array.isArray(data) ? data.map(normalizeItem) : []))
+        .catch(() => {});
+    }, 8000);
+    return () => window.clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -1128,6 +1240,36 @@ export default function AdminPage() {
     };
   }, []);
 
+  useEffect(() => {
+    if (activePanel !== "commercial") return;
+    const updateScale = () => {
+      const rect = commercialCanvasRef.current?.getBoundingClientRect();
+      if (!rect || !Number.isFinite(rect.width) || rect.width <= 0) return;
+      const nextScale = clampNumber(rect.width / 1600, 0.46, 1);
+      setCommercialCanvasScale(nextScale);
+      if (typeof window !== "undefined") {
+        const viewportRatio = clampNumber(
+          window.innerWidth / Math.max(window.innerHeight, 1),
+          1,
+          2.6
+        );
+        setCommercialViewportRatio(viewportRatio);
+        setCommercialSpinePercent(50);
+      }
+    };
+    updateScale();
+    let observer = null;
+    if (typeof ResizeObserver !== "undefined" && commercialCanvasRef.current) {
+      observer = new ResizeObserver(() => updateScale());
+      observer.observe(commercialCanvasRef.current);
+    }
+    window.addEventListener("resize", updateScale);
+    return () => {
+      window.removeEventListener("resize", updateScale);
+      if (observer) observer.disconnect();
+    };
+  }, [activePanel, activeCommercialSection, activeCommercialPageId]);
+
   const renderMiniPreview = (itemOrUrl, className = styles.previewThumb) => {
     const item = typeof itemOrUrl === "string" ? itemMapByUrl.get(itemOrUrl) : itemOrUrl;
     const mediaUrl = toStringSafe(item?.mediaUrl || itemOrUrl);
@@ -1207,7 +1349,11 @@ export default function AdminPage() {
         <details className={styles.thumbPicker}>
           <summary>{detailsTitle}</summary>
           {visibleCandidates.length === 0 ? (
-            <p className={styles.tip}>该板块暂无可选素材。先在「1.作品管理」里给作品勾选对应板块。</p>
+            <p className={styles.tip}>
+              {tagId === "allImages"
+                ? "当前 media/images 目录下暂无可选图片。"
+                : "该板块暂无可选素材。先在「1.作品管理」里给作品勾选对应板块。"}
+            </p>
           ) : (
             <div className={styles.thumbGrid}>
               {visibleCandidates.slice(0, 60).map((item) => (
@@ -1318,7 +1464,11 @@ export default function AdminPage() {
             onChange={(event) => updatePickerKeyword(pickerKey, event.target.value)}
           />
           {visibleCandidates.length === 0 ? (
-            <p className={styles.tip}>该板块暂无素材，请先到「1.作品管理」上传并勾选对应板块。</p>
+            <p className={styles.tip}>
+              {tagId === "allImages"
+                ? "当前 media/images 目录下暂无可选图片。"
+                : "该板块暂无素材，请先到「1.作品管理」上传并勾选对应板块。"}
+            </p>
           ) : (
             <div className={styles.candidateList}>
               {visibleCandidates.map((item) => {
@@ -1506,8 +1656,8 @@ export default function AdminPage() {
         <summary className={styles.sectionSummary}>圆环图片（2.1）</summary>
         {renderOrderedWorkPicker({
           pickerKey: "home-ring",
-          label: "勾选并排序圆环素材（只显示勾选了 2.1 标签的图片）",
-          tagId: "home",
+          label: "勾选并排序圆环素材（从 media/images 全部图片中选择）",
+          tagId: "allImages",
           acceptedTypes: ["image"],
           values: ringIds,
           onChange: (ids) => updateConfigPath(["home", "ring", "selectedWorkIds"], ids),
@@ -1570,6 +1720,9 @@ export default function AdminPage() {
         (element) => toStringSafe(element.id) === toStringSafe(selectedCommercialElementId)
       ) || toArray(activePage?.elements)[0] || null;
     const selectedElementId = toStringSafe(selectedElement?.id);
+    const spineCenter = commercialSpinePercent;
+    const leftPageCenter = spineCenter / 2;
+    const rightPageCenter = spineCenter + (100 - spineCenter) / 2;
 
     const buildNavFromProjects = (navItems, nextProjects) => {
       const navMap = new Map(
@@ -1775,57 +1928,6 @@ export default function AdminPage() {
       setActiveCommercialPageId(toStringSafe(fallback?.id));
       setSelectedCommercialElementId("");
     };
-    const autoLayoutMediaElements = (elements) => {
-      const normalized = toArray(elements).map((element, index) =>
-        normalizeCommercialCanvasElement(element, `${activeProjectId}-${activePageId}-element-${index + 1}`)
-      );
-      const mediaElements = normalized.filter((element) => element.type === "media");
-      const otherElements = normalized.filter((element) => element.type !== "media");
-      const total = mediaElements.length;
-
-      const getLayoutRect = (idx) => {
-        if (total <= 1) {
-          return { x: 8, y: 8, width: 84, height: 84 };
-        }
-        if (total === 2) {
-          return idx === 0
-            ? { x: 4, y: 10, width: 44, height: 80 }
-            : { x: 52, y: 10, width: 44, height: 80 };
-        }
-        if (total === 3) {
-          if (idx === 0) return { x: 4, y: 8, width: 58, height: 84 };
-          if (idx === 1) return { x: 66, y: 8, width: 30, height: 40 };
-          return { x: 66, y: 52, width: 30, height: 40 };
-        }
-        const column = idx % 2;
-        const row = Math.floor(idx / 2);
-        const maxRows = Math.ceil(total / 2);
-        const slotHeight = clampNumber((84 - (maxRows - 1) * 4) / Math.max(1, maxRows), 16, 84);
-        return {
-          x: column === 0 ? 4 : 52,
-          y: 8 + row * (slotHeight + 4),
-          width: 44,
-          height: slotHeight,
-        };
-      };
-
-      const laidOutMedia = mediaElements.map((element, idx) => {
-        const rect = getLayoutRect(idx);
-        return normalizeCommercialCanvasElement(
-          {
-            ...element,
-            ...rect,
-            fit: "contain",
-            opacity: 100,
-            zIndex: 8 + idx,
-          },
-          toStringSafe(element.id)
-        );
-      });
-
-      return [...laidOutMedia, ...otherElements];
-    };
-
     const addElement = (type) => {
       if (!activeProjectId || !activePageId) return;
       const elementId = `element-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
@@ -1849,8 +1951,8 @@ export default function AdminPage() {
               mediaType: normalizeMediaType(topMedia?.mediaType || inferMediaTypeFromUrl(topMedia?.mediaUrl)),
               x: 8,
               y: 8,
-              width: 84,
-              height: 84,
+              mediaBase: 28,
+              mediaScale: 100,
               fit: "contain",
               zIndex: 12,
             };
@@ -1865,10 +1967,7 @@ export default function AdminPage() {
                   const nextElements = [...toArray(page.elements), element];
                   return {
                     ...page,
-                    elements:
-                      type === "media"
-                        ? autoLayoutMediaElements(nextElements)
-                        : nextElements,
+                    elements: nextElements,
                   };
                 }),
               }
@@ -1881,7 +1980,6 @@ export default function AdminPage() {
     const removeSelectedElement = () => {
       if (!selectedElement || !activeProjectId || !activePageId) return;
       const removingId = toStringSafe(selectedElement.id);
-      const removingType = toStringSafe(selectedElement.type);
       applyProjectsUpdate((baseProjects) =>
         baseProjects.map((project) =>
           toStringSafe(project.id) === activeProjectId
@@ -1890,16 +1988,11 @@ export default function AdminPage() {
                 pages: toArray(project.pages).map((page) =>
                   toStringSafe(page.id) !== activePageId
                     ? page
-                    : {
+                      : {
                         ...page,
-                        elements: (() => {
-                          const remaining = toArray(page.elements).filter(
-                            (element) => toStringSafe(element.id) !== removingId
-                          );
-                          return removingType === "media"
-                            ? autoLayoutMediaElements(remaining)
-                            : remaining;
-                        })(),
+                        elements: toArray(page.elements).filter(
+                          (element) => toStringSafe(element.id) !== removingId
+                        ),
                       }
                 ),
               }
@@ -1921,6 +2014,17 @@ export default function AdminPage() {
       };
     };
 
+    const stopPointerSession = () => {
+      const drag = commercialDragRef.current;
+      if (!drag) return;
+      window.removeEventListener("pointermove", drag.onMove);
+      window.removeEventListener("pointerup", drag.onUp);
+      commercialDragRef.current = null;
+      setCommercialSnapGuides((prev) =>
+        prev.x === null && prev.y === null ? prev : { x: null, y: null }
+      );
+    };
+
     const startDrag = (event, element) => {
       if (!element || event.button !== 0) return;
       const rect = commercialCanvasRef.current?.getBoundingClientRect();
@@ -1934,30 +2038,158 @@ export default function AdminPage() {
       const baseY = normalized.y;
       const width = normalized.width;
       const height = normalized.height;
+      const bounds = getCommercialCanvasBounds({ ...normalized, width, height });
       const id = toStringSafe(normalized.id);
-
-      const detach = () => {
-        const drag = commercialDragRef.current;
-        if (!drag) return;
-        window.removeEventListener("pointermove", drag.onMove);
-        window.removeEventListener("pointerup", drag.onUp);
-        commercialDragRef.current = null;
-      };
-
-      detach();
+      const snapThresholdX = (CANVAS_SNAP_PX / Math.max(1, zoneWidth)) * 100;
+      const snapThresholdY = (CANVAS_SNAP_PX / Math.max(1, zoneHeight)) * 100;
+      const xTargets = [
+        { left: clampNumber(0, bounds.minX, bounds.maxX), guide: 0 },
+        { left: clampNumber(100 - width, bounds.minX, bounds.maxX), guide: 100 },
+        { left: clampNumber(spineCenter, bounds.minX, bounds.maxX), guide: spineCenter },
+        { left: clampNumber(spineCenter - width, bounds.minX, bounds.maxX), guide: spineCenter },
+      ];
+      const yTargets = [
+        { left: clampNumber(0, bounds.minY, bounds.maxY), guide: 0 },
+        { left: clampNumber((100 - height) / 2, bounds.minY, bounds.maxY), guide: 50 },
+        { left: clampNumber(100 - height, bounds.minY, bounds.maxY), guide: 100 },
+      ];
+      stopPointerSession();
 
       const onMove = (moveEvent) => {
         const dx = moveEvent.clientX - event.clientX;
         const dy = moveEvent.clientY - event.clientY;
-        const nextX = clampNumber(baseX + (dx / zoneWidth) * 100, 0, 100 - width);
-        const nextY = clampNumber(baseY + (dy / zoneHeight) * 100, 0, 100 - height);
-        updateElementById(id, { x: nextX, y: nextY });
+        const rawX = clampNumber(baseX + (dx / zoneWidth) * 100, bounds.minX, bounds.maxX);
+        const rawY = clampNumber(baseY + (dy / zoneHeight) * 100, bounds.minY, bounds.maxY);
+        const snappedX = pickSnapTarget(rawX, xTargets, snapThresholdX);
+        const snappedY = pickSnapTarget(rawY, yTargets, snapThresholdY);
+        updateElementById(id, { x: snappedX.value, y: snappedY.value });
+        setCommercialSnapGuides((prev) => {
+          const next = { x: snappedX.guide, y: snappedY.guide };
+          if (prev.x === next.x && prev.y === next.y) return prev;
+          return next;
+        });
       };
 
-      const onUp = () => detach();
+      const onUp = () => stopPointerSession();
       commercialDragRef.current = { onMove, onUp };
       window.addEventListener("pointermove", onMove);
       window.addEventListener("pointerup", onUp);
+    };
+
+    const updateMediaNatural = (element, width, height) => {
+      if (!element || toStringSafe(element.type) !== "media") return;
+      const safeWidth = toNumberSafe(width, 0);
+      const safeHeight = toNumberSafe(height, 0);
+      if (safeWidth <= 0 || safeHeight <= 0) return;
+      const nextAspect = clampNumber(safeWidth / safeHeight, 0.2, 5);
+      const currentAspect = resolveMediaAspect(element.mediaAspect, element.width, element.height);
+      if (Math.abs(nextAspect - currentAspect) < 0.01) return;
+      updateElementById(toStringSafe(element.id), { mediaAspect: nextAspect });
+    };
+
+    const applyMediaFitPreset = (elementId, preset) => {
+      const target = toArray(activePage?.elements).find(
+        (element) => toStringSafe(element.id) === toStringSafe(elementId)
+      );
+      if (!target) return;
+      const normalized = normalizeCommercialCanvasElement(target, toStringSafe(target.id));
+      if (normalized.type !== "media") return;
+      const aspect = resolveMediaAspect(
+        normalized.mediaAspect,
+        normalized.width,
+        normalized.height
+      );
+      const base = resolveMediaBase(
+        normalized.mediaBase,
+        normalized.width,
+        normalized.height
+      );
+      const targetShort =
+        preset === "fitHeight"
+          ? aspect >= 1
+            ? 100
+            : 100 * aspect
+          : aspect >= 1
+            ? 100 / aspect
+            : 100;
+      const nextScale = resolveMediaScale((targetShort / Math.max(base, 0.1)) * 100);
+      const nextSize = getCommercialMediaRenderSize(
+        aspect,
+        nextScale,
+        base,
+        normalized.width,
+        normalized.height
+      );
+      const bounds = getCommercialCanvasBounds({
+        type: "media",
+        width: nextSize.width,
+        height: nextSize.height,
+      });
+      const targetX = preset === "fitWidth" ? 0 : spineCenter - nextSize.width / 2;
+      const targetY = preset === "fitHeight" ? 0 : (100 - nextSize.height) / 2;
+      updateElementById(toStringSafe(normalized.id), {
+        mediaScale: nextScale,
+        x: clampNumber(targetX, bounds.minX, bounds.maxX),
+        y: clampNumber(targetY, bounds.minY, bounds.maxY),
+      });
+    };
+
+    const applyMediaSidePreset = (elementId, side) => {
+      const target = toArray(activePage?.elements).find(
+        (element) => toStringSafe(element.id) === toStringSafe(elementId)
+      );
+      if (!target) return;
+      const normalized = normalizeCommercialCanvasElement(target, toStringSafe(target.id));
+      if (normalized.type !== "media") return;
+      const bounds = getCommercialCanvasBounds({
+        type: "media",
+        width: normalized.width,
+        height: normalized.height,
+      });
+      const baseX =
+        side === "left"
+          ? leftPageCenter - normalized.width / 2
+          : rightPageCenter - normalized.width / 2;
+      updateElementById(toStringSafe(normalized.id), {
+        x: clampNumber(baseX, bounds.minX, bounds.maxX),
+      });
+    };
+
+    const applyMediaEdgePreset = (elementId, edge) => {
+      const target = toArray(activePage?.elements).find(
+        (element) => toStringSafe(element.id) === toStringSafe(elementId)
+      );
+      if (!target) return;
+      const normalized = normalizeCommercialCanvasElement(target, toStringSafe(target.id));
+      if (normalized.type !== "media") return;
+      const bounds = getCommercialCanvasBounds({
+        type: "media",
+        width: normalized.width,
+        height: normalized.height,
+      });
+      const nextX =
+        edge === "left" ? 0 : 100 - normalized.width;
+      updateElementById(toStringSafe(normalized.id), {
+        x: clampNumber(nextX, bounds.minX, bounds.maxX),
+      });
+    };
+
+    const applyMediaSpinePreset = (elementId, side) => {
+      const target = toArray(activePage?.elements).find(
+        (element) => toStringSafe(element.id) === toStringSafe(elementId)
+      );
+      if (!target) return;
+      const normalized = normalizeCommercialCanvasElement(target, toStringSafe(target.id));
+      if (normalized.type !== "media") return;
+      const bounds = getCommercialCanvasBounds({
+        type: "media",
+        width: normalized.width,
+        height: normalized.height,
+      });
+      const nextX = side === "leftEdge" ? spineCenter : spineCenter - normalized.width;
+      updateElementById(toStringSafe(normalized.id), {
+        x: clampNumber(nextX, bounds.minX, bounds.maxX),
+      });
     };
 
     return (
@@ -2072,18 +2304,51 @@ export default function AdminPage() {
                     placeholder="页面名称"
                   />
                 </label>
-                <p className={styles.tip}>页面切换、展开收起、增删页面，都在左侧项目树操作。</p>
               </div>
+              <p className={styles.tip}>页面切换、展开收起、增删页面都在左侧。当前预览画框按真实页面比例显示。</p>
 
               <div className={styles.commercialStageWrap}>
                 <div
                   ref={commercialCanvasRef}
                   className={styles.commercialSpreadCanvas}
+                  style={{ aspectRatio: `${commercialViewportRatio}` }}
                   onPointerDown={(event) => {
-                    if (event.target === event.currentTarget) setSelectedCommercialElementId("");
+                    if (event.target === event.currentTarget) {
+                      setSelectedCommercialElementId("");
+                      setCommercialSnapGuides({ x: null, y: null });
+                    }
                   }}
                 >
-                  <div className={styles.commercialSpineHint} aria-hidden="true" />
+                  <div
+                    className={`${styles.commercialPageZone} ${styles.commercialPageZoneLeft}`}
+                    style={{ width: `${spineCenter}%` }}
+                    aria-hidden="true"
+                  >
+                    <span className={styles.commercialPageZoneLabel}>左页</span>
+                  </div>
+                  <div
+                    className={`${styles.commercialPageZone} ${styles.commercialPageZoneRight}`}
+                    style={{ left: `${spineCenter}%`, width: `${100 - spineCenter}%` }}
+                    aria-hidden="true"
+                  >
+                    <span className={styles.commercialPageZoneLabel}>右页</span>
+                  </div>
+                  <div className={styles.commercialSpineHint} style={{ left: `${spineCenter}%` }} aria-hidden="true" />
+                  <div className={styles.commercialFrameOutline} aria-hidden="true" />
+                  {commercialSnapGuides.x !== null ? (
+                    <div
+                      className={styles.commercialSnapGuideX}
+                      style={{ left: `${commercialSnapGuides.x}%` }}
+                      aria-hidden="true"
+                    />
+                  ) : null}
+                  {commercialSnapGuides.y !== null ? (
+                    <div
+                      className={styles.commercialSnapGuideY}
+                      style={{ top: `${commercialSnapGuides.y}%` }}
+                      aria-hidden="true"
+                    />
+                  ) : null}
 
                   {toArray(activePage?.elements).map((element, index) => {
                     const normalized = normalizeCommercialCanvasElement(
@@ -2111,10 +2376,11 @@ export default function AdminPage() {
                             style={{
                               color: normalized.color,
                               fontFamily: normalized.fontFamily,
-                              fontSize: `${normalized.fontSize / 16}rem`,
+                              fontSize: `${(normalized.fontSize * commercialCanvasScale) / 16}rem`,
                               lineHeight: normalized.lineHeight,
                               fontWeight: normalized.fontWeight,
                               textAlign: normalized.textAlign,
+                              padding: `${Math.max(4, Math.round(8 * commercialCanvasScale))}px`,
                             }}
                           >
                             {toStringSafe(normalized.text) || "文本"}
@@ -2129,6 +2395,13 @@ export default function AdminPage() {
                             loop
                             playsInline
                             preload="metadata"
+                            onLoadedMetadata={(event) =>
+                              updateMediaNatural(
+                                normalized,
+                                event.currentTarget.videoWidth,
+                                event.currentTarget.videoHeight
+                              )
+                            }
                           />
                         ) : normalized.mediaType === "audio" || isAudioUrl(normalized.mediaUrl) ? (
                           <div className={styles.canvasAudioBadge}>音频</div>
@@ -2138,13 +2411,20 @@ export default function AdminPage() {
                             alt={title}
                             className={styles.canvasMediaPreview}
                             style={{ objectFit: "contain" }}
+                            onLoad={(event) =>
+                              updateMediaNatural(
+                                normalized,
+                                event.currentTarget.naturalWidth,
+                                event.currentTarget.naturalHeight
+                              )
+                            }
                           />
                         )}
                       </button>
                     );
                   })}
                 </div>
-                <p className={styles.tip}>提示：这里是单一画布坐标系，拖动元素即可；图片固定比例显示，不裁切不拉伸。</p>
+                <p className={styles.tip}>提示：拖动时会自动吸附到黑框的左/右/上/下边，以及“左边贴中线 / 右边贴中线”。</p>
               </div>
 
               <div className={styles.commercialBottomGrid}>
@@ -2243,6 +2523,88 @@ export default function AdminPage() {
                             emptyText: "请选择媒体",
                             detailsTitle: "展开素材缩略图选择",
                           })}
+                          <label className={styles.fieldBlock}>
+                            <span className={styles.fieldLabel}>缩放滑条</span>
+                            <div className={styles.rangePair}>
+                              <input
+                                type="range"
+                                className={styles.rangeInput}
+                                min={MIN_MEDIA_SCALE}
+                                max={MAX_MEDIA_SCALE}
+                                step={1}
+                                value={resolveMediaScale(selectedElement.mediaScale)}
+                                onChange={(event) =>
+                                  updateElementById(selectedElementId, {
+                                    mediaScale: resolveMediaScale(event.target.value),
+                                  })
+                                }
+                              />
+                              <input
+                                className={styles.smallInput}
+                                value={`${resolveMediaScale(selectedElement.mediaScale)}%`}
+                                readOnly
+                              />
+                            </div>
+                          </label>
+                          <div className={styles.inlineActions}>
+                            <button
+                              type="button"
+                              className={styles.iconBtn}
+                              onClick={() => applyMediaFitPreset(selectedElementId, "fitHeight")}
+                            >
+                              等屏高
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.iconBtn}
+                              onClick={() => applyMediaFitPreset(selectedElementId, "fitWidth")}
+                            >
+                              等屏宽
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.iconBtn}
+                              onClick={() => applyMediaEdgePreset(selectedElementId, "left")}
+                            >
+                              贴最左
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.iconBtn}
+                              onClick={() => applyMediaEdgePreset(selectedElementId, "right")}
+                            >
+                              贴最右
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.iconBtn}
+                              onClick={() => applyMediaSidePreset(selectedElementId, "left")}
+                            >
+                              居中到左页
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.iconBtn}
+                              onClick={() => applyMediaSpinePreset(selectedElementId, "leftEdge")}
+                            >
+                              左边贴中线
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.iconBtn}
+                              onClick={() => applyMediaSpinePreset(selectedElementId, "rightEdge")}
+                            >
+                              右边贴中线
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.iconBtn}
+                              onClick={() => applyMediaSidePreset(selectedElementId, "right")}
+                            >
+                              居中到右页
+                            </button>
+                          </div>
+                          <p className={styles.tip}>等屏高/等屏宽、贴最左/贴最右、居中到左页/右页都可一键应用；拖动时支持边缘与中线吸附。图片保持原比例，不裁切不拉伸。</p>
                         </div>
                       ) : (
                         <>

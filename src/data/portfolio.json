@@ -602,21 +602,6 @@
     "thumbUrl": "/media/images/wandering-souls-07.jpg"
   },
   {
-    "id": "44",
-    "title": "Demo 44",
-    "category": "design archive",
-    "categories": [
-      "personalLibrary",
-      "commercial",
-      "personalBook"
-    ],
-    "description": "Demo page 44.",
-    "date": "",
-    "mediaType": "image",
-    "mediaUrl": "/media/images/wandering-souls-08.jpg",
-    "thumbUrl": "/media/images/wandering-souls-08.jpg"
-  },
-  {
     "id": "45",
     "title": "Demo 45",
     "category": "design archive",
@@ -685,20 +670,5 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/kodak-charmera-cult-02.jpg",
     "thumbUrl": "/media/images/kodak-charmera-cult-02.jpg"
-  },
-  {
-    "id": "50",
-    "title": "Demo 50",
-    "category": "commercial design",
-    "categories": [
-      "commercial",
-      "personalBook",
-      "personalLibrary"
-    ],
-    "description": "Demo page 50.",
-    "date": "",
-    "mediaType": "image",
-    "mediaUrl": "/media/images/kodak-charmera-cult-03.jpg",
-    "thumbUrl": "/media/images/kodak-charmera-cult-03.jpg"
   }
 ]

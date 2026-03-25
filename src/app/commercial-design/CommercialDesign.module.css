@@ -107,13 +107,11 @@
   width: 100%;
   min-height: 100vh;
   position: relative;
-  left: calc((100vw - 100%) / 2);
   border-bottom: 1px solid rgba(0,0,0,0.03); /* subtle separator between long sections if needed, or none */
 }
 
 .manualSpread {
   display: block;
-  left: calc((100vw - 100%) / 2);
 }
 
 .manualCanvas {

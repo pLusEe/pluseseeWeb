@@ -41,6 +41,60 @@ const COMMERCIAL_TEXT_STANDARD = {
   color: "#111111",
   textAlign: "left",
 };
+const MIN_MEDIA_SCALE = 10;
+const MAX_MEDIA_SCALE = 1600;
+const MAX_MEDIA_SIZE = 360;
+const resolveMediaScale = (rawScale) =>
+  clampNumber(toNumberSafe(rawScale, 100), MIN_MEDIA_SCALE, MAX_MEDIA_SCALE);
+const resolveMediaAspect = (rawAspect, rawWidth, rawHeight) => {
+  const aspect = toNumberSafe(rawAspect, 0);
+  if (aspect > 0.05) return clampNumber(aspect, 0.2, 5);
+  const width = toNumberSafe(rawWidth, 0);
+  const height = toNumberSafe(rawHeight, 0);
+  if (width > 0 && height > 0) return clampNumber(width / height, 0.2, 5);
+  return 1;
+};
+const resolveMediaBase = (rawBase, rawWidth, rawHeight) => {
+  const parsed = toNumberSafe(rawBase, 0);
+  if (parsed > 1) return clampNumber(parsed, 10, 48);
+  const width = clampNumber(toNumberSafe(rawWidth, 84), 5, 100);
+  const height = clampNumber(toNumberSafe(rawHeight, 84), 5, 100);
+  return clampNumber(Math.min(width, height) * 0.38, 10, 48);
+};
+const getCommercialMediaRenderSize = (rawAspect, rawScale, rawBase, rawWidth, rawHeight) => {
+  const aspect = resolveMediaAspect(rawAspect, rawWidth, rawHeight);
+  const scale = resolveMediaScale(rawScale) / 100;
+  const baseShort = resolveMediaBase(rawBase, rawWidth, rawHeight) * scale;
+  if (aspect >= 1) {
+    return {
+      width: clampNumber(baseShort * aspect, 2, MAX_MEDIA_SIZE),
+      height: clampNumber(baseShort, 2, MAX_MEDIA_SIZE),
+    };
+  }
+  return {
+    width: clampNumber(baseShort, 2, MAX_MEDIA_SIZE),
+    height: clampNumber(baseShort / aspect, 2, MAX_MEDIA_SIZE),
+  };
+};
+const getCommercialCanvasBounds = (element) => {
+  const width = clampNumber(toNumberSafe(element?.width, 20), 2, MAX_MEDIA_SIZE);
+  const height = clampNumber(toNumberSafe(element?.height, 20), 2, MAX_MEDIA_SIZE);
+  const type = toStringSafe(element?.type).toLowerCase();
+  if (type === "media") {
+    return {
+      minX: -width,
+      maxX: 100,
+      minY: -height,
+      maxY: 100,
+    };
+  }
+  return {
+    minX: 0,
+    maxX: 100 - width,
+    minY: 0,
+    maxY: 100 - height,
+  };
+};
 const estimateCommercialTextBoxSize = (text) => {
   const source = toStringSafe(text).replace(/\r\n/g, "\n");
   const lines = source.split("\n");
@@ -63,16 +117,32 @@ const normalizeManualElement = (rawElement, fallbackId) => {
   const page = "both";
   const text = toStringSafe(rawElement?.text);
   const autoTextBox = estimateCommercialTextBoxSize(text);
+  const mediaScale = type === "media" ? resolveMediaScale(rawElement?.mediaScale) : 100;
+  const mediaAspect =
+    type === "media" ? resolveMediaAspect(rawElement?.mediaAspect, rawElement?.width, rawElement?.height) : 1;
+  const mediaBase =
+    type === "media" ? resolveMediaBase(rawElement?.mediaBase, rawElement?.width, rawElement?.height) : 0;
+  const mediaSize =
+    type === "media"
+      ? getCommercialMediaRenderSize(
+          mediaAspect,
+          mediaScale,
+          mediaBase,
+          rawElement?.width,
+          rawElement?.height
+        )
+      : null;
   const width =
     type === "text"
       ? autoTextBox.width
-      : clampNumber(toNumberSafe(rawElement?.width, 84), 5, 100);
+      : mediaSize.width;
   const height =
     type === "text"
       ? autoTextBox.height
-      : clampNumber(toNumberSafe(rawElement?.height, 84), 5, 100);
-  const x = clampNumber(toNumberSafe(rawElement?.x, 8), 0, 100 - width);
-  const y = clampNumber(toNumberSafe(rawElement?.y, 8), 0, 100 - height);
+      : mediaSize.height;
+  const bounds = getCommercialCanvasBounds({ type, width, height });
+  const x = clampNumber(toNumberSafe(rawElement?.x, 8), bounds.minX, bounds.maxX);
+  const y = clampNumber(toNumberSafe(rawElement?.y, 8), bounds.minY, bounds.maxY);
   return {
     id: toStringSafe(rawElement?.id, fallbackId),
     type,
@@ -86,6 +156,9 @@ const normalizeManualElement = (rawElement, fallbackId) => {
     fit: "contain",
     mediaUrl: toStringSafe(rawElement?.mediaUrl),
     mediaType: normalizeMediaType(rawElement?.mediaType),
+    mediaScale,
+    mediaAspect,
+    mediaBase,
     text,
     color: COMMERCIAL_TEXT_STANDARD.color,
     fontFamily: COMMERCIAL_TEXT_STANDARD.fontFamily,
@@ -270,11 +343,13 @@ export default function CommercialDesignPage() {
   };
 
   const renderManualElement = (projectId, element, index) => {
+    const width = toNumberSafe(element.width, 44);
+    const height = toNumberSafe(element.height, 44);
     const style = {
       left: `${element.x}%`,
       top: `${element.y}%`,
-      width: `${element.width}%`,
-      height: `${element.height}%`,
+      width: `${width}%`,
+      height: `${height}%`,
       zIndex: element.zIndex,
       opacity: element.opacity / 100,
     };
