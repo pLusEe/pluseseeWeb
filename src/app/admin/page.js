@@ -127,6 +127,13 @@ const COMMERCIAL_LAYOUT_PRESETS = [
   { id: "focus-right", label: "右大左小" },
 ];
 
+const COMMERCIAL_CANVAS_PRESETS = [
+  { id: "left-media-right-text", label: "左图右文" },
+  { id: "right-media-left-text", label: "右图左文" },
+  { id: "split-media", label: "左右双图" },
+  { id: "across-media", label: "跨页大图" },
+];
+
 const initialForm = {
   title: "",
   description: "",
@@ -148,6 +155,227 @@ const toNumberSafe = (value, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback;
 };
 const unique = (list) => Array.from(new Set(list));
+const clampNumber = (value, min, max) => Math.max(min, Math.min(max, value));
+const parsePercentNumber = (value, fallback) => {
+  const text = toStringSafe(value).trim();
+  const parsed = text.endsWith("%") ? Number.parseFloat(text.slice(0, -1)) : Number.parseFloat(text);
+  if (!Number.isFinite(parsed)) return fallback;
+  return parsed;
+};
+const inferMediaTypeFromUrl = (url) => {
+  const safe = toStringSafe(url).trim().toLowerCase();
+  if (!safe) return "image";
+  if (/\.(mp4|webm|mov|m4v|ogg)$/i.test(safe)) return "video";
+  if (/\.(mp3|wav|ogg|aac|flac|m4a)$/i.test(safe)) return "audio";
+  return "image";
+};
+const parseObjectPositionToXY = (objectPosition, width, height) => {
+  const [tokenXRaw, tokenYRaw] = toStringSafe(objectPosition, "center center").trim().split(/\s+/);
+  const tokenX = (tokenXRaw || "center").toLowerCase();
+  const tokenY = (tokenYRaw || "center").toLowerCase();
+  const calcAxis = (token, size) => {
+    if (token === "left" || token === "top") return 0;
+    if (token === "right" || token === "bottom") return 100 - size;
+    return (100 - size) / 2;
+  };
+  return [
+    clampNumber(calcAxis(tokenX, width), 0, 100 - width),
+    clampNumber(calcAxis(tokenY, height), 0, 100 - height),
+  ];
+};
+const inferPageFromUrlKey = (urlKey) => {
+  const key = toStringSafe(urlKey).toLowerCase();
+  if (key.includes("left")) return "left";
+  if (key.includes("right")) return "right";
+  return "both";
+};
+const normalizeCommercialCanvasElement = (raw, fallbackId = "element") => {
+  const type = toStringSafe(raw?.type).toLowerCase() === "text" ? "text" : "media";
+  const pageRaw = toStringSafe(raw?.page, "right").toLowerCase();
+  const page = pageRaw === "left" || pageRaw === "right" || pageRaw === "both" ? pageRaw : "right";
+  const widthDefault = page === "both" ? 100 : type === "text" ? 44 : 84;
+  const heightDefault = page === "both" ? 100 : type === "text" ? 44 : 84;
+  const width = clampNumber(toNumberSafe(raw?.width, widthDefault), 5, 100);
+  const height = clampNumber(toNumberSafe(raw?.height, heightDefault), 5, 100);
+  const x = clampNumber(toNumberSafe(raw?.x, page === "right" ? 8 : 8), 0, 100 - width);
+  const y = clampNumber(toNumberSafe(raw?.y, type === "text" ? 22 : 8), 0, 100 - height);
+  const opacity = clampNumber(toNumberSafe(raw?.opacity, 100), 5, 100);
+  const zIndex = clampNumber(toNumberSafe(raw?.zIndex, type === "text" ? 10 : 6), 1, 99);
+  const fitRaw = toStringSafe(raw?.fit, "contain").toLowerCase();
+  const fit = fitRaw === "cover" ? "cover" : "contain";
+  const textAlignRaw = toStringSafe(raw?.textAlign, "left").toLowerCase();
+  const textAlign = textAlignRaw === "center" || textAlignRaw === "right" ? textAlignRaw : "left";
+  const mediaUrl = toStringSafe(raw?.mediaUrl).trim();
+  const mediaType = normalizeMediaType(raw?.mediaType || inferMediaTypeFromUrl(mediaUrl));
+  return {
+    id: toStringSafe(raw?.id, fallbackId),
+    type,
+    page,
+    x,
+    y,
+    width,
+    height,
+    opacity,
+    zIndex,
+    fit,
+    mediaUrl,
+    mediaType,
+    text: toStringSafe(raw?.text),
+    color: toStringSafe(raw?.color, "#111111"),
+    fontSize: clampNumber(toNumberSafe(raw?.fontSize, 24), 10, 140),
+    lineHeight: clampNumber(toNumberSafe(raw?.lineHeight, 1.4), 1, 3),
+    fontWeight: clampNumber(toNumberSafe(raw?.fontWeight, 500), 300, 900),
+    textAlign,
+  };
+};
+const normalizeCommercialCanvasProject = (rawProject, index, navItems = []) => {
+  const fallbackNav = toArray(navItems)[index];
+  const projectId = toStringSafe(rawProject?.id, toStringSafe(fallbackNav?.id, `project-${index + 1}`)).trim() || `project-${index + 1}`;
+  const navLabel = toStringSafe(toArray(navItems).find((item) => toStringSafe(item?.id) === projectId)?.label);
+  const label = toStringSafe(rawProject?.label, navLabel || `项目 ${index + 1}`).trim() || `项目 ${index + 1}`;
+  const elements = toArray(rawProject?.elements)
+    .map((element, elementIndex) =>
+      normalizeCommercialCanvasElement(element, `${projectId}-element-${elementIndex + 1}`)
+    )
+    .filter((element) => {
+      if (element.type === "text") return Boolean(toStringSafe(element.text).trim());
+      return Boolean(toStringSafe(element.mediaUrl).trim());
+    });
+  return {
+    id: projectId,
+    label,
+    elements,
+  };
+};
+const buildTextElement = (id, page, text, extra = {}) =>
+  normalizeCommercialCanvasElement(
+    {
+      id,
+      type: "text",
+      page,
+      text,
+      x: 12,
+      y: 24,
+      width: 74,
+      height: 52,
+      fontSize: 22,
+      lineHeight: 1.45,
+      fontWeight: 550,
+      color: "#111111",
+      textAlign: "left",
+      zIndex: 20,
+      ...extra,
+    },
+    id
+  );
+const buildLegacyCommercialManualLayouts = (commercialConfig, works) => {
+  const navItems = toArray(commercialConfig?.navItems);
+  const sections = toObject(commercialConfig?.sections);
+  const orderedWorks = sortWorks(toArray(works));
+
+  const projects = COMMERCIAL_PROJECTS.map((project, projectIndex) => {
+    const section = toObject(sections?.[project.sectionKey]);
+    const navItem = navItems.find((item) => toStringSafe(item?.id) === project.navId);
+    const label = toStringSafe(navItem?.label, project.fallbackName).trim() || project.fallbackName;
+    const elements = [];
+
+    project.slots.forEach((slot, slotIndex) => {
+      let mediaUrl = toStringSafe(section?.[slot.urlKey]).trim();
+      if (!mediaUrl && slot.indexKey) {
+        const idx = clampNumber(toNumberSafe(section?.[slot.indexKey], slotIndex), 0, Math.max(0, orderedWorks.length - 1));
+        mediaUrl = toStringSafe(orderedWorks[idx]?.mediaUrl).trim();
+      }
+      if (!mediaUrl) return;
+      const style = toObject(section?.[slot.styleKey]);
+      const page = inferPageFromUrlKey(slot.urlKey);
+      const width = clampNumber(parsePercentNumber(style?.width, page === "both" ? 100 : 84), 5, 100);
+      const height = clampNumber(parsePercentNumber(style?.height, page === "both" ? 100 : 84), 5, 100);
+      const [x, y] = parseObjectPositionToXY(style?.objectPosition, width, height);
+      const fit = page === "both" || (width >= 95 && height >= 95) ? "cover" : "contain";
+      const matched = orderedWorks.find((item) => toStringSafe(item?.mediaUrl) === mediaUrl);
+      elements.push(
+        normalizeCommercialCanvasElement(
+          {
+            id: `${project.navId}-media-${slot.id}`,
+            type: "media",
+            page,
+            mediaUrl,
+            mediaType: matched?.mediaType || inferMediaTypeFromUrl(mediaUrl),
+            x,
+            y,
+            width,
+            height,
+            fit,
+            zIndex: 6 + slotIndex,
+          },
+          `${project.navId}-media-${slot.id}`
+        )
+      );
+    });
+
+    const joinText = (...parts) =>
+      parts
+        .map((value) => toStringSafe(value).trim())
+        .filter(Boolean)
+        .join("\n\n");
+
+    if (project.sectionKey === "all") {
+      const text = joinText(section?.title || label, section?.body);
+      if (text) elements.push(buildTextElement(`${project.navId}-text-main`, "left", text, { fontSize: 26, width: 72 }));
+    } else if (project.sectionKey === "graphicDesign") {
+      const text = joinText(section?.title || label, section?.body1, section?.body2, section?.credit);
+      if (text) elements.push(buildTextElement(`${project.navId}-text-main`, "left", text));
+    } else if (project.sectionKey === "archDesign") {
+      const text = joinText(section?.title || label, section?.body);
+      if (text) elements.push(buildTextElement(`${project.navId}-text-main`, "left", text));
+    } else if (project.sectionKey === "extra") {
+      const text = joinText(section?.title || label, section?.body);
+      if (text) elements.push(buildTextElement(`${project.navId}-text-main`, "left", text));
+    } else if (project.sectionKey === "style") {
+      const text = toStringSafe(section?.overlayText).trim();
+      if (text) {
+        elements.push(
+          buildTextElement(`${project.navId}-text-overlay`, "left", text, {
+            x: 64,
+            y: 82,
+            width: 30,
+            height: 14,
+            fontSize: 12,
+            lineHeight: 1.25,
+            color: toStringSafe(section?.overlayStyle?.color, "#ffffff"),
+          })
+        );
+      }
+    } else if (project.sectionKey === "shops") {
+      const text = toStringSafe(section?.caption).trim();
+      if (text) {
+        elements.push(
+          buildTextElement(`${project.navId}-text-caption`, "right", text, {
+            x: 54,
+            y: 88,
+            width: 42,
+            height: 10,
+            fontSize: 14,
+            lineHeight: 1.2,
+            fontWeight: 500,
+            color: "#a89458",
+            textAlign: "right",
+          })
+        );
+      }
+    }
+
+    return {
+      id: project.navId,
+      label,
+      elements,
+    };
+  });
+
+  return projects
+    .map((project, index) => normalizeCommercialCanvasProject(project, index, navItems))
+    .filter((project) => project.elements.length > 0 || project.label);
+};
 
 const normalizeTags = (rawCategories, rawCategory) => {
   const source = [];
@@ -364,6 +592,12 @@ const normalizeForSave = (config) => {
     next.commercialDesign.navItems = defaultSiteContent.commercialDesign.navItems;
   }
 
+  next.commercialDesign.manualLayouts = toArray(next.commercialDesign.manualLayouts)
+    .map((project, index) =>
+      normalizeCommercialCanvasProject(project, index, next.commercialDesign.navItems)
+    )
+    .filter((project) => project.id);
+
   next.personalDesign.library.fallingImages = toArray(next.personalDesign.library.fallingImages)
     .map((item, idx) => ({
       src: toStringSafe(item?.src).trim(),
@@ -443,6 +677,9 @@ export default function AdminPage() {
 
   const [pickerQuery, setPickerQuery] = useState({});
   const [activeCommercialSection, setActiveCommercialSection] = useState("all");
+  const [selectedCommercialElementId, setSelectedCommercialElementId] = useState("");
+  const commercialCanvasRef = useRef(null);
+  const commercialDragRef = useRef(null);
 
   const itemMapById = useMemo(
     () => new Map(items.map((item) => [toStringSafe(item.id), item])),
@@ -715,6 +952,69 @@ export default function AdminPage() {
   const hasUnsavedChanges = useMemo(() => {
     return JSON.stringify(normalizeForSave(config)) !== JSON.stringify(normalizeForSave(savedConfig));
   }, [config, savedConfig]);
+
+  const commercialManualProjects = useMemo(() => {
+    const navItems = toArray(config?.commercialDesign?.navItems);
+    const rawProjects = toArray(config?.commercialDesign?.manualLayouts);
+    if (rawProjects.length > 0) {
+      return rawProjects.map((project, index) => normalizeCommercialCanvasProject(project, index, navItems));
+    }
+    return [];
+  }, [config?.commercialDesign?.manualLayouts, config?.commercialDesign?.navItems]);
+
+  useEffect(() => {
+    if (activePanel !== "commercial") return;
+    const current = toArray(config?.commercialDesign?.manualLayouts);
+    if (current.length > 0) return;
+    const generated = buildLegacyCommercialManualLayouts(config?.commercialDesign, items);
+    if (generated.length === 0) return;
+    setConfig((prev) => {
+      const existing = toArray(prev?.commercialDesign?.manualLayouts);
+      if (existing.length > 0) return prev;
+      const next = structuredClone(prev);
+      if (!next.commercialDesign || typeof next.commercialDesign !== "object") {
+        next.commercialDesign = {};
+      }
+      next.commercialDesign.manualLayouts = generated;
+      return next;
+    });
+  }, [activePanel, config?.commercialDesign, items]);
+
+  useEffect(() => {
+    if (activePanel !== "commercial") return;
+    if (commercialManualProjects.length === 0) return;
+    const activeExists = commercialManualProjects.some(
+      (project) => toStringSafe(project.id) === toStringSafe(activeCommercialSection)
+    );
+    if (!activeExists) {
+      setActiveCommercialSection(toStringSafe(commercialManualProjects[0].id));
+    }
+  }, [activePanel, commercialManualProjects, activeCommercialSection]);
+
+  useEffect(() => {
+    if (activePanel !== "commercial") return;
+    const activeProject =
+      commercialManualProjects.find(
+        (project) => toStringSafe(project.id) === toStringSafe(activeCommercialSection)
+      ) || commercialManualProjects[0];
+    if (!activeProject) return;
+    const selectedExists = toArray(activeProject.elements).some(
+      (element) => toStringSafe(element.id) === toStringSafe(selectedCommercialElementId)
+    );
+    if (!selectedExists) {
+      setSelectedCommercialElementId(toStringSafe(activeProject.elements?.[0]?.id));
+    }
+  }, [activePanel, commercialManualProjects, activeCommercialSection, selectedCommercialElementId]);
+
+  useEffect(() => {
+    return () => {
+      const drag = commercialDragRef.current;
+      if (!drag) return;
+      window.removeEventListener("pointermove", drag.onMove);
+      window.removeEventListener("pointerup", drag.onUp);
+      commercialDragRef.current = null;
+    };
+  }, []);
 
   const renderMiniPreview = (itemOrUrl, className = styles.previewThumb) => {
     const item = typeof itemOrUrl === "string" ? itemMapByUrl.get(itemOrUrl) : itemOrUrl;
@@ -1134,222 +1434,834 @@ export default function AdminPage() {
   );
 
   const renderCommercialPanel = () => {
-    const navItems = toArray(config?.commercialDesign?.navItems);
-    const sections = toObject(config?.commercialDesign?.sections);
-    const project =
-      COMMERCIAL_PROJECTS.find((item) => item.sectionKey === activeCommercialSection) ||
-      COMMERCIAL_PROJECTS[0];
-    const sectionData = toObject(sections?.[project.sectionKey]);
-    const currentLayout =
-      toStringSafe(sectionData.layoutType) ||
-      (project.slots.length > 1 ? "split" : "single");
-    const navIndex = navItems.findIndex((item) => toStringSafe(item?.id) === project.navId);
-    const projectName =
-      navIndex >= 0
-        ? toStringSafe(navItems[navIndex]?.label)
-        : project.fallbackName;
-    const commercialCandidates = getCandidates("commercial", ["image", "video"]);
+    const projects = commercialManualProjects;
+    const candidates = getCandidates("commercial", ["image", "video", "audio"]);
 
-    const setProjectName = (value) => {
-      const nextValue = toStringSafe(value);
-      if (navIndex >= 0) {
-        updateConfigPath(["commercialDesign", "navItems", navIndex, "label"], nextValue);
-        return;
-      }
-      updateConfigPath(["commercialDesign", "navItems"], [
-        ...navItems,
-        { id: project.navId, label: nextValue || project.fallbackName },
-      ]);
-    };
+    if (projects.length === 0) {
+      return (
+        <section className={styles.card}>
+          <p className={styles.tip}>暂无可视化项目。先在「1.作品管理」上传素材并勾选 2.2 商业设计标签。</p>
+        </section>
+      );
+    }
 
-    const applyLayoutPreset = (presetId) => {
+    const activeProject =
+      projects.find((project) => toStringSafe(project.id) === toStringSafe(activeCommercialSection)) || projects[0];
+    const activeProjectId = toStringSafe(activeProject?.id);
+    const selectedElement =
+      toArray(activeProject?.elements).find(
+        (element) => toStringSafe(element.id) === toStringSafe(selectedCommercialElementId)
+      ) || toArray(activeProject?.elements)[0] || null;
+    const selectedElementId = toStringSafe(selectedElement?.id);
+
+    const applyProjectsUpdate = (updater) => {
       setConfig((prev) => {
         const next = structuredClone(prev);
-        const section = toObject(next?.commercialDesign?.sections?.[project.sectionKey]);
-        const styles = getCommercialStylePreset(project.slots.length, presetId);
-        section.layoutType = presetId;
-        project.slots.forEach((slot, slotIndex) => {
-          const currentStyle = toObject(section?.[slot.styleKey]);
-          section[slot.styleKey] = {
-            ...currentStyle,
-            ...toObject(styles[slotIndex]),
-          };
-        });
-        next.commercialDesign.sections[project.sectionKey] = section;
+        if (!next.commercialDesign || typeof next.commercialDesign !== "object") {
+          next.commercialDesign = {};
+        }
+        const nav = toArray(next?.commercialDesign?.navItems);
+        const baseRaw = toArray(next?.commercialDesign?.manualLayouts);
+        const baseProjects =
+          baseRaw.length > 0
+            ? baseRaw.map((project, index) => normalizeCommercialCanvasProject(project, index, nav))
+            : buildLegacyCommercialManualLayouts(next.commercialDesign, items);
+        const updated = toArray(updater(baseProjects)).map((project, index) =>
+          normalizeCommercialCanvasProject(project, index, nav)
+        );
+        next.commercialDesign.manualLayouts = updated;
         return next;
       });
     };
 
-    const previewSlots = project.slots.map((slot, index) => {
-      const item = itemMapByUrl.get(toStringSafe(sectionData?.[slot.urlKey]));
-      const style = toObject(sectionData?.[slot.styleKey]);
-      const width = Number.parseFloat(toStringSafe(style.width));
-      const widthRatio = Number.isFinite(width) ? Math.max(20, Math.min(100, width)) : project.slots.length > 1 ? 50 : 88;
+    const updateElementById = (elementId, patch) => {
+      if (!activeProjectId || !elementId) return;
+      applyProjectsUpdate((baseProjects) =>
+        baseProjects.map((project) => {
+          if (toStringSafe(project.id) !== activeProjectId) return project;
+          return {
+            ...project,
+            elements: toArray(project.elements).map((element) =>
+              toStringSafe(element.id) === toStringSafe(elementId)
+                ? normalizeCommercialCanvasElement({ ...element, ...patch }, toStringSafe(element.id))
+                : element
+            ),
+          };
+        })
+      );
+    };
+
+    const updateProjectName = (value) => {
+      const nextLabel = toStringSafe(value).trim();
+      if (!activeProjectId) return;
+      setConfig((prev) => {
+        const next = structuredClone(prev);
+        if (!next.commercialDesign || typeof next.commercialDesign !== "object") {
+          next.commercialDesign = {};
+        }
+        const nav = toArray(next?.commercialDesign?.navItems);
+        const baseRaw = toArray(next?.commercialDesign?.manualLayouts);
+        const baseProjects =
+          baseRaw.length > 0
+            ? baseRaw.map((project, index) => normalizeCommercialCanvasProject(project, index, nav))
+            : buildLegacyCommercialManualLayouts(next.commercialDesign, items);
+        next.commercialDesign.manualLayouts = baseProjects.map((project) =>
+          toStringSafe(project.id) === activeProjectId
+            ? { ...project, label: nextLabel || project.label }
+            : project
+        );
+        const navIndex = nav.findIndex((item) => toStringSafe(item?.id) === activeProjectId);
+        if (navIndex >= 0) {
+          nav[navIndex] = {
+            ...toObject(nav[navIndex]),
+            id: activeProjectId,
+            label: nextLabel || toStringSafe(nav[navIndex]?.label),
+          };
+        } else {
+          nav.push({ id: activeProjectId, label: nextLabel || activeProject.label });
+        }
+        next.commercialDesign.navItems = nav;
+        return next;
+      });
+    };
+
+    const setProjectElements = (elements) => {
+      if (!activeProjectId) return;
+      const normalizedElements = toArray(elements).map((element, index) =>
+        normalizeCommercialCanvasElement(element, `${activeProjectId}-element-${index + 1}`)
+      );
+      applyProjectsUpdate((baseProjects) =>
+        baseProjects.map((project) =>
+          toStringSafe(project.id) === activeProjectId
+            ? { ...project, elements: normalizedElements }
+            : project
+        )
+      );
+    };
+
+    const createMediaElement = (elementId, page, media, extra = {}) =>
+      normalizeCommercialCanvasElement(
+        {
+          id: elementId,
+          type: "media",
+          page,
+          mediaUrl: toStringSafe(media?.mediaUrl),
+          mediaType: normalizeMediaType(media?.mediaType || inferMediaTypeFromUrl(media?.mediaUrl)),
+          x: page === "both" ? 0 : 8,
+          y: page === "both" ? 0 : 8,
+          width: page === "both" ? 100 : 84,
+          height: page === "both" ? 100 : 84,
+          fit: page === "both" ? "cover" : "contain",
+          zIndex: 12,
+          ...extra,
+        },
+        elementId
+      );
+
+    const applyCanvasPreset = (presetId) => {
+      if (!activeProjectId) return;
+      const mediaA = candidates[0] || null;
+      const mediaB = candidates[1] || mediaA;
+      const textLabel = `${toStringSafe(activeProject?.label, "项目")}`;
+      const nextElements = [];
+
+      if (presetId === "left-media-right-text") {
+        nextElements.push(
+          createMediaElement(`${activeProjectId}-preset-left-media`, "left", mediaA, {
+            x: 4,
+            y: 4,
+            width: 92,
+            height: 92,
+          })
+        );
+        nextElements.push(
+          buildTextElement(`${activeProjectId}-preset-right-text`, "right", textLabel, {
+            x: 12,
+            y: 24,
+            width: 72,
+            height: 52,
+            fontSize: 28,
+            lineHeight: 1.45,
+          })
+        );
+      } else if (presetId === "right-media-left-text") {
+        nextElements.push(
+          buildTextElement(`${activeProjectId}-preset-left-text`, "left", textLabel, {
+            x: 12,
+            y: 24,
+            width: 72,
+            height: 52,
+            fontSize: 28,
+            lineHeight: 1.45,
+          })
+        );
+        nextElements.push(
+          createMediaElement(`${activeProjectId}-preset-right-media`, "right", mediaA, {
+            x: 4,
+            y: 4,
+            width: 92,
+            height: 92,
+          })
+        );
+      } else if (presetId === "split-media") {
+        nextElements.push(
+          createMediaElement(`${activeProjectId}-preset-left-media`, "left", mediaA, {
+            x: 4,
+            y: 4,
+            width: 92,
+            height: 92,
+          })
+        );
+        nextElements.push(
+          createMediaElement(`${activeProjectId}-preset-right-media`, "right", mediaB, {
+            x: 4,
+            y: 4,
+            width: 92,
+            height: 92,
+          })
+        );
+      } else {
+        nextElements.push(
+          createMediaElement(`${activeProjectId}-preset-across-media`, "both", mediaA, {
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+            fit: "cover",
+          })
+        );
+      }
+
+      setProjectElements(nextElements);
+      setSelectedCommercialElementId(toStringSafe(nextElements?.[0]?.id));
+    };
+
+    const addElement = (type, page) => {
+      if (!activeProjectId) return;
+      const elementId = `element-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+      const topMedia = candidates[0];
+      const draft =
+        type === "text"
+          ? {
+              id: elementId,
+              type: "text",
+              page,
+              text: `${toStringSafe(activeProject.label)}\n`,
+              x: 12,
+              y: 24,
+              width: 74,
+              height: 46,
+              fontSize: 24,
+              lineHeight: 1.45,
+              fontWeight: 560,
+              color: "#111111",
+              textAlign: "left",
+              zIndex: 30,
+            }
+          : {
+              id: elementId,
+              type: "media",
+              page,
+              mediaUrl: toStringSafe(topMedia?.mediaUrl),
+              mediaType: normalizeMediaType(topMedia?.mediaType || inferMediaTypeFromUrl(topMedia?.mediaUrl)),
+              x: page === "both" ? 0 : 8,
+              y: page === "both" ? 0 : 8,
+              width: page === "both" ? 100 : 84,
+              height: page === "both" ? 100 : 84,
+              fit: page === "both" ? "cover" : "contain",
+              zIndex: 12,
+            };
+      const element = normalizeCommercialCanvasElement(draft, elementId);
+      applyProjectsUpdate((baseProjects) =>
+        baseProjects.map((project) =>
+          toStringSafe(project.id) === activeProjectId
+            ? { ...project, elements: [...toArray(project.elements), element] }
+            : project
+        )
+      );
+      setSelectedCommercialElementId(elementId);
+    };
+
+    const removeSelectedElement = () => {
+      if (!selectedElement || !activeProjectId) return;
+      const removingId = toStringSafe(selectedElement.id);
+      applyProjectsUpdate((baseProjects) =>
+        baseProjects.map((project) =>
+          toStringSafe(project.id) === activeProjectId
+            ? {
+                ...project,
+                elements: toArray(project.elements).filter(
+                  (element) => toStringSafe(element.id) !== removingId
+                ),
+              }
+            : project
+        )
+      );
+      setSelectedCommercialElementId("");
+    };
+
+    const nudgeSelectedElement = (delta) => {
+      if (!selectedElement) return;
+      const nextZ = clampNumber(toNumberSafe(selectedElement.zIndex, 1) + delta, 1, 99);
+      updateElementById(selectedElement.id, { zIndex: nextZ });
+    };
+
+    const getCanvasStyle = (element) => {
+      const normalized = normalizeCommercialCanvasElement(element, toStringSafe(element?.id));
+      const widthScale = normalized.page === "both" ? 1 : 0.5;
+      const leftBase = normalized.page === "right" ? 50 : 0;
       return {
-        slot,
-        item,
-        widthRatio,
-        index,
+        left: `${leftBase + normalized.x * widthScale}%`,
+        top: `${normalized.y}%`,
+        width: `${normalized.width * widthScale}%`,
+        height: `${normalized.height}%`,
+        zIndex: normalized.zIndex,
+        opacity: normalized.opacity / 100,
       };
-    });
+    };
+
+    const startDrag = (event, element) => {
+      if (!element || event.button !== 0) return;
+      const rect = commercialCanvasRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const normalized = normalizeCommercialCanvasElement(element, toStringSafe(element.id));
+      const zoneWidth = normalized.page === "both" ? rect.width : rect.width / 2;
+      const zoneHeight = rect.height;
+      const baseX = normalized.x;
+      const baseY = normalized.y;
+      const width = normalized.width;
+      const height = normalized.height;
+      const id = toStringSafe(normalized.id);
+
+      const detach = () => {
+        const drag = commercialDragRef.current;
+        if (!drag) return;
+        window.removeEventListener("pointermove", drag.onMove);
+        window.removeEventListener("pointerup", drag.onUp);
+        commercialDragRef.current = null;
+      };
+
+      detach();
+
+      const onMove = (moveEvent) => {
+        const dx = moveEvent.clientX - event.clientX;
+        const dy = moveEvent.clientY - event.clientY;
+        const nextX = clampNumber(baseX + (dx / zoneWidth) * 100, 0, 100 - width);
+        const nextY = clampNumber(baseY + (dy / zoneHeight) * 100, 0, 100 - height);
+        updateElementById(id, { x: nextX, y: nextY });
+      };
+
+      const onUp = () => detach();
+      commercialDragRef.current = { onMove, onUp };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    };
 
     return (
       <div className={styles.stack}>
         <section className={styles.card}>
           <div className={styles.cardHeader}>
-            <h3>项目切换编辑</h3>
-            <p>左侧切项目，右侧只编辑当前项目，不再整页堆叠。</p>
+            <h3>商业设计可视化编排（仅 2.2）</h3>
+            <p>左侧切换项目，中间拖拽排版，右侧编辑元素属性。所有媒体均来自你已上传并标记 2.2 的作品。</p>
           </div>
-          <div className={styles.commercialEditorLayout}>
-            <aside className={styles.projectSwitch}>
-              {COMMERCIAL_PROJECTS.map((item, idx) => {
-                const index = navItems.findIndex((nav) => toStringSafe(nav?.id) === item.navId);
-                const label = index >= 0 ? toStringSafe(navItems[index]?.label) : item.fallbackName;
-                const active = item.sectionKey === project.sectionKey;
+
+          <div className={styles.commercialStudio}>
+            <aside className={styles.commercialProjectRail}>
+              {projects.map((project, index) => {
+                const isActive = toStringSafe(project.id) === activeProjectId;
                 return (
                   <button
-                    key={`commercial-project-${item.sectionKey}`}
+                    key={`commercial-project-${project.id}`}
                     type="button"
-                    className={`${styles.projectSwitchBtn} ${active ? styles.projectSwitchBtnActive : ""}`}
-                    onClick={() => setActiveCommercialSection(item.sectionKey)}
+                    className={`${styles.projectSwitchBtn} ${isActive ? styles.projectSwitchBtnActive : ""}`}
+                    onClick={() => setActiveCommercialSection(toStringSafe(project.id))}
                   >
-                    <span>项目 {idx + 1}</span>
-                    <strong>{label}</strong>
+                    <span>项目 {index + 1}</span>
+                    <strong>{toStringSafe(project.label, `项目 ${index + 1}`)}</strong>
                   </button>
                 );
               })}
             </aside>
 
-            <div className={styles.projectEditorMain}>
-              <div className={styles.gridTwo}>
+            <div className={styles.commercialWorkspace}>
+              <div className={styles.commercialToolbar}>
                 <label className={styles.fieldBlock}>
-                  <span className={styles.fieldLabel}>项目名称（同步左侧导航）</span>
-                  <input className={styles.input} value={projectName} onChange={(event) => setProjectName(event.target.value)} />
+                  <span className={styles.fieldLabel}>当前项目名称（同步左侧导航）</span>
+                  <input
+                    className={styles.input}
+                    value={toStringSafe(activeProject?.label)}
+                    onChange={(event) => updateProjectName(event.target.value)}
+                  />
                 </label>
-                <label className={styles.fieldBlock}>
-                  <span className={styles.fieldLabel}>当前布局</span>
-                  <input className={styles.input} value={currentLayout} readOnly />
-                </label>
-              </div>
-
-              <div className={styles.layoutPresetGrid}>
-                {COMMERCIAL_LAYOUT_PRESETS.map((preset) => (
-                  <button
-                    key={`layout-${preset.id}`}
-                    type="button"
-                    className={`${styles.layoutPresetBtn} ${currentLayout === preset.id ? styles.layoutPresetBtnActive : ""}`}
-                    onClick={() => applyLayoutPreset(preset.id)}
-                  >
-                    <div className={`${styles.layoutPresetSketch} ${styles[`layoutPresetSketch_${preset.id}`]}`}>
-                      <span />
-                      <span />
-                    </div>
-                    <small>{preset.label}</small>
-                  </button>
-                ))}
-              </div>
-
-              <div className={`${styles.layoutPreviewBoard} ${styles[`layoutPreviewBoard_${currentLayout}`]}`}>
-                {previewSlots.map((entry) => (
-                  <div
-                    key={`preview-${entry.slot.id}`}
-                    className={styles.layoutPreviewSlot}
-                    style={{ width: `${entry.widthRatio}%` }}
-                  >
-                    {entry.item ? renderMiniPreview(entry.item, styles.layoutPreviewMedia) : <span className={styles.tip}>未选素材</span>}
-                    <small>{entry.slot.label}</small>
+                <div className={styles.fieldBlock}>
+                  <span className={styles.fieldLabel}>快速版式</span>
+                  <div className={styles.commercialPresetRow}>
+                    {COMMERCIAL_CANVAS_PRESETS.map((preset) => (
+                      <button
+                        key={`canvas-preset-${preset.id}`}
+                        type="button"
+                        className={styles.presetChip}
+                        onClick={() => applyCanvasPreset(preset.id)}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
 
-              <div className={styles.tableList}>
-                {project.slots.map((slot, slotIndex) => {
-                  const currentUrl = toStringSafe(sectionData?.[slot.urlKey]);
-                  const styleData = toObject(sectionData?.[slot.styleKey]);
-                  return (
-                    <div key={`slot-${project.sectionKey}-${slot.urlKey}`} className={styles.compactBlock}>
-                      {renderSingleWorkPicker({
-                        pickerKey: `commercial-${project.sectionKey}-${slot.urlKey}`,
-                        label: slot.label,
-                        tagId: "commercial",
-                        acceptedTypes: ["image", "video"],
-                        value: currentUrl,
-                        onChange: (url) => {
-                          updateConfigPath(["commercialDesign", "sections", project.sectionKey, slot.urlKey], url);
-                          const fallbackIndex = commercialCandidates.findIndex(
-                            (item) => toStringSafe(item.mediaUrl) === toStringSafe(url)
-                          );
-                          if (slot.indexKey) {
-                            updateConfigPath(
-                              ["commercialDesign", "sections", project.sectionKey, slot.indexKey],
-                              fallbackIndex >= 0 ? fallbackIndex : slotIndex
-                            );
-                          }
-                        },
-                        emptyText: "未绑定媒体",
-                        detailsTitle: "展开可选媒体",
-                      })}
+              <div className={styles.commercialStageWrap}>
+                <div
+                  ref={commercialCanvasRef}
+                  className={styles.commercialSpreadCanvas}
+                  onPointerDown={(event) => {
+                    if (event.target === event.currentTarget) setSelectedCommercialElementId("");
+                  }}
+                >
+                  <div className={`${styles.commercialHalf} ${styles.commercialHalfLeft}`} aria-hidden="true" />
+                  <div className={`${styles.commercialHalf} ${styles.commercialHalfRight}`} aria-hidden="true" />
+                  <div className={styles.commercialSpineHint} aria-hidden="true" />
 
-                      <div className={styles.compactStyleRow}>
+                  {toArray(activeProject?.elements).map((element, index) => {
+                    const normalized = normalizeCommercialCanvasElement(element, `${activeProjectId}-element-${index + 1}`);
+                    const selected = toStringSafe(normalized.id) === selectedElementId;
+                    const linked = itemMapByUrl.get(toStringSafe(normalized.mediaUrl));
+                    const title = toStringSafe(linked?.title, normalized.type === "text" ? "文本" : "媒体");
+                    return (
+                      <button
+                        key={`canvas-${normalized.id}`}
+                        type="button"
+                        className={`${styles.canvasElement} ${
+                          normalized.type === "text" ? styles.canvasElementText : styles.canvasElementMedia
+                        } ${selected ? styles.canvasElementActive : ""}`}
+                        style={getCanvasStyle(normalized)}
+                        onPointerDown={(event) => startDrag(event, normalized)}
+                        onClick={() => setSelectedCommercialElementId(toStringSafe(normalized.id))}
+                        title={`拖拽调整：${title}`}
+                      >
+                        {normalized.type === "text" ? (
+                          <div
+                            className={styles.canvasTextPreview}
+                            style={{
+                              color: normalized.color,
+                              fontSize: `${normalized.fontSize / 16}rem`,
+                              lineHeight: normalized.lineHeight,
+                              fontWeight: normalized.fontWeight,
+                              textAlign: normalized.textAlign,
+                            }}
+                          >
+                            {toStringSafe(normalized.text) || "文本"}
+                          </div>
+                        ) : normalized.mediaType === "video" || isVideoUrl(normalized.mediaUrl) ? (
+                          <video
+                            src={normalized.mediaUrl}
+                            className={styles.canvasMediaPreview}
+                            style={{ objectFit: normalized.fit }}
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            preload="metadata"
+                          />
+                        ) : normalized.mediaType === "audio" || isAudioUrl(normalized.mediaUrl) ? (
+                          <div className={styles.canvasAudioBadge}>音频</div>
+                        ) : (
+                          <img
+                            src={toStringSafe(normalized.mediaUrl) || FALLBACK_IMAGE}
+                            alt={title}
+                            className={styles.canvasMediaPreview}
+                            style={{ objectFit: normalized.fit }}
+                          />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className={styles.tip}>提示：直接拖动画布里的元素改位置；右侧可精确输入 X/Y、宽高、字体与层级。</p>
+              </div>
+
+              <div className={styles.commercialBottomGrid}>
+                <section className={styles.elementListPanel}>
+                  <div className={styles.elementPanelHeader}>
+                    <h4>元素列表</h4>
+                    <small>{toArray(activeProject?.elements).length} 个元素</small>
+                  </div>
+                  <div className={styles.elementQuickActions}>
+                    <button type="button" className={styles.iconBtn} onClick={() => addElement("media", "left")}>
+                      + 左页媒体
+                    </button>
+                    <button type="button" className={styles.iconBtn} onClick={() => addElement("media", "right")}>
+                      + 右页媒体
+                    </button>
+                    <button type="button" className={styles.iconBtn} onClick={() => addElement("media", "both")}>
+                      + 跨页媒体
+                    </button>
+                    <button type="button" className={styles.iconBtn} onClick={() => addElement("text", "left")}>
+                      + 左页文本
+                    </button>
+                    <button type="button" className={styles.iconBtn} onClick={() => addElement("text", "right")}>
+                      + 右页文本
+                    </button>
+                  </div>
+                  <div className={styles.elementList}>
+                    {toArray(activeProject?.elements).map((element, index) => {
+                      const normalized = normalizeCommercialCanvasElement(element, `${activeProjectId}-element-${index + 1}`);
+                      const isActive = toStringSafe(normalized.id) === selectedElementId;
+                      const linked = itemMapByUrl.get(toStringSafe(normalized.mediaUrl));
+                      const name =
+                        normalized.type === "text"
+                          ? `文本 ${index + 1}`
+                          : toStringSafe(linked?.title, `媒体 ${index + 1}`);
+                      return (
+                        <button
+                          key={`element-row-${normalized.id}`}
+                          type="button"
+                          className={`${styles.elementRow} ${isActive ? styles.elementRowActive : ""}`}
+                          onClick={() => setSelectedCommercialElementId(toStringSafe(normalized.id))}
+                        >
+                          <span className={styles.orderIndex}>{index + 1}</span>
+                          {normalized.type === "text" ? (
+                            <div className={`${styles.previewThumb} ${styles.textThumb}`}>T</div>
+                          ) : (
+                            renderMiniPreview(
+                              linked || {
+                                mediaUrl: normalized.mediaUrl,
+                                mediaType: normalized.mediaType,
+                                thumbUrl: normalized.mediaUrl,
+                              },
+                              styles.previewThumb
+                            )
+                          )}
+                          <span className={styles.elementMeta}>
+                            <strong>{name}</strong>
+                            <small>{normalized.page === "both" ? "跨页" : normalized.page === "left" ? "左页" : "右页"}</small>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section className={styles.elementInspector}>
+                  <div className={styles.elementPanelHeader}>
+                    <h4>属性编辑</h4>
+                    {selectedElement ? <small>ID: {selectedElementId}</small> : null}
+                  </div>
+
+                  {!selectedElement ? (
+                    <p className={styles.tip}>先在画布或左侧列表选择一个元素。</p>
+                  ) : (
+                    <>
+                      <div className={styles.inspectorActions}>
+                        <button type="button" className={styles.iconBtn} onClick={() => nudgeSelectedElement(-1)}>
+                          下移一层
+                        </button>
+                        <button type="button" className={styles.iconBtn} onClick={() => nudgeSelectedElement(1)}>
+                          上移一层
+                        </button>
+                        <button type="button" className={styles.iconBtnDanger} onClick={removeSelectedElement}>
+                          删除元素
+                        </button>
+                      </div>
+
+                      <div className={styles.inspectorGrid}>
+                        <label className={styles.fieldBlock}>
+                          <span className={styles.fieldLabel}>所在页</span>
+                          <select
+                            className={styles.input}
+                            value={toStringSafe(selectedElement.page)}
+                            onChange={(event) => updateElementById(selectedElementId, { page: event.target.value })}
+                          >
+                            <option value="left">左页</option>
+                            <option value="right">右页</option>
+                            <option value="both">跨页</option>
+                          </select>
+                        </label>
+
+                        <label className={styles.fieldBlock}>
+                          <span className={styles.fieldLabel}>图层层级</span>
+                          <input
+                            className={styles.input}
+                            type="number"
+                            min={1}
+                            max={99}
+                            value={toNumberSafe(selectedElement.zIndex, 1)}
+                            onChange={(event) =>
+                              updateElementById(selectedElementId, { zIndex: toNumberSafe(event.target.value, 1) })
+                            }
+                          />
+                        </label>
+
+                        <label className={styles.fieldBlock}>
+                          <span className={styles.fieldLabel}>透明度</span>
+                          <div className={styles.rangePair}>
+                            <input
+                              className={styles.rangeInput}
+                              type="range"
+                              min={5}
+                              max={100}
+                              value={toNumberSafe(selectedElement.opacity, 100)}
+                              onChange={(event) =>
+                                updateElementById(selectedElementId, { opacity: toNumberSafe(event.target.value, 100) })
+                              }
+                            />
+                            <input
+                              className={styles.smallInput}
+                              type="number"
+                              min={5}
+                              max={100}
+                              value={toNumberSafe(selectedElement.opacity, 100)}
+                              onChange={(event) =>
+                                updateElementById(selectedElementId, { opacity: toNumberSafe(event.target.value, 100) })
+                              }
+                            />
+                          </div>
+                        </label>
+
+                        <label className={styles.fieldBlock}>
+                          <span className={styles.fieldLabel}>适配方式</span>
+                          <select
+                            className={styles.input}
+                            value={toStringSafe(selectedElement.fit, "contain")}
+                            onChange={(event) => updateElementById(selectedElementId, { fit: event.target.value })}
+                            disabled={selectedElement.type === "text"}
+                          >
+                            <option value="contain">contain</option>
+                            <option value="cover">cover</option>
+                          </select>
+                        </label>
+
+                        <label className={styles.fieldBlock}>
+                          <span className={styles.fieldLabel}>X（横向）</span>
+                          <div className={styles.rangePair}>
+                            <input
+                              className={styles.rangeInput}
+                              type="range"
+                              min={0}
+                              max={100}
+                              step={0.5}
+                              value={toNumberSafe(selectedElement.x, 0)}
+                              onChange={(event) => updateElementById(selectedElementId, { x: toNumberSafe(event.target.value, 0) })}
+                            />
+                            <input
+                              className={styles.smallInput}
+                              type="number"
+                              min={0}
+                              max={100}
+                              step={0.5}
+                              value={toNumberSafe(selectedElement.x, 0)}
+                              onChange={(event) => updateElementById(selectedElementId, { x: toNumberSafe(event.target.value, 0) })}
+                            />
+                          </div>
+                        </label>
+
+                        <label className={styles.fieldBlock}>
+                          <span className={styles.fieldLabel}>Y（纵向）</span>
+                          <div className={styles.rangePair}>
+                            <input
+                              className={styles.rangeInput}
+                              type="range"
+                              min={0}
+                              max={100}
+                              step={0.5}
+                              value={toNumberSafe(selectedElement.y, 0)}
+                              onChange={(event) => updateElementById(selectedElementId, { y: toNumberSafe(event.target.value, 0) })}
+                            />
+                            <input
+                              className={styles.smallInput}
+                              type="number"
+                              min={0}
+                              max={100}
+                              step={0.5}
+                              value={toNumberSafe(selectedElement.y, 0)}
+                              onChange={(event) => updateElementById(selectedElementId, { y: toNumberSafe(event.target.value, 0) })}
+                            />
+                          </div>
+                        </label>
+
                         <label className={styles.fieldBlock}>
                           <span className={styles.fieldLabel}>宽度</span>
-                          <input
-                            className={styles.input}
-                            placeholder="例如 50%"
-                            value={toStringSafe(styleData.width)}
-                            onChange={(event) =>
-                              updateConfigPath(
-                                ["commercialDesign", "sections", project.sectionKey, slot.styleKey, "width"],
-                                event.target.value
-                              )
-                            }
-                          />
-                          <input
-                            className={styles.rangeInput}
-                            type="range"
-                            min={20}
-                            max={100}
-                            value={Math.max(20, Math.min(100, toNumberSafe(parseFloat(toStringSafe(styleData.width)), 50)))}
-                            onChange={(event) =>
-                              updateConfigPath(
-                                ["commercialDesign", "sections", project.sectionKey, slot.styleKey, "width"],
-                                `${event.target.value}%`
-                              )
-                            }
-                          />
+                          <div className={styles.rangePair}>
+                            <input
+                              className={styles.rangeInput}
+                              type="range"
+                              min={5}
+                              max={100}
+                              step={0.5}
+                              value={toNumberSafe(selectedElement.width, 84)}
+                              onChange={(event) =>
+                                updateElementById(selectedElementId, { width: toNumberSafe(event.target.value, 84) })
+                              }
+                            />
+                            <input
+                              className={styles.smallInput}
+                              type="number"
+                              min={5}
+                              max={100}
+                              step={0.5}
+                              value={toNumberSafe(selectedElement.width, 84)}
+                              onChange={(event) =>
+                                updateElementById(selectedElementId, { width: toNumberSafe(event.target.value, 84) })
+                              }
+                            />
+                          </div>
                         </label>
+
                         <label className={styles.fieldBlock}>
                           <span className={styles.fieldLabel}>高度</span>
-                          <input
-                            className={styles.input}
-                            placeholder="例如 100%"
-                            value={toStringSafe(styleData.height)}
-                            onChange={(event) =>
-                              updateConfigPath(
-                                ["commercialDesign", "sections", project.sectionKey, slot.styleKey, "height"],
-                                event.target.value
-                              )
-                            }
-                          />
-                        </label>
-                        <label className={styles.fieldBlock}>
-                          <span className={styles.fieldLabel}>位置</span>
-                          <input
-                            className={styles.input}
-                            placeholder="例如 center center"
-                            value={toStringSafe(styleData.objectPosition)}
-                            onChange={(event) =>
-                              updateConfigPath(
-                                ["commercialDesign", "sections", project.sectionKey, slot.styleKey, "objectPosition"],
-                                event.target.value
-                              )
-                            }
-                          />
+                          <div className={styles.rangePair}>
+                            <input
+                              className={styles.rangeInput}
+                              type="range"
+                              min={5}
+                              max={100}
+                              step={0.5}
+                              value={toNumberSafe(selectedElement.height, 84)}
+                              onChange={(event) =>
+                                updateElementById(selectedElementId, { height: toNumberSafe(event.target.value, 84) })
+                              }
+                            />
+                            <input
+                              className={styles.smallInput}
+                              type="number"
+                              min={5}
+                              max={100}
+                              step={0.5}
+                              value={toNumberSafe(selectedElement.height, 84)}
+                              onChange={(event) =>
+                                updateElementById(selectedElementId, { height: toNumberSafe(event.target.value, 84) })
+                              }
+                            />
+                          </div>
                         </label>
                       </div>
-                    </div>
-                  );
-                })}
+
+                      {selectedElement.type === "media" ? (
+                        <div className={styles.fieldBlock}>
+                          {renderSingleWorkPicker({
+                            pickerKey: `commercial-manual-${activeProjectId}-${selectedElementId}`,
+                            label: "绑定媒体（下拉 + 缩略图）",
+                            tagId: "commercial",
+                            acceptedTypes: ["image", "video", "audio"],
+                            value: toStringSafe(selectedElement.mediaUrl),
+                            onChange: (url) => {
+                              const chosen = candidates.find(
+                                (item) => toStringSafe(item.mediaUrl) === toStringSafe(url)
+                              );
+                              updateElementById(selectedElementId, {
+                                mediaUrl: url,
+                                mediaType: normalizeMediaType(
+                                  chosen?.mediaType || inferMediaTypeFromUrl(url)
+                                ),
+                              });
+                            },
+                            emptyText: "请选择媒体",
+                            detailsTitle: "展开素材缩略图选择",
+                          })}
+                        </div>
+                      ) : (
+                        <>
+                          <label className={styles.fieldBlock}>
+                            <span className={styles.fieldLabel}>文本内容</span>
+                            <textarea
+                              className={styles.textarea}
+                              rows={5}
+                              value={toStringSafe(selectedElement.text)}
+                              onChange={(event) => updateElementById(selectedElementId, { text: event.target.value })}
+                            />
+                          </label>
+
+                          <div className={styles.inspectorGrid}>
+                            <label className={styles.fieldBlock}>
+                              <span className={styles.fieldLabel}>文字颜色</span>
+                              <input
+                                className={styles.input}
+                                type="color"
+                                value={toStringSafe(selectedElement.color, "#111111")}
+                                onChange={(event) => updateElementById(selectedElementId, { color: event.target.value })}
+                              />
+                            </label>
+                            <label className={styles.fieldBlock}>
+                              <span className={styles.fieldLabel}>对齐方式</span>
+                              <select
+                                className={styles.input}
+                                value={toStringSafe(selectedElement.textAlign, "left")}
+                                onChange={(event) => updateElementById(selectedElementId, { textAlign: event.target.value })}
+                              >
+                                <option value="left">左对齐</option>
+                                <option value="center">居中</option>
+                                <option value="right">右对齐</option>
+                              </select>
+                            </label>
+                            <label className={styles.fieldBlock}>
+                              <span className={styles.fieldLabel}>字号</span>
+                              <div className={styles.rangePair}>
+                                <input
+                                  className={styles.rangeInput}
+                                  type="range"
+                                  min={10}
+                                  max={140}
+                                  value={toNumberSafe(selectedElement.fontSize, 24)}
+                                  onChange={(event) =>
+                                    updateElementById(selectedElementId, {
+                                      fontSize: toNumberSafe(event.target.value, 24),
+                                    })
+                                  }
+                                />
+                                <input
+                                  className={styles.smallInput}
+                                  type="number"
+                                  min={10}
+                                  max={140}
+                                  value={toNumberSafe(selectedElement.fontSize, 24)}
+                                  onChange={(event) =>
+                                    updateElementById(selectedElementId, {
+                                      fontSize: toNumberSafe(event.target.value, 24),
+                                    })
+                                  }
+                                />
+                              </div>
+                            </label>
+                            <label className={styles.fieldBlock}>
+                              <span className={styles.fieldLabel}>行高</span>
+                              <input
+                                className={styles.input}
+                                type="number"
+                                min={1}
+                                max={3}
+                                step={0.05}
+                                value={toNumberSafe(selectedElement.lineHeight, 1.4)}
+                                onChange={(event) =>
+                                  updateElementById(selectedElementId, {
+                                    lineHeight: toNumberSafe(event.target.value, 1.4),
+                                  })
+                                }
+                              />
+                            </label>
+                            <label className={styles.fieldBlock}>
+                              <span className={styles.fieldLabel}>字重</span>
+                              <input
+                                className={styles.input}
+                                type="number"
+                                min={300}
+                                max={900}
+                                step={100}
+                                value={toNumberSafe(selectedElement.fontWeight, 500)}
+                                onChange={(event) =>
+                                  updateElementById(selectedElementId, {
+                                    fontWeight: toNumberSafe(event.target.value, 500),
+                                  })
+                                }
+                              />
+                            </label>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  )}
+                </section>
               </div>
             </div>
           </div>
@@ -1357,6 +2269,7 @@ export default function AdminPage() {
       </div>
     );
   };
+
 
   const renderPersonalLibraryPanel = () => {
     const book = toObject(config?.personalDesign?.library?.book);

@@ -14,7 +14,7 @@
     "navItems": [
       {
         "id": "all",
-        "label": "All"
+        "label": "飞书品牌设计"
       },
       {
         "id": "sites-in-use",
@@ -56,81 +56,452 @@
     "spineImageUrl": "/ui/crease-multiply2.png",
     "sections": {
       "all": {
+        "title": "飞书品牌设计",
+        "body": "在飞书（Lark）创意设计团队工作期间，参与品牌视觉识别系统升级与资产库搭建，并负责品牌手册、获客物料、招聘海报及H5等视觉延展设计。",
         "rightImageIndex": 0,
-        "rightImageUrl": "/media/images/1774436908953-___bn_3x.png",
+        "rightImageUrl": "/media/images/feishu-pt1/36.png",
         "rightImageStyle": {
-          "width": "48%",
-          "height": "50%",
+          "width": "84%",
+          "height": "100%",
           "objectPosition": "center center"
         },
-        "layoutType": "focus-right"
+        "layoutType": "single"
       },
       "sitesInUse": {
         "leftImageIndex": 1,
-        "leftImageUrl": "",
-        "leftImageStyle": {},
+        "leftImageUrl": "/media/images/feishu-pt1/Frame%201321318981.png",
+        "leftImageStyle": {
+          "width": "100%",
+          "height": "100%",
+          "objectPosition": "center center"
+        },
         "rightImageIndex": 2,
-        "rightImageUrl": "",
-        "rightImageStyle": {}
+        "rightImageUrl": "/media/images/feishu-pt1/for%20ppt.png",
+        "rightImageStyle": {
+          "width": "72%",
+          "height": "46%",
+          "objectPosition": "center top"
+        }
       },
       "graphicDesign": {
-        "title": "Graphic & Print",
-        "body1": "This editorial layout mimics the structural rhythm of a high-end photography book. The rigid center spine and the generous whitespace allow the imagery to breathe, presenting visual systems with a quiet, confident authority.",
-        "body2": "The typography relies on tight letter-spacing and structural hierarchy, avoiding unnecessary ornaments.",
-        "credit": "Photography Plusesee Studio",
+        "title": "品牌系统与视觉延展",
+        "body1": "在飞书（Lark）创意设计团队工作期间，参与品牌视觉识别系统升级与资产库搭建，并负责品牌手册、获客物料、招聘海报及H5等视觉延展设计。",
+        "body2": "",
+        "credit": "Lark Creative Design Team",
         "rightImageIndex": 3,
-        "rightImageUrl": "",
-        "rightImageStyle": {}
+        "rightImageUrl": "/media/images/feishu-pt1/Frame%202036083845.png",
+        "rightImageStyle": {
+          "width": "100%",
+          "height": "100%",
+          "objectPosition": "center center"
+        }
       },
       "style": {
         "leftImageIndex": 4,
-        "leftImageUrl": "",
-        "leftImageStyle": {},
-        "overlayText": "Le Fool Collective\\n@le_fool_club",
-        "overlayStyle": {
-          "bottom": "2rem",
-          "left": "2rem",
-          "fontSize": "0.65rem",
-          "color": "#fff"
-        }
+        "leftImageUrl": "/media/images/feishu-pt1/1774436908953-___bn_3x.png",
+        "leftImageStyle": {
+          "width": "100%",
+          "height": "100%",
+          "objectPosition": "center center"
+        },
+        "overlayText": "",
+        "overlayStyle": {}
       },
       "acrossSpread": {
         "imageIndex": 5,
-        "imageUrl": "",
-        "imageStyle": {}
+        "imageUrl": "/media/images/feishu-pt1/Frame%202036083845.png",
+        "imageStyle": {
+          "objectPosition": "center center"
+        }
       },
       "archDesign": {
-        "title": "Architecture & Space",
-        "body": "A study in spatial relationships and structural harmony.",
-        "rightImageIndex": 0,
-        "rightImageUrl": "",
-        "rightImageStyle": {}
+        "title": "品牌手册与规范资产",
+        "body": "核心视觉规范、组件资产和落地模板统一维护，保证跨场景一致性。",
+        "rightImageIndex": 6,
+        "rightImageUrl": "/media/images/feishu-pt1/d5c024f6f45a65318b9d68d0f3a486b8%201.png",
+        "rightImageStyle": {
+          "width": "66%",
+          "height": "100%",
+          "objectPosition": "center top"
+        }
       },
       "art": {
-        "leftImageIndex": 1,
-        "leftImageUrl": "",
-        "leftImageStyle": {},
-        "rightImageIndex": 2,
-        "rightImageUrl": "",
-        "rightImageStyle": {}
+        "leftImageIndex": 7,
+        "leftImageUrl": "/media/images/feishu-pt1/36.png",
+        "leftImageStyle": {
+          "width": "90%",
+          "height": "100%",
+          "objectPosition": "center center"
+        },
+        "rightImageIndex": 8,
+        "rightImageUrl": "/media/images/feishu-pt1/for%20ppt.png",
+        "rightImageStyle": {
+          "width": "82%",
+          "height": "68%",
+          "objectPosition": "center center"
+        }
       },
       "photo": {
-        "leftImageIndex": 3,
-        "leftImageUrl": "",
-        "leftImageStyle": {}
+        "leftImageIndex": 9,
+        "leftImageUrl": "/media/images/feishu-pt1/1774436908953-___bn_3x.png",
+        "leftImageStyle": {
+          "width": "96%",
+          "height": "100%",
+          "objectPosition": "center center"
+        }
       },
       "shops": {
-        "rightImageIndex": 4,
-        "rightImageUrl": "",
-        "rightImageStyle": {},
-        "caption": "Retail Concepts"
+        "rightImageIndex": 10,
+        "rightImageUrl": "/media/images/feishu-pt1/Frame%201321318981.png",
+        "rightImageStyle": {
+          "width": "100%",
+          "height": "100%",
+          "objectPosition": "center center"
+        },
+        "caption": "飞书品牌视觉延展"
       },
       "extra": {
         "title": "Extra Material",
         "body": "Additional resources and references.",
         "linkLabel": "Extra Material"
       }
-    }
+    },
+    "manualLayouts": [
+      {
+        "id": "all",
+        "label": "飞书品牌设计",
+        "elements": [
+          {
+            "id": "all-preset-across-media",
+            "type": "media",
+            "page": "both",
+            "x": 0,
+            "y": 0,
+            "width": 82.5,
+            "height": 77.5,
+            "opacity": 100,
+            "zIndex": 12,
+            "fit": "cover",
+            "mediaUrl": "/media/images/1774436908953-___bn_3x.png",
+            "mediaType": "image",
+            "text": "",
+            "color": "#111111",
+            "fontSize": 24,
+            "lineHeight": 1.4,
+            "fontWeight": 500,
+            "textAlign": "left"
+          }
+        ]
+      },
+      {
+        "id": "sites-in-use",
+        "label": "Sites In Use",
+        "elements": [
+          {
+            "id": "sites-in-use-media-left",
+            "type": "media",
+            "page": "left",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100,
+            "opacity": 100,
+            "zIndex": 6,
+            "fit": "cover",
+            "mediaUrl": "/media/images/feishu-pt1/Frame%201321318981.png",
+            "mediaType": "image",
+            "text": "",
+            "color": "#111111",
+            "fontSize": 24,
+            "lineHeight": 1.4,
+            "fontWeight": 500,
+            "textAlign": "left"
+          },
+          {
+            "id": "sites-in-use-media-right",
+            "type": "media",
+            "page": "right",
+            "x": 14,
+            "y": 0,
+            "width": 72,
+            "height": 46,
+            "opacity": 100,
+            "zIndex": 7,
+            "fit": "contain",
+            "mediaUrl": "/media/images/feishu-pt1/for%20ppt.png",
+            "mediaType": "image",
+            "text": "",
+            "color": "#111111",
+            "fontSize": 24,
+            "lineHeight": 1.4,
+            "fontWeight": 500,
+            "textAlign": "left"
+          }
+        ]
+      },
+      {
+        "id": "graphic-design",
+        "label": "Graphic Design",
+        "elements": [
+          {
+            "id": "graphic-design-media-main",
+            "type": "media",
+            "page": "right",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100,
+            "opacity": 100,
+            "zIndex": 6,
+            "fit": "cover",
+            "mediaUrl": "/media/images/feishu-pt1/Frame%202036083845.png",
+            "mediaType": "image",
+            "text": "",
+            "color": "#111111",
+            "fontSize": 24,
+            "lineHeight": 1.4,
+            "fontWeight": 500,
+            "textAlign": "left"
+          },
+          {
+            "id": "graphic-design-text-main",
+            "type": "text",
+            "page": "left",
+            "x": 12,
+            "y": 24,
+            "width": 74,
+            "height": 52,
+            "opacity": 100,
+            "zIndex": 20,
+            "fit": "contain",
+            "mediaUrl": "",
+            "mediaType": "image",
+            "text": "品牌系统与视觉延展\n\n在飞书（Lark）创意设计团队工作期间，参与品牌视觉识别系统升级与资产库搭建，并负责品牌手册、获客物料、招聘海报及H5等视觉延展设计。\n\nLark Creative Design Team",
+            "color": "#111111",
+            "fontSize": 22,
+            "lineHeight": 1.45,
+            "fontWeight": 550,
+            "textAlign": "left"
+          }
+        ]
+      },
+      {
+        "id": "style",
+        "label": "Style",
+        "elements": [
+          {
+            "id": "style-media-main",
+            "type": "media",
+            "page": "left",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100,
+            "opacity": 100,
+            "zIndex": 6,
+            "fit": "cover",
+            "mediaUrl": "/media/images/feishu-pt1/1774436908953-___bn_3x.png",
+            "mediaType": "image",
+            "text": "",
+            "color": "#111111",
+            "fontSize": 24,
+            "lineHeight": 1.4,
+            "fontWeight": 500,
+            "textAlign": "left"
+          }
+        ]
+      },
+      {
+        "id": "across-spread",
+        "label": "Across Spread",
+        "elements": [
+          {
+            "id": "across-spread-media-main",
+            "type": "media",
+            "page": "both",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100,
+            "opacity": 100,
+            "zIndex": 6,
+            "fit": "cover",
+            "mediaUrl": "/media/images/feishu-pt1/Frame%202036083845.png",
+            "mediaType": "image",
+            "text": "",
+            "color": "#111111",
+            "fontSize": 24,
+            "lineHeight": 1.4,
+            "fontWeight": 500,
+            "textAlign": "left"
+          }
+        ]
+      },
+      {
+        "id": "arch-design",
+        "label": "Arch. & Design",
+        "elements": [
+          {
+            "id": "arch-design-media-main",
+            "type": "media",
+            "page": "right",
+            "x": 17,
+            "y": 0,
+            "width": 66,
+            "height": 100,
+            "opacity": 100,
+            "zIndex": 6,
+            "fit": "contain",
+            "mediaUrl": "/media/images/feishu-pt1/d5c024f6f45a65318b9d68d0f3a486b8%201.png",
+            "mediaType": "image",
+            "text": "",
+            "color": "#111111",
+            "fontSize": 24,
+            "lineHeight": 1.4,
+            "fontWeight": 500,
+            "textAlign": "left"
+          },
+          {
+            "id": "arch-design-text-main",
+            "type": "text",
+            "page": "left",
+            "x": 12,
+            "y": 24,
+            "width": 74,
+            "height": 52,
+            "opacity": 100,
+            "zIndex": 20,
+            "fit": "contain",
+            "mediaUrl": "",
+            "mediaType": "image",
+            "text": "品牌手册与规范资产\n\n核心视觉规范、组件资产和落地模板统一维护，保证跨场景一致性。",
+            "color": "#111111",
+            "fontSize": 22,
+            "lineHeight": 1.45,
+            "fontWeight": 550,
+            "textAlign": "left"
+          }
+        ]
+      },
+      {
+        "id": "art",
+        "label": "Art",
+        "elements": [
+          {
+            "id": "art-media-left",
+            "type": "media",
+            "page": "left",
+            "x": 5,
+            "y": 0,
+            "width": 90,
+            "height": 100,
+            "opacity": 100,
+            "zIndex": 6,
+            "fit": "contain",
+            "mediaUrl": "/media/images/feishu-pt1/36.png",
+            "mediaType": "image",
+            "text": "",
+            "color": "#111111",
+            "fontSize": 24,
+            "lineHeight": 1.4,
+            "fontWeight": 500,
+            "textAlign": "left"
+          },
+          {
+            "id": "art-media-right",
+            "type": "media",
+            "page": "right",
+            "x": 9,
+            "y": 16,
+            "width": 82,
+            "height": 68,
+            "opacity": 100,
+            "zIndex": 7,
+            "fit": "contain",
+            "mediaUrl": "/media/images/feishu-pt1/for%20ppt.png",
+            "mediaType": "image",
+            "text": "",
+            "color": "#111111",
+            "fontSize": 24,
+            "lineHeight": 1.4,
+            "fontWeight": 500,
+            "textAlign": "left"
+          }
+        ]
+      },
+      {
+        "id": "photo",
+        "label": "Photo",
+        "elements": [
+          {
+            "id": "photo-media-main",
+            "type": "media",
+            "page": "left",
+            "x": 2,
+            "y": 0,
+            "width": 96,
+            "height": 100,
+            "opacity": 100,
+            "zIndex": 6,
+            "fit": "cover",
+            "mediaUrl": "/media/images/feishu-pt1/1774436908953-___bn_3x.png",
+            "mediaType": "image",
+            "text": "",
+            "color": "#111111",
+            "fontSize": 24,
+            "lineHeight": 1.4,
+            "fontWeight": 500,
+            "textAlign": "left"
+          }
+        ]
+      },
+      {
+        "id": "shops",
+        "label": "Shops",
+        "elements": [
+          {
+            "id": "shops-media-main",
+            "type": "media",
+            "page": "right",
+            "x": 0,
+            "y": 0,
+            "width": 100,
+            "height": 100,
+            "opacity": 100,
+            "zIndex": 6,
+            "fit": "cover",
+            "mediaUrl": "/media/images/feishu-pt1/Frame%201321318981.png",
+            "mediaType": "image",
+            "text": "",
+            "color": "#111111",
+            "fontSize": 24,
+            "lineHeight": 1.4,
+            "fontWeight": 500,
+            "textAlign": "left"
+          },
+          {
+            "id": "shops-text-caption",
+            "type": "text",
+            "page": "right",
+            "x": 54,
+            "y": 88,
+            "width": 42,
+            "height": 10,
+            "opacity": 100,
+            "zIndex": 20,
+            "fit": "contain",
+            "mediaUrl": "",
+            "mediaType": "image",
+            "text": "飞书品牌视觉延展",
+            "color": "#a89458",
+            "fontSize": 14,
+            "lineHeight": 1.2,
+            "fontWeight": 500,
+            "textAlign": "right"
+          }
+        ]
+      }
+    ]
   },
   "personalDesign": {
     "library": {

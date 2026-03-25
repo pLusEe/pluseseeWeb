@@ -111,6 +111,53 @@
   border-bottom: 1px solid rgba(0,0,0,0.03); /* subtle separator between long sections if needed, or none */
 }
 
+.manualPageBase {
+  padding: 0 !important;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.manualLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.manualElement {
+  position: absolute;
+  overflow: hidden;
+}
+
+.manualMedia {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+}
+
+.manualText {
+  width: 100%;
+  height: 100%;
+  padding: 0.8rem;
+  white-space: pre-wrap;
+  overflow: hidden;
+  line-height: 1.5;
+}
+
+.manualAudioWrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(245, 247, 250, 0.9);
+}
+
+.manualAudio {
+  width: 100%;
+}
+
 /* Pages */
 .leftPage, .rightPage {
   flex: 0 0 50%;
@@ -327,6 +374,10 @@
   margin-bottom: 1.5rem;
 }
 
+.projectIntroBlock {
+  max-width: 540px;
+}
+
 @media (max-width: 1024px) {
   .pageWrapper {
     padding: 0;
@@ -357,6 +408,10 @@
   .acrossSpread .leftPage,
   .acrossSpread .rightPage {
     padding: 0 !important;
+  }
+
+  .projectIntroBlock {
+    max-width: none;
   }
 
   .flushRight .containedImg,

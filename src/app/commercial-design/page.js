@@ -14,8 +14,63 @@ const getThumb = (item) => {
 };
 
 const isVideoUrl = (url) => /\.(mp4|webm|mov|m4v|ogg)$/i.test(String(url || "").trim());
+const isAudioUrl = (url) => /\.(mp3|wav|ogg|aac|flac|m4a)$/i.test(String(url || "").trim());
 
 const toStyleObject = (value) => (value && typeof value === "object" && !Array.isArray(value) ? value : {});
+const toArray = (value, fallback = []) => (Array.isArray(value) ? value : fallback);
+const toStringSafe = (value, fallback = "") => {
+  if (typeof value === "string") return value;
+  if (value === null || value === undefined) return fallback;
+  return String(value);
+};
+const toNumberSafe = (value, fallback = 0) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+const clampNumber = (value, min, max) => Math.max(min, Math.min(max, value));
+const normalizeMediaType = (value) => {
+  const type = toStringSafe(value).trim().toLowerCase();
+  if (type === "image" || type === "video" || type === "audio") return type;
+  return "image";
+};
+const normalizeManualElement = (rawElement, fallbackId) => {
+  const type = toStringSafe(rawElement?.type).toLowerCase() === "text" ? "text" : "media";
+  const pageRaw = toStringSafe(rawElement?.page, "right").toLowerCase();
+  const page = pageRaw === "left" || pageRaw === "right" || pageRaw === "both" ? pageRaw : "right";
+  const widthDefault = page === "both" ? 100 : type === "text" ? 44 : 84;
+  const heightDefault = page === "both" ? 100 : type === "text" ? 44 : 84;
+  return {
+    id: toStringSafe(rawElement?.id, fallbackId),
+    type,
+    page,
+    x: clampNumber(toNumberSafe(rawElement?.x, 8), 0, 100),
+    y: clampNumber(toNumberSafe(rawElement?.y, 8), 0, 100),
+    width: clampNumber(toNumberSafe(rawElement?.width, widthDefault), 5, 100),
+    height: clampNumber(toNumberSafe(rawElement?.height, heightDefault), 5, 100),
+    zIndex: clampNumber(toNumberSafe(rawElement?.zIndex, type === "text" ? 10 : 6), 1, 99),
+    opacity: clampNumber(toNumberSafe(rawElement?.opacity, 100), 5, 100),
+    fit: toStringSafe(rawElement?.fit, "contain").toLowerCase() === "cover" ? "cover" : "contain",
+    mediaUrl: toStringSafe(rawElement?.mediaUrl),
+    mediaType: normalizeMediaType(rawElement?.mediaType),
+    text: toStringSafe(rawElement?.text),
+    color: toStringSafe(rawElement?.color, "#111111"),
+    fontSize: clampNumber(toNumberSafe(rawElement?.fontSize, 24), 10, 140),
+    lineHeight: clampNumber(toNumberSafe(rawElement?.lineHeight, 1.4), 1, 3),
+    fontWeight: clampNumber(toNumberSafe(rawElement?.fontWeight, 500), 300, 900),
+    textAlign: ["left", "center", "right"].includes(toStringSafe(rawElement?.textAlign).toLowerCase())
+      ? toStringSafe(rawElement?.textAlign).toLowerCase()
+      : "left",
+  };
+};
+const normalizeManualProject = (rawProject, index) => ({
+  id: toStringSafe(rawProject?.id, `project-${index + 1}`),
+  label: toStringSafe(rawProject?.label, `Project ${index + 1}`),
+  elements: toArray(rawProject?.elements)
+    .map((element, elementIndex) =>
+      normalizeManualElement(element, `${toStringSafe(rawProject?.id, `project-${index + 1}`)}-element-${elementIndex + 1}`)
+    )
+    .filter((element) => (element.type === "text" ? Boolean(toStringSafe(element.text).trim()) : Boolean(toStringSafe(element.mediaUrl).trim()))),
+});
 
 const resolveImage = (safeItems, section, key, fallbackIndex) => {
   const urlKey = `${key}Url`;
@@ -51,6 +106,11 @@ export default function CommercialDesignPage() {
               ...defaultCommercial.sections,
               ...(data.commercialDesign.sections || {}),
             },
+            manualLayouts: Array.isArray(data.commercialDesign.manualLayouts)
+              ? data.commercialDesign.manualLayouts
+              : Array.isArray(defaultCommercial.manualLayouts)
+                ? defaultCommercial.manualLayouts
+                : [],
           });
         }
       })
@@ -63,11 +123,34 @@ export default function CommercialDesignPage() {
   }, [items]);
 
   const sections = commercial?.sections || defaultCommercial.sections;
-  const navItems = Array.isArray(commercial?.navItems) && commercial.navItems.length > 0
-    ? commercial.navItems
-    : defaultCommercial.navItems;
+  const manualProjects = useMemo(
+    () => toArray(commercial?.manualLayouts).map((project, index) => normalizeManualProject(project, index)),
+    [commercial?.manualLayouts]
+  );
+
+  const navItems =
+    manualProjects.length > 0
+      ? manualProjects.map((project, index) => ({
+          id: toStringSafe(project.id, `project-${index + 1}`),
+          label: toStringSafe(project.label, `Project ${index + 1}`),
+        }))
+      : Array.isArray(commercial?.navItems) && commercial.navItems.length > 0
+        ? commercial.navItems
+        : defaultCommercial.navItems;
+
+  useEffect(() => {
+    if (!Array.isArray(navItems) || navItems.length === 0) return;
+    const hasActive = navItems.some((item) => toStringSafe(item?.id) === toStringSafe(activeSection));
+    if (!hasActive) {
+      setActiveSection(toStringSafe(navItems[0]?.id, "all"));
+    }
+  }, [navItems, activeSection]);
 
   const allHero = resolveImage(safeItems, sections.all, "rightImage", 0);
+  const allNavTitle =
+    navItems.find((item) => String(item?.id || "").trim() === "all")?.label || "Project 1";
+  const allTitle = String(sections?.all?.title || allNavTitle);
+  const allBody = String(sections?.all?.body || "");
   const sitesLeft = resolveImage(safeItems, sections.sitesInUse, "leftImage", 1);
   const sitesRight = resolveImage(safeItems, sections.sitesInUse, "rightImage", 2);
   const graphicRight = resolveImage(safeItems, sections.graphicDesign, "rightImage", 3);
@@ -119,6 +202,80 @@ export default function CommercialDesignPage() {
     return <img src={url} alt={alt} className={className} style={style} />;
   };
 
+  const renderManualElement = (projectId, element, index) => {
+    const widthScale = element.page === "both" ? 1 : 0.5;
+    const leftBase = element.page === "right" ? 50 : 0;
+    const style = {
+      left: `${leftBase + element.x * widthScale}%`,
+      top: `${element.y}%`,
+      width: `${element.width * widthScale}%`,
+      height: `${element.height}%`,
+      zIndex: element.zIndex,
+      opacity: element.opacity / 100,
+    };
+
+    if (element.type === "text") {
+      return (
+        <div
+          key={`manual-text-${projectId}-${element.id}-${index}`}
+          className={styles.manualElement}
+          style={style}
+        >
+          <div
+            className={styles.manualText}
+            style={{
+              color: element.color,
+              fontSize: `${element.fontSize / 16}rem`,
+              lineHeight: element.lineHeight,
+              fontWeight: element.fontWeight,
+              textAlign: element.textAlign,
+            }}
+          >
+            {toStringSafe(element.text)}
+          </div>
+        </div>
+      );
+    }
+
+    if (element.mediaType === "video" || isVideoUrl(element.mediaUrl)) {
+      return (
+        <div key={`manual-video-${projectId}-${element.id}-${index}`} className={styles.manualElement} style={style}>
+          <video
+            src={element.mediaUrl}
+            className={styles.manualMedia}
+            style={{ objectFit: element.fit }}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          />
+        </div>
+      );
+    }
+
+    if (element.mediaType === "audio" || isAudioUrl(element.mediaUrl)) {
+      return (
+        <div key={`manual-audio-${projectId}-${element.id}-${index}`} className={styles.manualElement} style={style}>
+          <div className={styles.manualAudioWrap}>
+            <audio src={element.mediaUrl} controls className={styles.manualAudio} />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div key={`manual-image-${projectId}-${element.id}-${index}`} className={styles.manualElement} style={style}>
+        <img
+          src={toStringSafe(element.mediaUrl) || FALLBACK_IMAGE}
+          alt={toStringSafe(element.text, "Commercial media")}
+          className={styles.manualMedia}
+          style={{ objectFit: element.fit }}
+        />
+      </div>
+    );
+  };
+
   return (
     <div className={styles.pageWrapper}>
       <div className={styles.bookContainer}>
@@ -153,13 +310,38 @@ export default function CommercialDesignPage() {
           </div>
         </aside>
 
+        {manualProjects.length > 0 ? (
+          <>
+            {manualProjects.map((project, projectIndex) => (
+              <section
+                key={`manual-spread-${project.id}-${projectIndex}`}
+                id={toStringSafe(project.id, `project-${projectIndex + 1}`)}
+                className={styles.spread}
+              >
+                <div className={`${styles.leftPage} ${styles.manualPageBase}`}></div>
+                <div className={`${styles.rightPage} ${styles.manualPageBase}`}></div>
+                <div className={styles.manualLayer}>
+                  {toArray(project.elements).map((element, elementIndex) =>
+                    renderManualElement(toStringSafe(project.id), element, elementIndex)
+                  )}
+                </div>
+              </section>
+            ))}
+          </>
+        ) : (
+          <>
         <section id="all" className={styles.spread}>
-          <div className={styles.leftPage}></div>
-          <div className={`${styles.rightPage} ${styles.fullBleed}`}>
+          <div className={`${styles.leftPage} ${styles.flexCenter}`}>
+            <div className={`${styles.textBlock} ${styles.projectIntroBlock}`}>
+              <h2 className={styles.textTitle}>{allTitle}</h2>
+              {allBody ? <p className={styles.textBody}>{allBody}</p> : null}
+            </div>
+          </div>
+          <div className={`${styles.rightPage} ${styles.flexCenter} ${styles.flushLeft}`}>
             {renderMedia(
               allHero,
-              "Project 1",
-              `${styles.fullBleedImg} ${styles.heroRightImg}`,
+              allTitle,
+              styles.containedImg,
               toStyleObject(sections?.all?.rightImageStyle)
             )}
           </div>
@@ -307,6 +489,8 @@ export default function CommercialDesignPage() {
           </div>
           <div className={`${styles.rightPage} ${styles.flexCenter}`}></div>
         </section>
+          </>
+        )}
       </div>
     </div>
   );
