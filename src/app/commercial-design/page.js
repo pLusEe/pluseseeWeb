@@ -33,43 +33,101 @@ const normalizeMediaType = (value) => {
   if (type === "image" || type === "video" || type === "audio") return type;
   return "image";
 };
+const COMMERCIAL_TEXT_STANDARD = {
+  fontFamily: "\"Noto Sans SC\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+  fontSize: 22,
+  lineHeight: 1.45,
+  fontWeight: 500,
+  color: "#111111",
+  textAlign: "left",
+};
+const estimateCommercialTextBoxSize = (text) => {
+  const source = toStringSafe(text).replace(/\r\n/g, "\n");
+  const lines = source.split("\n");
+  const normalizedLines = lines.length > 0 ? lines : [""];
+  const longestLine = normalizedLines.reduce(
+    (max, line) => Math.max(max, toStringSafe(line).length),
+    1
+  );
+  const width = clampNumber(26 + longestLine * 1.2, 24, 78);
+  const charsPerLine = Math.max(10, Math.floor((width - 8) / 1.15));
+  const wrappedLines = normalizedLines.reduce((sum, line) => {
+    const len = Math.max(1, toStringSafe(line).length);
+    return sum + Math.max(1, Math.ceil(len / charsPerLine));
+  }, 0);
+  const height = clampNumber(10 + wrappedLines * 6.4, 12, 82);
+  return { width, height };
+};
 const normalizeManualElement = (rawElement, fallbackId) => {
   const type = toStringSafe(rawElement?.type).toLowerCase() === "text" ? "text" : "media";
-  const pageRaw = toStringSafe(rawElement?.page, "right").toLowerCase();
-  const page = pageRaw === "left" || pageRaw === "right" || pageRaw === "both" ? pageRaw : "right";
-  const widthDefault = page === "both" ? 100 : type === "text" ? 44 : 84;
-  const heightDefault = page === "both" ? 100 : type === "text" ? 44 : 84;
+  const page = "both";
+  const text = toStringSafe(rawElement?.text);
+  const autoTextBox = estimateCommercialTextBoxSize(text);
+  const width =
+    type === "text"
+      ? autoTextBox.width
+      : clampNumber(toNumberSafe(rawElement?.width, 84), 5, 100);
+  const height =
+    type === "text"
+      ? autoTextBox.height
+      : clampNumber(toNumberSafe(rawElement?.height, 84), 5, 100);
+  const x = clampNumber(toNumberSafe(rawElement?.x, 8), 0, 100 - width);
+  const y = clampNumber(toNumberSafe(rawElement?.y, 8), 0, 100 - height);
   return {
     id: toStringSafe(rawElement?.id, fallbackId),
     type,
     page,
-    x: clampNumber(toNumberSafe(rawElement?.x, 8), 0, 100),
-    y: clampNumber(toNumberSafe(rawElement?.y, 8), 0, 100),
-    width: clampNumber(toNumberSafe(rawElement?.width, widthDefault), 5, 100),
-    height: clampNumber(toNumberSafe(rawElement?.height, heightDefault), 5, 100),
+    x,
+    y,
+    width,
+    height,
     zIndex: clampNumber(toNumberSafe(rawElement?.zIndex, type === "text" ? 10 : 6), 1, 99),
     opacity: clampNumber(toNumberSafe(rawElement?.opacity, 100), 5, 100),
-    fit: toStringSafe(rawElement?.fit, "contain").toLowerCase() === "cover" ? "cover" : "contain",
+    fit: "contain",
     mediaUrl: toStringSafe(rawElement?.mediaUrl),
     mediaType: normalizeMediaType(rawElement?.mediaType),
-    text: toStringSafe(rawElement?.text),
-    color: toStringSafe(rawElement?.color, "#111111"),
-    fontSize: clampNumber(toNumberSafe(rawElement?.fontSize, 24), 10, 140),
-    lineHeight: clampNumber(toNumberSafe(rawElement?.lineHeight, 1.4), 1, 3),
-    fontWeight: clampNumber(toNumberSafe(rawElement?.fontWeight, 500), 300, 900),
-    textAlign: ["left", "center", "right"].includes(toStringSafe(rawElement?.textAlign).toLowerCase())
-      ? toStringSafe(rawElement?.textAlign).toLowerCase()
-      : "left",
+    text,
+    color: COMMERCIAL_TEXT_STANDARD.color,
+    fontFamily: COMMERCIAL_TEXT_STANDARD.fontFamily,
+    fontSize: COMMERCIAL_TEXT_STANDARD.fontSize,
+    lineHeight: COMMERCIAL_TEXT_STANDARD.lineHeight,
+    fontWeight: COMMERCIAL_TEXT_STANDARD.fontWeight,
+    textAlign: COMMERCIAL_TEXT_STANDARD.textAlign,
   };
 };
+const normalizeManualPage = (rawPage, pageIndex, projectId) => ({
+  id: toStringSafe(rawPage?.id, `page-${pageIndex + 1}`),
+  label: toStringSafe(rawPage?.label, `页面 ${pageIndex + 1}`),
+  elements: toArray(rawPage?.elements)
+    .map((element, elementIndex) =>
+      normalizeManualElement(
+        element,
+        `${projectId}-page-${pageIndex + 1}-element-${elementIndex + 1}`
+      )
+    )
+    .filter((element) =>
+      element.type === "text" ? Boolean(toStringSafe(element.text).trim()) : Boolean(toStringSafe(element.mediaUrl).trim())
+    ),
+});
 const normalizeManualProject = (rawProject, index) => ({
   id: toStringSafe(rawProject?.id, `project-${index + 1}`),
   label: toStringSafe(rawProject?.label, `Project ${index + 1}`),
-  elements: toArray(rawProject?.elements)
-    .map((element, elementIndex) =>
-      normalizeManualElement(element, `${toStringSafe(rawProject?.id, `project-${index + 1}`)}-element-${elementIndex + 1}`)
-    )
-    .filter((element) => (element.type === "text" ? Boolean(toStringSafe(element.text).trim()) : Boolean(toStringSafe(element.mediaUrl).trim()))),
+  pages:
+    toArray(rawProject?.pages).length > 0
+      ? toArray(rawProject?.pages).map((page, pageIndex) =>
+          normalizeManualPage(page, pageIndex, toStringSafe(rawProject?.id, `project-${index + 1}`))
+        )
+      : [
+          normalizeManualPage(
+            {
+              id: "page-1",
+              label: "页面 1",
+              elements: toArray(rawProject?.elements),
+            },
+            0,
+            toStringSafe(rawProject?.id, `project-${index + 1}`)
+          ),
+        ],
 });
 
 const resolveImage = (safeItems, section, key, fallbackIndex) => {
@@ -137,14 +195,23 @@ export default function CommercialDesignPage() {
       : Array.isArray(commercial?.navItems) && commercial.navItems.length > 0
         ? commercial.navItems
         : defaultCommercial.navItems;
-
-  useEffect(() => {
-    if (!Array.isArray(navItems) || navItems.length === 0) return;
-    const hasActive = navItems.some((item) => toStringSafe(item?.id) === toStringSafe(activeSection));
-    if (!hasActive) {
-      setActiveSection(toStringSafe(navItems[0]?.id, "all"));
-    }
-  }, [navItems, activeSection]);
+  const activeSectionId = navItems.some((item) => toStringSafe(item?.id) === toStringSafe(activeSection))
+    ? activeSection
+    : toStringSafe(navItems[0]?.id, "all");
+  const activeNavId =
+    navItems.find((item) => toStringSafe(item?.id) === toStringSafe(activeSectionId))?.id ||
+    navItems.find((item) => toStringSafe(activeSectionId).startsWith(`${toStringSafe(item?.id)}--page-`))?.id ||
+    toStringSafe(navItems[0]?.id, "all");
+  const manualRenderedPages = manualProjects.flatMap((project, projectIndex) => {
+    const projectId = toStringSafe(project.id, `project-${projectIndex + 1}`);
+    const pages = toArray(project.pages);
+    return pages.map((page, pageIndex) => ({
+      projectId,
+      pageId: toStringSafe(page.id, `page-${pageIndex + 1}`),
+      anchorId: pageIndex === 0 ? projectId : `${projectId}--page-${pageIndex + 1}`,
+      elements: toArray(page.elements),
+    }));
+  });
 
   const allHero = resolveImage(safeItems, sections.all, "rightImage", 0);
   const allNavTitle =
@@ -203,12 +270,10 @@ export default function CommercialDesignPage() {
   };
 
   const renderManualElement = (projectId, element, index) => {
-    const widthScale = element.page === "both" ? 1 : 0.5;
-    const leftBase = element.page === "right" ? 50 : 0;
     const style = {
-      left: `${leftBase + element.x * widthScale}%`,
+      left: `${element.x}%`,
       top: `${element.y}%`,
-      width: `${element.width * widthScale}%`,
+      width: `${element.width}%`,
       height: `${element.height}%`,
       zIndex: element.zIndex,
       opacity: element.opacity / 100,
@@ -225,6 +290,7 @@ export default function CommercialDesignPage() {
             className={styles.manualText}
             style={{
               color: element.color,
+              fontFamily: element.fontFamily,
               fontSize: `${element.fontSize / 16}rem`,
               lineHeight: element.lineHeight,
               fontWeight: element.fontWeight,
@@ -243,7 +309,7 @@ export default function CommercialDesignPage() {
           <video
             src={element.mediaUrl}
             className={styles.manualMedia}
-            style={{ objectFit: element.fit }}
+            style={{ objectFit: "contain" }}
             autoPlay
             muted
             loop
@@ -270,7 +336,7 @@ export default function CommercialDesignPage() {
           src={toStringSafe(element.mediaUrl) || FALLBACK_IMAGE}
           alt={toStringSafe(element.text, "Commercial media")}
           className={styles.manualMedia}
-          style={{ objectFit: element.fit }}
+          style={{ objectFit: "contain" }}
         />
       </div>
     );
@@ -296,7 +362,7 @@ export default function CommercialDesignPage() {
                 <li key={item.id} className={styles.navItem}>
                   <a
                     href={`#${item.id}`}
-                    className={`${styles.navLink} ${activeSection === item.id ? styles.navLinkActive : ""}`}
+                    className={`${styles.navLink} ${activeNavId === item.id ? styles.navLinkActive : ""}`}
                     onClick={(e) => handleNavClick(e, item.id)}
                   >
                     {item.label}
@@ -304,26 +370,28 @@ export default function CommercialDesignPage() {
                 </li>
               ))}
             </ul>
-            <a href="#extra" className={styles.navExtra}>
-              {sections?.extra?.linkLabel || "Extra Material"} <span>→</span>
-            </a>
+            {manualProjects.length === 0 ? (
+              <a href="#extra" className={styles.navExtra}>
+                {sections?.extra?.linkLabel || "Extra Material"} <span>→</span>
+              </a>
+            ) : null}
           </div>
         </aside>
 
         {manualProjects.length > 0 ? (
           <>
-            {manualProjects.map((project, projectIndex) => (
+            {manualRenderedPages.map((page, pageIndex) => (
               <section
-                key={`manual-spread-${project.id}-${projectIndex}`}
-                id={toStringSafe(project.id, `project-${projectIndex + 1}`)}
-                className={styles.spread}
+                key={`manual-spread-${page.projectId}-${page.pageId}-${pageIndex}`}
+                id={page.anchorId}
+                className={`${styles.spread} ${styles.manualSpread}`}
               >
-                <div className={`${styles.leftPage} ${styles.manualPageBase}`}></div>
-                <div className={`${styles.rightPage} ${styles.manualPageBase}`}></div>
-                <div className={styles.manualLayer}>
-                  {toArray(project.elements).map((element, elementIndex) =>
-                    renderManualElement(toStringSafe(project.id), element, elementIndex)
-                  )}
+                <div className={styles.manualCanvas}>
+                  <div className={styles.manualLayer}>
+                    {toArray(page.elements).map((element, elementIndex) =>
+                      renderManualElement(page.anchorId, element, elementIndex)
+                    )}
+                  </div>
                 </div>
               </section>
             ))}

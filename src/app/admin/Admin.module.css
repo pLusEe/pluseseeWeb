@@ -762,7 +762,7 @@
 
 .commercialStudio {
   display: grid;
-  grid-template-columns: 190px minmax(0, 1fr);
+  grid-template-columns: 236px minmax(0, 1fr);
   gap: 10px;
 }
 
@@ -786,28 +786,94 @@
 
 .commercialToolbar {
   display: grid;
-  grid-template-columns: minmax(220px, 320px) minmax(0, 1fr);
+  grid-template-columns: minmax(220px, 340px) minmax(220px, 340px) minmax(0, 1fr);
   gap: 8px;
   align-items: end;
 }
 
-.commercialPresetRow {
-  display: flex;
-  flex-wrap: wrap;
+.commercialRailActions {
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 6px;
 }
 
-.presetChip {
-  border: 1px solid #d0d8e5;
-  background: #f8faff;
+.projectTree {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.projectTreeNode {
+  border: 1px solid #e2e7ef;
+  background: #fff;
+  padding: 5px;
+}
+
+.projectTreeHead {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.projectTreeHead .projectSwitchBtn {
+  flex: 1;
+}
+
+.treeToggleBtn {
+  border: 1px solid #d5dce8;
+  background: #f7f9fc;
   color: #111;
-  padding: 6px 8px;
   font-size: 11px;
+  min-width: 48px;
+  padding: 0 6px;
   cursor: pointer;
 }
 
-.presetChip:hover {
-  background: #eef3fb;
+.pageTree {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.pageTreeBtn {
+  border: 1px solid #dbe2ec;
+  background: #f9fbff;
+  text-align: left;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+}
+
+.pageTreeBtn span {
+  font-size: 10px;
+  color: #677286;
+}
+
+.pageTreeBtn strong {
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pageTreeBtnActive {
+  border-color: #111;
+  background: #111;
+  color: #fff;
+}
+
+.pageTreeBtnActive span {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.pageTreeActions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  margin-top: 4px;
 }
 
 .commercialStageWrap {
@@ -1003,12 +1069,6 @@
   flex-wrap: wrap;
   gap: 6px;
   margin-bottom: 8px;
-}
-
-.inspectorGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
 }
 
 .rangePair {

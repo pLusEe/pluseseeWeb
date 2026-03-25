@@ -14,43 +14,11 @@
     "navItems": [
       {
         "id": "all",
-        "label": "飞书品牌设计"
+        "label": "飞书品牌设计面 4"
       },
       {
         "id": "sites-in-use",
         "label": "Sites In Use"
-      },
-      {
-        "id": "graphic-design",
-        "label": "Graphic Design"
-      },
-      {
-        "id": "style",
-        "label": "Style"
-      },
-      {
-        "id": "across-spread",
-        "label": "Across Spread"
-      },
-      {
-        "id": "arch-design",
-        "label": "Arch. & Design"
-      },
-      {
-        "id": "art",
-        "label": "Art"
-      },
-      {
-        "id": "photo",
-        "label": "Photo"
-      },
-      {
-        "id": "shops",
-        "label": "Shops"
-      },
-      {
-        "id": "extra",
-        "label": "Extra"
       }
     ],
     "spineImageUrl": "/ui/crease-multiply2.png",
@@ -169,335 +137,130 @@
     "manualLayouts": [
       {
         "id": "all",
-        "label": "飞书品牌设计",
-        "elements": [
+        "label": "飞书品牌设计面 4",
+        "pages": [
           {
-            "id": "all-preset-across-media",
-            "type": "media",
-            "page": "both",
-            "x": 0,
-            "y": 0,
-            "width": 82.5,
-            "height": 77.5,
-            "opacity": 100,
-            "zIndex": 12,
-            "fit": "cover",
-            "mediaUrl": "/media/images/1774436908953-___bn_3x.png",
-            "mediaType": "image",
-            "text": "",
-            "color": "#111111",
-            "fontSize": 24,
-            "lineHeight": 1.4,
-            "fontWeight": 500,
-            "textAlign": "left"
+            "id": "page-4",
+            "label": "页",
+            "elements": [
+              {
+                "id": "element-mn6aozj1-jhrby",
+                "type": "media",
+                "page": "both",
+                "x": 3.74159418150436,
+                "y": 9.7984496124031,
+                "width": 58,
+                "height": 84,
+                "opacity": 100,
+                "zIndex": 8,
+                "fit": "contain",
+                "mediaUrl": "/media/images/1774436908953-___bn_3x.png",
+                "mediaType": "image",
+                "text": "",
+                "color": "#111111",
+                "fontFamily": "\"Noto Sans SC\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+                "fontSize": 22,
+                "lineHeight": 1.45,
+                "fontWeight": 500,
+                "textAlign": "left"
+              },
+              {
+                "id": "element-mn6ap0bx-ndcxw",
+                "type": "media",
+                "page": "both",
+                "x": 65.48320019152737,
+                "y": 10.985928163355943,
+                "width": 30,
+                "height": 40,
+                "opacity": 100,
+                "zIndex": 9,
+                "fit": "contain",
+                "mediaUrl": "/media/images/1774436908953-___bn_3x.png",
+                "mediaType": "image",
+                "text": "",
+                "color": "#111111",
+                "fontFamily": "\"Noto Sans SC\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+                "fontSize": 22,
+                "lineHeight": 1.45,
+                "fontWeight": 500,
+                "textAlign": "left"
+              },
+              {
+                "id": "element-mn6ap2ie-llb5w",
+                "type": "media",
+                "page": "both",
+                "x": 66,
+                "y": 52,
+                "width": 30,
+                "height": 40,
+                "opacity": 100,
+                "zIndex": 10,
+                "fit": "contain",
+                "mediaUrl": "/media/images/1774436908953-___bn_3x.png",
+                "mediaType": "image",
+                "text": "",
+                "color": "#111111",
+                "fontFamily": "\"Noto Sans SC\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+                "fontSize": 22,
+                "lineHeight": 1.45,
+                "fontWeight": 500,
+                "textAlign": "left"
+              }
+            ]
           }
         ]
       },
       {
         "id": "sites-in-use",
         "label": "Sites In Use",
-        "elements": [
+        "pages": [
           {
-            "id": "sites-in-use-media-left",
-            "type": "media",
-            "page": "left",
-            "x": 0,
-            "y": 0,
-            "width": 100,
-            "height": 100,
-            "opacity": 100,
-            "zIndex": 6,
-            "fit": "cover",
-            "mediaUrl": "/media/images/feishu-pt1/Frame%201321318981.png",
-            "mediaType": "image",
-            "text": "",
-            "color": "#111111",
-            "fontSize": 24,
-            "lineHeight": 1.4,
-            "fontWeight": 500,
-            "textAlign": "left"
-          },
-          {
-            "id": "sites-in-use-media-right",
-            "type": "media",
-            "page": "right",
-            "x": 14,
-            "y": 0,
-            "width": 72,
-            "height": 46,
-            "opacity": 100,
-            "zIndex": 7,
-            "fit": "contain",
-            "mediaUrl": "/media/images/feishu-pt1/for%20ppt.png",
-            "mediaType": "image",
-            "text": "",
-            "color": "#111111",
-            "fontSize": 24,
-            "lineHeight": 1.4,
-            "fontWeight": 500,
-            "textAlign": "left"
-          }
-        ]
-      },
-      {
-        "id": "graphic-design",
-        "label": "Graphic Design",
-        "elements": [
-          {
-            "id": "graphic-design-media-main",
-            "type": "media",
-            "page": "right",
-            "x": 0,
-            "y": 0,
-            "width": 100,
-            "height": 100,
-            "opacity": 100,
-            "zIndex": 6,
-            "fit": "cover",
-            "mediaUrl": "/media/images/feishu-pt1/Frame%202036083845.png",
-            "mediaType": "image",
-            "text": "",
-            "color": "#111111",
-            "fontSize": 24,
-            "lineHeight": 1.4,
-            "fontWeight": 500,
-            "textAlign": "left"
-          },
-          {
-            "id": "graphic-design-text-main",
-            "type": "text",
-            "page": "left",
-            "x": 12,
-            "y": 24,
-            "width": 74,
-            "height": 52,
-            "opacity": 100,
-            "zIndex": 20,
-            "fit": "contain",
-            "mediaUrl": "",
-            "mediaType": "image",
-            "text": "品牌系统与视觉延展\n\n在飞书（Lark）创意设计团队工作期间，参与品牌视觉识别系统升级与资产库搭建，并负责品牌手册、获客物料、招聘海报及H5等视觉延展设计。\n\nLark Creative Design Team",
-            "color": "#111111",
-            "fontSize": 22,
-            "lineHeight": 1.45,
-            "fontWeight": 550,
-            "textAlign": "left"
-          }
-        ]
-      },
-      {
-        "id": "style",
-        "label": "Style",
-        "elements": [
-          {
-            "id": "style-media-main",
-            "type": "media",
-            "page": "left",
-            "x": 0,
-            "y": 0,
-            "width": 100,
-            "height": 100,
-            "opacity": 100,
-            "zIndex": 6,
-            "fit": "cover",
-            "mediaUrl": "/media/images/feishu-pt1/1774436908953-___bn_3x.png",
-            "mediaType": "image",
-            "text": "",
-            "color": "#111111",
-            "fontSize": 24,
-            "lineHeight": 1.4,
-            "fontWeight": 500,
-            "textAlign": "left"
-          }
-        ]
-      },
-      {
-        "id": "across-spread",
-        "label": "Across Spread",
-        "elements": [
-          {
-            "id": "across-spread-media-main",
-            "type": "media",
-            "page": "both",
-            "x": 0,
-            "y": 0,
-            "width": 100,
-            "height": 100,
-            "opacity": 100,
-            "zIndex": 6,
-            "fit": "cover",
-            "mediaUrl": "/media/images/feishu-pt1/Frame%202036083845.png",
-            "mediaType": "image",
-            "text": "",
-            "color": "#111111",
-            "fontSize": 24,
-            "lineHeight": 1.4,
-            "fontWeight": 500,
-            "textAlign": "left"
-          }
-        ]
-      },
-      {
-        "id": "arch-design",
-        "label": "Arch. & Design",
-        "elements": [
-          {
-            "id": "arch-design-media-main",
-            "type": "media",
-            "page": "right",
-            "x": 17,
-            "y": 0,
-            "width": 66,
-            "height": 100,
-            "opacity": 100,
-            "zIndex": 6,
-            "fit": "contain",
-            "mediaUrl": "/media/images/feishu-pt1/d5c024f6f45a65318b9d68d0f3a486b8%201.png",
-            "mediaType": "image",
-            "text": "",
-            "color": "#111111",
-            "fontSize": 24,
-            "lineHeight": 1.4,
-            "fontWeight": 500,
-            "textAlign": "left"
-          },
-          {
-            "id": "arch-design-text-main",
-            "type": "text",
-            "page": "left",
-            "x": 12,
-            "y": 24,
-            "width": 74,
-            "height": 52,
-            "opacity": 100,
-            "zIndex": 20,
-            "fit": "contain",
-            "mediaUrl": "",
-            "mediaType": "image",
-            "text": "品牌手册与规范资产\n\n核心视觉规范、组件资产和落地模板统一维护，保证跨场景一致性。",
-            "color": "#111111",
-            "fontSize": 22,
-            "lineHeight": 1.45,
-            "fontWeight": 550,
-            "textAlign": "left"
-          }
-        ]
-      },
-      {
-        "id": "art",
-        "label": "Art",
-        "elements": [
-          {
-            "id": "art-media-left",
-            "type": "media",
-            "page": "left",
-            "x": 5,
-            "y": 0,
-            "width": 90,
-            "height": 100,
-            "opacity": 100,
-            "zIndex": 6,
-            "fit": "contain",
-            "mediaUrl": "/media/images/feishu-pt1/36.png",
-            "mediaType": "image",
-            "text": "",
-            "color": "#111111",
-            "fontSize": 24,
-            "lineHeight": 1.4,
-            "fontWeight": 500,
-            "textAlign": "left"
-          },
-          {
-            "id": "art-media-right",
-            "type": "media",
-            "page": "right",
-            "x": 9,
-            "y": 16,
-            "width": 82,
-            "height": 68,
-            "opacity": 100,
-            "zIndex": 7,
-            "fit": "contain",
-            "mediaUrl": "/media/images/feishu-pt1/for%20ppt.png",
-            "mediaType": "image",
-            "text": "",
-            "color": "#111111",
-            "fontSize": 24,
-            "lineHeight": 1.4,
-            "fontWeight": 500,
-            "textAlign": "left"
-          }
-        ]
-      },
-      {
-        "id": "photo",
-        "label": "Photo",
-        "elements": [
-          {
-            "id": "photo-media-main",
-            "type": "media",
-            "page": "left",
-            "x": 2,
-            "y": 0,
-            "width": 96,
-            "height": 100,
-            "opacity": 100,
-            "zIndex": 6,
-            "fit": "cover",
-            "mediaUrl": "/media/images/feishu-pt1/1774436908953-___bn_3x.png",
-            "mediaType": "image",
-            "text": "",
-            "color": "#111111",
-            "fontSize": 24,
-            "lineHeight": 1.4,
-            "fontWeight": 500,
-            "textAlign": "left"
-          }
-        ]
-      },
-      {
-        "id": "shops",
-        "label": "Shops",
-        "elements": [
-          {
-            "id": "shops-media-main",
-            "type": "media",
-            "page": "right",
-            "x": 0,
-            "y": 0,
-            "width": 100,
-            "height": 100,
-            "opacity": 100,
-            "zIndex": 6,
-            "fit": "cover",
-            "mediaUrl": "/media/images/feishu-pt1/Frame%201321318981.png",
-            "mediaType": "image",
-            "text": "",
-            "color": "#111111",
-            "fontSize": 24,
-            "lineHeight": 1.4,
-            "fontWeight": 500,
-            "textAlign": "left"
-          },
-          {
-            "id": "shops-text-caption",
-            "type": "text",
-            "page": "right",
-            "x": 54,
-            "y": 88,
-            "width": 42,
-            "height": 10,
-            "opacity": 100,
-            "zIndex": 20,
-            "fit": "contain",
-            "mediaUrl": "",
-            "mediaType": "image",
-            "text": "飞书品牌视觉延展",
-            "color": "#a89458",
-            "fontSize": 14,
-            "lineHeight": 1.2,
-            "fontWeight": 500,
-            "textAlign": "right"
+            "id": "page-1",
+            "label": "页面 1",
+            "elements": [
+              {
+                "id": "sites-in-use-media-left",
+                "type": "media",
+                "page": "both",
+                "x": 0,
+                "y": 0,
+                "width": 100,
+                "height": 100,
+                "opacity": 100,
+                "zIndex": 6,
+                "fit": "contain",
+                "mediaUrl": "/media/images/feishu-pt1/Frame%201321318981.png",
+                "mediaType": "image",
+                "text": "",
+                "color": "#111111",
+                "fontFamily": "\"Noto Sans SC\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+                "fontSize": 22,
+                "lineHeight": 1.45,
+                "fontWeight": 500,
+                "textAlign": "left"
+              },
+              {
+                "id": "sites-in-use-media-right",
+                "type": "media",
+                "page": "both",
+                "x": 14,
+                "y": 0,
+                "width": 72,
+                "height": 46,
+                "opacity": 100,
+                "zIndex": 7,
+                "fit": "contain",
+                "mediaUrl": "/media/images/feishu-pt1/for%20ppt.png",
+                "mediaType": "image",
+                "text": "",
+                "color": "#111111",
+                "fontFamily": "\"Noto Sans SC\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+                "fontSize": 22,
+                "lineHeight": 1.45,
+                "fontWeight": 500,
+                "textAlign": "left"
+              }
+            ]
           }
         ]
       }

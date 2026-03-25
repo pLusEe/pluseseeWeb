@@ -111,9 +111,17 @@
   border-bottom: 1px solid rgba(0,0,0,0.03); /* subtle separator between long sections if needed, or none */
 }
 
-.manualPageBase {
-  padding: 0 !important;
-  background: rgba(255, 255, 255, 0.82);
+.manualSpread {
+  display: block;
+  left: calc((100vw - 100%) / 2);
+}
+
+.manualCanvas {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  background: rgba(255, 255, 255, 0.94);
+  overflow: hidden;
 }
 
 .manualLayer {
@@ -392,6 +400,13 @@
     flex-direction: column;
     min-height: auto;
     left: 0;
+  }
+  .manualSpread {
+    left: 0;
+    min-height: 88vh;
+  }
+  .manualCanvas {
+    min-height: 88vh;
   }
   .leftPage, .rightPage {
     width: 100%;
