@@ -185,7 +185,8 @@ const COMMERCIAL_TEXT_STANDARD = {
 const MIN_MEDIA_SCALE = 10;
 const MAX_MEDIA_SCALE = 1600;
 const MAX_MEDIA_SIZE = 360;
-const CANVAS_SNAP_PX = 26;
+const CANVAS_SNAP_PX = 42;
+const COMMERCIAL_SPINE_OFFSET_PERCENT = 0.5;
 const dedupeSnapTargets = (targets) => {
   const map = new Map();
   toArray(targets).forEach((target) => {
@@ -275,6 +276,102 @@ const getCommercialCanvasBounds = (element) => {
     maxX: 100 - width,
     minY: 0,
     maxY: 100 - height,
+  };
+};
+const getCommercialVisibleBox = (element) => {
+  const width = clampNumber(toNumberSafe(element?.width, 20), 2, MAX_MEDIA_SIZE);
+  const height = clampNumber(toNumberSafe(element?.height, 20), 2, MAX_MEDIA_SIZE);
+  const type = toStringSafe(element?.type).toLowerCase();
+  if (type !== "media") {
+    return {
+      offsetX: 0,
+      offsetY: 0,
+      width,
+      height,
+    };
+  }
+  const mediaAspect = resolveMediaAspect(element?.mediaAspect, width, height);
+  const boxAspect = width / Math.max(height, 0.01);
+  if (Math.abs(boxAspect - mediaAspect) < 0.0001) {
+    return {
+      offsetX: 0,
+      offsetY: 0,
+      width,
+      height,
+    };
+  }
+  if (boxAspect > mediaAspect) {
+    const visibleWidth = clampNumber(height * mediaAspect, 0.1, width);
+    return {
+      offsetX: (width - visibleWidth) / 2,
+      offsetY: 0,
+      width: visibleWidth,
+      height,
+    };
+  }
+  const visibleHeight = clampNumber(width / mediaAspect, 0.1, height);
+  return {
+    offsetX: 0,
+    offsetY: (height - visibleHeight) / 2,
+    width,
+    height: visibleHeight,
+  };
+};
+const getCommercialVisibleBoxFromDom = (element, node, zoneWidth, zoneHeight) => {
+  const fallback = getCommercialVisibleBox(element);
+  const type = toStringSafe(element?.type).toLowerCase();
+  const safeZoneWidth = Math.max(1, toNumberSafe(zoneWidth, 0));
+  const safeZoneHeight = Math.max(1, toNumberSafe(zoneHeight, 0));
+  if (type !== "media" || !node || safeZoneWidth <= 0 || safeZoneHeight <= 0) {
+    return fallback;
+  }
+  const mediaNode = node.querySelector("img, video");
+  if (!mediaNode) return fallback;
+  const boxRect = node.getBoundingClientRect();
+  const boxWidthPx = toNumberSafe(boxRect.width, 0);
+  const boxHeightPx = toNumberSafe(boxRect.height, 0);
+  if (boxWidthPx <= 0 || boxHeightPx <= 0) return fallback;
+
+  let intrinsicWidth = 0;
+  let intrinsicHeight = 0;
+  if (mediaNode instanceof HTMLImageElement) {
+    intrinsicWidth = toNumberSafe(mediaNode.naturalWidth, 0);
+    intrinsicHeight = toNumberSafe(mediaNode.naturalHeight, 0);
+  } else if (mediaNode instanceof HTMLVideoElement) {
+    intrinsicWidth = toNumberSafe(mediaNode.videoWidth, 0);
+    intrinsicHeight = toNumberSafe(mediaNode.videoHeight, 0);
+  }
+  if (intrinsicWidth <= 0 || intrinsicHeight <= 0) {
+    const fallbackAspect = resolveMediaAspect(element?.mediaAspect, fallback.width, fallback.height);
+    intrinsicWidth = fallbackAspect;
+    intrinsicHeight = 1;
+  }
+
+  const mediaAspect = intrinsicWidth / Math.max(intrinsicHeight, 0.01);
+  const boxAspect = boxWidthPx / Math.max(boxHeightPx, 0.01);
+  let visibleWidthPx = boxWidthPx;
+  let visibleHeightPx = boxHeightPx;
+  let offsetXpx = 0;
+  let offsetYpx = 0;
+
+  if (boxAspect > mediaAspect) {
+    visibleHeightPx = boxHeightPx;
+    visibleWidthPx = boxHeightPx * mediaAspect;
+    offsetXpx = (boxWidthPx - visibleWidthPx) / 2;
+  } else {
+    visibleWidthPx = boxWidthPx;
+    visibleHeightPx = boxWidthPx / Math.max(mediaAspect, 0.01);
+    offsetYpx = (boxHeightPx - visibleHeightPx) / 2;
+  }
+
+  const maxWidthPercent = clampNumber(toNumberSafe(element?.width, fallback.width), 0.1, MAX_MEDIA_SIZE);
+  const maxHeightPercent = clampNumber(toNumberSafe(element?.height, fallback.height), 0.1, MAX_MEDIA_SIZE);
+
+  return {
+    offsetX: clampNumber((offsetXpx / safeZoneWidth) * 100, 0, maxWidthPercent),
+    offsetY: clampNumber((offsetYpx / safeZoneHeight) * 100, 0, maxHeightPercent),
+    width: clampNumber((visibleWidthPx / safeZoneWidth) * 100, 0.1, MAX_MEDIA_SIZE),
+    height: clampNumber((visibleHeightPx / safeZoneHeight) * 100, 0.1, MAX_MEDIA_SIZE),
   };
 };
 const normalizeCommercialCanvasElement = (raw, fallbackId = "element") => {
@@ -833,6 +930,7 @@ export default function AdminPage() {
   const [commercialSnapGuides, setCommercialSnapGuides] = useState({ x: null, y: null });
   const commercialCanvasRef = useRef(null);
   const commercialDragRef = useRef(null);
+  const commercialElementNodeRef = useRef(new Map());
   const commercialInitTrimRef = useRef(false);
 
   const itemMapById = useMemo(
@@ -1248,14 +1346,15 @@ export default function AdminPage() {
       const nextScale = clampNumber(rect.width / 1600, 0.46, 1);
       setCommercialCanvasScale(nextScale);
       if (typeof window !== "undefined") {
-        const viewportRatio = clampNumber(
-          window.innerWidth / Math.max(window.innerHeight, 1),
+        const layoutWidth = Math.max(
           1,
-          2.6
+          toNumberSafe(document?.documentElement?.clientWidth, window.innerWidth)
         );
+        const layoutHeight = Math.max(1, toNumberSafe(window.innerHeight, 1));
+        const viewportRatio = clampNumber(layoutWidth / layoutHeight, 0.6, 2.6);
         setCommercialViewportRatio(viewportRatio);
-        setCommercialSpinePercent(50);
       }
+      setCommercialSpinePercent(50);
     };
     updateScale();
     let observer = null;
@@ -1720,7 +1819,7 @@ export default function AdminPage() {
         (element) => toStringSafe(element.id) === toStringSafe(selectedCommercialElementId)
       ) || toArray(activePage?.elements)[0] || null;
     const selectedElementId = toStringSafe(selectedElement?.id);
-    const spineCenter = commercialSpinePercent;
+    const spineCenter = clampNumber(commercialSpinePercent + COMMERCIAL_SPINE_OFFSET_PERCENT, 0, 100);
     const leftPageCenter = spineCenter / 2;
     const rightPageCenter = spineCenter + (100 - spineCenter) / 2;
 
@@ -2027,31 +2126,42 @@ export default function AdminPage() {
 
     const startDrag = (event, element) => {
       if (!element || event.button !== 0) return;
-      const rect = commercialCanvasRef.current?.getBoundingClientRect();
+      const canvasNode = commercialCanvasRef.current;
+      const rect = canvasNode?.getBoundingClientRect();
       if (!rect) return;
       event.preventDefault();
       event.stopPropagation();
       const normalized = normalizeCommercialCanvasElement(element, toStringSafe(element.id));
-      const zoneWidth = rect.width;
-      const zoneHeight = rect.height;
+      const zoneWidth = Math.max(1, toNumberSafe(canvasNode?.clientWidth, rect.width));
+      const zoneHeight = Math.max(1, toNumberSafe(canvasNode?.clientHeight, rect.height));
       const baseX = normalized.x;
       const baseY = normalized.y;
       const width = normalized.width;
       const height = normalized.height;
+      const visibleBox = getCommercialVisibleBoxFromDom(
+        normalized,
+        event.currentTarget,
+        zoneWidth,
+        zoneHeight
+      );
       const bounds = getCommercialCanvasBounds({ ...normalized, width, height });
       const id = toStringSafe(normalized.id);
       const snapThresholdX = (CANVAS_SNAP_PX / Math.max(1, zoneWidth)) * 100;
       const snapThresholdY = (CANVAS_SNAP_PX / Math.max(1, zoneHeight)) * 100;
+      const snapOffsetX = visibleBox.offsetX;
+      const snapOffsetY = visibleBox.offsetY;
+      const snapWidth = visibleBox.width;
+      const snapHeight = visibleBox.height;
       const xTargets = [
-        { left: clampNumber(0, bounds.minX, bounds.maxX), guide: 0 },
-        { left: clampNumber(100 - width, bounds.minX, bounds.maxX), guide: 100 },
-        { left: clampNumber(spineCenter, bounds.minX, bounds.maxX), guide: spineCenter },
-        { left: clampNumber(spineCenter - width, bounds.minX, bounds.maxX), guide: spineCenter },
+        { left: clampNumber(0 - snapOffsetX, bounds.minX, bounds.maxX), guide: 0 },
+        { left: clampNumber(100 - snapOffsetX - snapWidth, bounds.minX, bounds.maxX), guide: 100 },
+        { left: clampNumber(spineCenter - snapOffsetX, bounds.minX, bounds.maxX), guide: spineCenter },
+        { left: clampNumber(spineCenter - snapOffsetX - snapWidth, bounds.minX, bounds.maxX), guide: spineCenter },
       ];
       const yTargets = [
-        { left: clampNumber(0, bounds.minY, bounds.maxY), guide: 0 },
-        { left: clampNumber((100 - height) / 2, bounds.minY, bounds.maxY), guide: 50 },
-        { left: clampNumber(100 - height, bounds.minY, bounds.maxY), guide: 100 },
+        { left: clampNumber(0 - snapOffsetY, bounds.minY, bounds.maxY), guide: 0 },
+        { left: clampNumber((100 - snapHeight) / 2 - snapOffsetY, bounds.minY, bounds.maxY), guide: 50 },
+        { left: clampNumber(100 - snapHeight - snapOffsetY, bounds.minY, bounds.maxY), guide: 100 },
       ];
       stopPointerSession();
 
@@ -2167,8 +2277,16 @@ export default function AdminPage() {
         width: normalized.width,
         height: normalized.height,
       });
+      const canvasNode = commercialCanvasRef.current;
+      const canvasRect = canvasNode?.getBoundingClientRect();
+      const zoneWidth = Math.max(1, toNumberSafe(canvasNode?.clientWidth, canvasRect?.width));
+      const zoneHeight = Math.max(1, toNumberSafe(canvasNode?.clientHeight, canvasRect?.height));
+      const elementNode = commercialElementNodeRef.current.get(toStringSafe(normalized.id)) || null;
+      const visibleBox = getCommercialVisibleBoxFromDom(normalized, elementNode, zoneWidth, zoneHeight);
       const nextX =
-        edge === "left" ? 0 : 100 - normalized.width;
+        edge === "left"
+          ? 0 - visibleBox.offsetX
+          : 100 - visibleBox.offsetX - visibleBox.width;
       updateElementById(toStringSafe(normalized.id), {
         x: clampNumber(nextX, bounds.minX, bounds.maxX),
       });
@@ -2186,7 +2304,16 @@ export default function AdminPage() {
         width: normalized.width,
         height: normalized.height,
       });
-      const nextX = side === "leftEdge" ? spineCenter : spineCenter - normalized.width;
+      const canvasNode = commercialCanvasRef.current;
+      const canvasRect = canvasNode?.getBoundingClientRect();
+      const zoneWidth = Math.max(1, toNumberSafe(canvasNode?.clientWidth, canvasRect?.width));
+      const zoneHeight = Math.max(1, toNumberSafe(canvasNode?.clientHeight, canvasRect?.height));
+      const elementNode = commercialElementNodeRef.current.get(toStringSafe(normalized.id)) || null;
+      const visibleBox = getCommercialVisibleBoxFromDom(normalized, elementNode, zoneWidth, zoneHeight);
+      const nextX =
+        side === "leftEdge"
+          ? spineCenter - visibleBox.offsetX
+          : spineCenter - visibleBox.offsetX - visibleBox.width;
       updateElementById(toStringSafe(normalized.id), {
         x: clampNumber(nextX, bounds.minX, bounds.maxX),
       });
@@ -2361,6 +2488,15 @@ export default function AdminPage() {
                     return (
                       <button
                         key={`canvas-${normalized.id}`}
+                        ref={(node) => {
+                          const refKey = toStringSafe(normalized.id);
+                          if (!refKey) return;
+                          if (node) {
+                            commercialElementNodeRef.current.set(refKey, node);
+                          } else {
+                            commercialElementNodeRef.current.delete(refKey);
+                          }
+                        }}
                         type="button"
                         className={`${styles.canvasElement} ${
                           normalized.type === "text" ? styles.canvasElementText : styles.canvasElementMedia
