@@ -43,7 +43,10 @@ const COMMERCIAL_TEXT_STANDARD = {
 };
 const MIN_MEDIA_SCALE = 10;
 const MAX_MEDIA_SCALE = 1600;
-const MAX_MEDIA_SIZE = 360;
+const MAX_MEDIA_SIZE = 2000;
+const DEFAULT_CANVAS_RATIO = 16 / 9;
+const getSafeCanvasRatio = (rawRatio) =>
+  clampNumber(toNumberSafe(rawRatio, DEFAULT_CANVAS_RATIO), 0.4, 4);
 const resolveMediaScale = (rawScale) =>
   clampNumber(toNumberSafe(rawScale, 100), MIN_MEDIA_SCALE, MAX_MEDIA_SCALE);
 const resolveMediaAspect = (rawAspect, rawWidth, rawHeight) => {
@@ -61,19 +64,28 @@ const resolveMediaBase = (rawBase, rawWidth, rawHeight) => {
   const height = clampNumber(toNumberSafe(rawHeight, 84), 5, 100);
   return clampNumber(Math.min(width, height) * 0.38, 10, 48);
 };
-const getCommercialMediaRenderSize = (rawAspect, rawScale, rawBase, rawWidth, rawHeight) => {
+const getCommercialMediaRenderSize = (
+  rawAspect,
+  rawScale,
+  rawBase,
+  rawWidth,
+  rawHeight,
+  canvasRatio = DEFAULT_CANVAS_RATIO
+) => {
   const aspect = resolveMediaAspect(rawAspect, rawWidth, rawHeight);
+  const safeRatio = getSafeCanvasRatio(canvasRatio);
   const scale = resolveMediaScale(rawScale) / 100;
   const baseShort = resolveMediaBase(rawBase, rawWidth, rawHeight) * scale;
-  if (aspect >= 1) {
-    return {
-      width: clampNumber(baseShort * aspect, 2, MAX_MEDIA_SIZE),
-      height: clampNumber(baseShort, 2, MAX_MEDIA_SIZE),
-    };
-  }
+  const baseWidth = aspect >= 1 ? baseShort * aspect : baseShort;
+  const baseHeight = baseWidth * (safeRatio / Math.max(aspect, 0.01));
+  const boundedWidth = clampNumber(baseWidth, 2, MAX_MEDIA_SIZE);
+  const boundedHeight = clampNumber(baseHeight, 2, MAX_MEDIA_SIZE);
+  const widthScale = boundedWidth / Math.max(baseWidth, 0.01);
+  const heightScale = boundedHeight / Math.max(baseHeight, 0.01);
+  const safeScale = Math.min(widthScale, heightScale);
   return {
-    width: clampNumber(baseShort, 2, MAX_MEDIA_SIZE),
-    height: clampNumber(baseShort / aspect, 2, MAX_MEDIA_SIZE),
+    width: clampNumber(baseWidth * safeScale, 2, MAX_MEDIA_SIZE),
+    height: clampNumber(baseHeight * safeScale, 2, MAX_MEDIA_SIZE),
   };
 };
 const getCommercialCanvasBounds = (element) => {
@@ -112,7 +124,8 @@ const estimateCommercialTextBoxSize = (text) => {
   const height = clampNumber(10 + wrappedLines * 6.4, 12, 82);
   return { width, height };
 };
-const normalizeManualElement = (rawElement, fallbackId) => {
+const normalizeManualElement = (rawElement, fallbackId, canvasRatio = DEFAULT_CANVAS_RATIO) => {
+  const safeRatio = getSafeCanvasRatio(canvasRatio);
   const type = toStringSafe(rawElement?.type).toLowerCase() === "text" ? "text" : "media";
   const page = "both";
   const text = toStringSafe(rawElement?.text);
@@ -129,7 +142,8 @@ const normalizeManualElement = (rawElement, fallbackId) => {
           mediaScale,
           mediaBase,
           rawElement?.width,
-          rawElement?.height
+          rawElement?.height,
+          safeRatio
         )
       : null;
   const width =
@@ -168,27 +182,33 @@ const normalizeManualElement = (rawElement, fallbackId) => {
     textAlign: COMMERCIAL_TEXT_STANDARD.textAlign,
   };
 };
-const normalizeManualPage = (rawPage, pageIndex, projectId) => ({
+const normalizeManualPage = (rawPage, pageIndex, projectId, canvasRatio = DEFAULT_CANVAS_RATIO) => ({
   id: toStringSafe(rawPage?.id, `page-${pageIndex + 1}`),
   label: toStringSafe(rawPage?.label, `页面 ${pageIndex + 1}`),
   elements: toArray(rawPage?.elements)
     .map((element, elementIndex) =>
       normalizeManualElement(
         element,
-        `${projectId}-page-${pageIndex + 1}-element-${elementIndex + 1}`
+        `${projectId}-page-${pageIndex + 1}-element-${elementIndex + 1}`,
+        canvasRatio
       )
     )
     .filter((element) =>
       element.type === "text" ? Boolean(toStringSafe(element.text).trim()) : Boolean(toStringSafe(element.mediaUrl).trim())
     ),
 });
-const normalizeManualProject = (rawProject, index) => ({
+const normalizeManualProject = (rawProject, index, canvasRatio = DEFAULT_CANVAS_RATIO) => ({
   id: toStringSafe(rawProject?.id, `project-${index + 1}`),
   label: toStringSafe(rawProject?.label, `Project ${index + 1}`),
   pages:
     toArray(rawProject?.pages).length > 0
       ? toArray(rawProject?.pages).map((page, pageIndex) =>
-          normalizeManualPage(page, pageIndex, toStringSafe(rawProject?.id, `project-${index + 1}`))
+          normalizeManualPage(
+            page,
+            pageIndex,
+            toStringSafe(rawProject?.id, `project-${index + 1}`),
+            canvasRatio
+          )
         )
       : [
           normalizeManualPage(
@@ -198,7 +218,8 @@ const normalizeManualProject = (rawProject, index) => ({
               elements: toArray(rawProject?.elements),
             },
             0,
-            toStringSafe(rawProject?.id, `project-${index + 1}`)
+            toStringSafe(rawProject?.id, `project-${index + 1}`),
+            canvasRatio
           ),
         ],
 });
@@ -220,6 +241,7 @@ export default function CommercialDesignPage() {
   const [items, setItems] = useState([]);
   const [commercial, setCommercial] = useState(defaultCommercial);
   const [spineLeftPx, setSpineLeftPx] = useState(null);
+  const [viewportRatio, setViewportRatio] = useState(DEFAULT_CANVAS_RATIO);
   const bookContainerRef = useRef(null);
   const manualCanvasNodeRef = useRef(new Map());
 
@@ -251,6 +273,21 @@ export default function CommercialDesignPage() {
       .catch(() => {});
   }, []);
 
+  useLayoutEffect(() => {
+    const syncRatio = () => {
+      if (typeof window === "undefined") return;
+      const layoutWidth = Math.max(
+        1,
+        toNumberSafe(document?.documentElement?.clientWidth, window.innerWidth)
+      );
+      const layoutHeight = Math.max(1, toNumberSafe(window.innerHeight, 1));
+      setViewportRatio(getSafeCanvasRatio(layoutWidth / layoutHeight));
+    };
+    syncRatio();
+    window.addEventListener("resize", syncRatio);
+    return () => window.removeEventListener("resize", syncRatio);
+  }, []);
+
   const safeItems = useMemo(() => {
     if (Array.isArray(items) && items.length > 0) return items;
     return [{ title: "Placeholder", mediaUrl: FALLBACK_IMAGE, thumbUrl: FALLBACK_IMAGE }];
@@ -258,8 +295,11 @@ export default function CommercialDesignPage() {
 
   const sections = commercial?.sections || defaultCommercial.sections;
   const manualProjects = useMemo(
-    () => toArray(commercial?.manualLayouts).map((project, index) => normalizeManualProject(project, index)),
-    [commercial?.manualLayouts]
+    () =>
+      toArray(commercial?.manualLayouts).map((project, index) =>
+        normalizeManualProject(project, index, viewportRatio)
+      ),
+    [commercial?.manualLayouts, viewportRatio]
   );
 
   const navItems =

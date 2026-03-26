@@ -184,8 +184,11 @@ const COMMERCIAL_TEXT_STANDARD = {
 };
 const MIN_MEDIA_SCALE = 10;
 const MAX_MEDIA_SCALE = 1600;
-const MAX_MEDIA_SIZE = 360;
+const MAX_MEDIA_SIZE = 2000;
 const CANVAS_SNAP_PX = 30;
+const DEFAULT_CANVAS_RATIO = 16 / 9;
+const getSafeCanvasRatio = (rawRatio) =>
+  clampNumber(toNumberSafe(rawRatio, DEFAULT_CANVAS_RATIO), 0.4, 4);
 const dedupeSnapTargets = (targets) => {
   const map = new Map();
   toArray(targets).forEach((target) => {
@@ -243,20 +246,32 @@ const resolveMediaBase = (rawBase, rawWidth, rawHeight) => {
   const height = clampNumber(toNumberSafe(rawHeight, 84), 5, 100);
   return clampNumber(Math.min(width, height) * 0.38, 10, 48);
 };
-const getCommercialMediaRenderSize = (rawAspect, rawScale, rawBase, rawWidth, rawHeight) => {
+const getCommercialMediaRenderSize = (
+  rawAspect,
+  rawScale,
+  rawBase,
+  rawWidth,
+  rawHeight,
+  canvasRatio = DEFAULT_CANVAS_RATIO
+) => {
   const aspect = resolveMediaAspect(rawAspect, rawWidth, rawHeight);
+  const safeRatio = getSafeCanvasRatio(canvasRatio);
   const scale = resolveMediaScale(rawScale) / 100;
   const baseShort = resolveMediaBase(rawBase, rawWidth, rawHeight) * scale;
-  if (aspect >= 1) {
-    return {
-      width: clampNumber(baseShort * aspect, 2, MAX_MEDIA_SIZE),
-      height: clampNumber(baseShort, 2, MAX_MEDIA_SIZE),
-    };
-  }
-  return {
-    width: clampNumber(baseShort, 2, MAX_MEDIA_SIZE),
-    height: clampNumber(baseShort / aspect, 2, MAX_MEDIA_SIZE),
-  };
+  const baseWidth = aspect >= 1 ? baseShort * aspect : baseShort;
+  const baseHeight = baseWidth * (safeRatio / Math.max(aspect, 0.01));
+  const boundedWidth = clampNumber(baseWidth, 2, MAX_MEDIA_SIZE);
+  const boundedHeight = clampNumber(baseHeight, 2, MAX_MEDIA_SIZE);
+
+  // Keep media box and real image in the same aspect relation across viewport resize.
+  // This removes the "visible image shifts inside transparent box" problem.
+  const widthScale = boundedWidth / Math.max(baseWidth, 0.01);
+  const heightScale = boundedHeight / Math.max(baseHeight, 0.01);
+  const safeScale = Math.min(widthScale, heightScale);
+  const width = clampNumber(baseWidth * safeScale, 2, MAX_MEDIA_SIZE);
+  const height = clampNumber(baseHeight * safeScale, 2, MAX_MEDIA_SIZE);
+
+  return { width, height };
 };
 const getCommercialCanvasBounds = (element) => {
   const width = clampNumber(toNumberSafe(element?.width, 20), 2, MAX_MEDIA_SIZE);
@@ -280,100 +295,20 @@ const getCommercialCanvasBounds = (element) => {
 const getCommercialVisibleBox = (element) => {
   const width = clampNumber(toNumberSafe(element?.width, 20), 2, MAX_MEDIA_SIZE);
   const height = clampNumber(toNumberSafe(element?.height, 20), 2, MAX_MEDIA_SIZE);
-  const type = toStringSafe(element?.type).toLowerCase();
-  if (type !== "media") {
-    return {
-      offsetX: 0,
-      offsetY: 0,
-      width,
-      height,
-    };
-  }
-  const mediaAspect = resolveMediaAspect(element?.mediaAspect, width, height);
-  const boxAspect = width / Math.max(height, 0.01);
-  if (Math.abs(boxAspect - mediaAspect) < 0.0001) {
-    return {
-      offsetX: 0,
-      offsetY: 0,
-      width,
-      height,
-    };
-  }
-  if (boxAspect > mediaAspect) {
-    const visibleWidth = clampNumber(height * mediaAspect, 0.1, width);
-    return {
-      offsetX: (width - visibleWidth) / 2,
-      offsetY: 0,
-      width: visibleWidth,
-      height,
-    };
-  }
-  const visibleHeight = clampNumber(width / mediaAspect, 0.1, height);
   return {
     offsetX: 0,
-    offsetY: (height - visibleHeight) / 2,
+    offsetY: 0,
     width,
-    height: visibleHeight,
+    height,
   };
 };
-const getCommercialVisibleBoxFromDom = (element, node, zoneWidth, zoneHeight) => {
-  const fallback = getCommercialVisibleBox(element);
-  const type = toStringSafe(element?.type).toLowerCase();
-  const safeZoneWidth = Math.max(1, toNumberSafe(zoneWidth, 0));
-  const safeZoneHeight = Math.max(1, toNumberSafe(zoneHeight, 0));
-  if (type !== "media" || !node || safeZoneWidth <= 0 || safeZoneHeight <= 0) {
-    return fallback;
-  }
-  const mediaNode = node.querySelector("img, video");
-  if (!mediaNode) return fallback;
-  const boxRect = node.getBoundingClientRect();
-  const boxWidthPx = toNumberSafe(boxRect.width, 0);
-  const boxHeightPx = toNumberSafe(boxRect.height, 0);
-  if (boxWidthPx <= 0 || boxHeightPx <= 0) return fallback;
-
-  let intrinsicWidth = 0;
-  let intrinsicHeight = 0;
-  if (mediaNode instanceof HTMLImageElement) {
-    intrinsicWidth = toNumberSafe(mediaNode.naturalWidth, 0);
-    intrinsicHeight = toNumberSafe(mediaNode.naturalHeight, 0);
-  } else if (mediaNode instanceof HTMLVideoElement) {
-    intrinsicWidth = toNumberSafe(mediaNode.videoWidth, 0);
-    intrinsicHeight = toNumberSafe(mediaNode.videoHeight, 0);
-  }
-  if (intrinsicWidth <= 0 || intrinsicHeight <= 0) {
-    const fallbackAspect = resolveMediaAspect(element?.mediaAspect, fallback.width, fallback.height);
-    intrinsicWidth = fallbackAspect;
-    intrinsicHeight = 1;
-  }
-
-  const mediaAspect = intrinsicWidth / Math.max(intrinsicHeight, 0.01);
-  const boxAspect = boxWidthPx / Math.max(boxHeightPx, 0.01);
-  let visibleWidthPx = boxWidthPx;
-  let visibleHeightPx = boxHeightPx;
-  let offsetXpx = 0;
-  let offsetYpx = 0;
-
-  if (boxAspect > mediaAspect) {
-    visibleHeightPx = boxHeightPx;
-    visibleWidthPx = boxHeightPx * mediaAspect;
-    offsetXpx = (boxWidthPx - visibleWidthPx) / 2;
-  } else {
-    visibleWidthPx = boxWidthPx;
-    visibleHeightPx = boxWidthPx / Math.max(mediaAspect, 0.01);
-    offsetYpx = (boxHeightPx - visibleHeightPx) / 2;
-  }
-
-  const maxWidthPercent = clampNumber(toNumberSafe(element?.width, fallback.width), 0.1, MAX_MEDIA_SIZE);
-  const maxHeightPercent = clampNumber(toNumberSafe(element?.height, fallback.height), 0.1, MAX_MEDIA_SIZE);
-
-  return {
-    offsetX: clampNumber((offsetXpx / safeZoneWidth) * 100, 0, maxWidthPercent),
-    offsetY: clampNumber((offsetYpx / safeZoneHeight) * 100, 0, maxHeightPercent),
-    width: clampNumber((visibleWidthPx / safeZoneWidth) * 100, 0.1, MAX_MEDIA_SIZE),
-    height: clampNumber((visibleHeightPx / safeZoneHeight) * 100, 0.1, MAX_MEDIA_SIZE),
-  };
-};
-const normalizeCommercialCanvasElement = (raw, fallbackId = "element") => {
+const getCommercialVisibleBoxFromDom = (element) => getCommercialVisibleBox(element);
+const normalizeCommercialCanvasElement = (
+  raw,
+  fallbackId = "element",
+  canvasRatio = DEFAULT_CANVAS_RATIO
+) => {
+  const safeRatio = getSafeCanvasRatio(canvasRatio);
   const type = toStringSafe(raw?.type).toLowerCase() === "text" ? "text" : "media";
   const page = "both";
   const text = toStringSafe(raw?.text);
@@ -390,7 +325,8 @@ const normalizeCommercialCanvasElement = (raw, fallbackId = "element") => {
           mediaScale,
           mediaBase,
           raw?.width,
-          raw?.height
+          raw?.height,
+          safeRatio
         )
       : null;
   const width =
@@ -434,7 +370,12 @@ const normalizeCommercialCanvasElement = (raw, fallbackId = "element") => {
     textAlign: COMMERCIAL_TEXT_STANDARD.textAlign,
   };
 };
-const normalizeCommercialCanvasPage = (rawPage, pageIndex, projectId) => {
+const normalizeCommercialCanvasPage = (
+  rawPage,
+  pageIndex,
+  projectId,
+  canvasRatio = DEFAULT_CANVAS_RATIO
+) => {
   const pageId =
     toStringSafe(rawPage?.id, `page-${pageIndex + 1}`).trim() || `page-${pageIndex + 1}`;
   const pageLabel =
@@ -443,7 +384,8 @@ const normalizeCommercialCanvasPage = (rawPage, pageIndex, projectId) => {
     .map((element, elementIndex) =>
       normalizeCommercialCanvasElement(
         element,
-        `${projectId}-${pageId}-element-${elementIndex + 1}`
+        `${projectId}-${pageId}-element-${elementIndex + 1}`,
+        canvasRatio
       )
     )
     .filter((element) => {
@@ -456,7 +398,12 @@ const normalizeCommercialCanvasPage = (rawPage, pageIndex, projectId) => {
     elements,
   };
 };
-const normalizeCommercialCanvasProject = (rawProject, index, navItems = []) => {
+const normalizeCommercialCanvasProject = (
+  rawProject,
+  index,
+  navItems = [],
+  canvasRatio = DEFAULT_CANVAS_RATIO
+) => {
   const fallbackNav = toArray(navItems)[index];
   const projectId = toStringSafe(rawProject?.id, toStringSafe(fallbackNav?.id, `project-${index + 1}`)).trim() || `project-${index + 1}`;
   const navLabel = toStringSafe(toArray(navItems).find((item) => toStringSafe(item?.id) === projectId)?.label);
@@ -465,7 +412,7 @@ const normalizeCommercialCanvasProject = (rawProject, index, navItems = []) => {
   const pages =
     rawPages.length > 0
       ? rawPages.map((page, pageIndex) =>
-          normalizeCommercialCanvasPage(page, pageIndex, projectId)
+          normalizeCommercialCanvasPage(page, pageIndex, projectId, canvasRatio)
         )
       : [
           normalizeCommercialCanvasPage(
@@ -475,7 +422,8 @@ const normalizeCommercialCanvasProject = (rawProject, index, navItems = []) => {
               elements: toArray(rawProject?.elements),
             },
             0,
-            projectId
+            projectId,
+            canvasRatio
           ),
         ];
   return {
@@ -1219,10 +1167,12 @@ export default function AdminPage() {
     const navItems = toArray(config?.commercialDesign?.navItems);
     const rawProjects = toArray(config?.commercialDesign?.manualLayouts);
     if (rawProjects.length > 0) {
-      return rawProjects.map((project, index) => normalizeCommercialCanvasProject(project, index, navItems));
+      return rawProjects.map((project, index) =>
+        normalizeCommercialCanvasProject(project, index, navItems, commercialViewportRatio)
+      );
     }
     return [];
-  }, [config?.commercialDesign?.manualLayouts, config?.commercialDesign?.navItems]);
+  }, [config?.commercialDesign?.manualLayouts, config?.commercialDesign?.navItems, commercialViewportRatio]);
 
   useEffect(() => {
     if (activePanel !== "commercial") return;
@@ -1251,7 +1201,7 @@ export default function AdminPage() {
       const next = structuredClone(prev);
       const navItems = toArray(next?.commercialDesign?.navItems);
       const current = toArray(next?.commercialDesign?.manualLayouts).map((project, index) =>
-        normalizeCommercialCanvasProject(project, index, navItems)
+        normalizeCommercialCanvasProject(project, index, navItems, commercialViewportRatio)
       );
       if (current.length <= 2) return prev;
       const trimmed = current.slice(0, 2);
@@ -1262,7 +1212,7 @@ export default function AdminPage() {
       }));
       return next;
     });
-  }, [activePanel]);
+  }, [activePanel, commercialViewportRatio]);
 
   useEffect(() => {
     if (activePanel !== "commercial") return;
@@ -1847,10 +1797,12 @@ export default function AdminPage() {
         const baseRaw = toArray(next?.commercialDesign?.manualLayouts);
         const baseProjects =
           baseRaw.length > 0
-            ? baseRaw.map((project, index) => normalizeCommercialCanvasProject(project, index, nav))
+            ? baseRaw.map((project, index) =>
+                normalizeCommercialCanvasProject(project, index, nav, commercialViewportRatio)
+              )
             : buildLegacyCommercialManualLayouts(next.commercialDesign, items);
         const updated = toArray(updater(baseProjects)).map((project, index) =>
-          normalizeCommercialCanvasProject(project, index, nav)
+          normalizeCommercialCanvasProject(project, index, nav, commercialViewportRatio)
         );
         next.commercialDesign.manualLayouts = updated;
         next.commercialDesign.navItems = buildNavFromProjects(nav, updated);
@@ -1874,7 +1826,8 @@ export default function AdminPage() {
                       toStringSafe(element.id) === toStringSafe(elementId)
                         ? normalizeCommercialCanvasElement(
                             { ...element, ...patch },
-                            toStringSafe(element.id)
+                            toStringSafe(element.id),
+                            commercialViewportRatio
                           )
                         : element
                     ),
@@ -2054,7 +2007,7 @@ export default function AdminPage() {
               fit: "contain",
               zIndex: 12,
             };
-      const element = normalizeCommercialCanvasElement(draft, elementId);
+      const element = normalizeCommercialCanvasElement(draft, elementId, commercialViewportRatio);
       applyProjectsUpdate((baseProjects) =>
         baseProjects.map((project) =>
           toStringSafe(project.id) === activeProjectId
@@ -2101,7 +2054,11 @@ export default function AdminPage() {
     };
 
     const getCanvasStyle = (element) => {
-      const normalized = normalizeCommercialCanvasElement(element, toStringSafe(element?.id));
+      const normalized = normalizeCommercialCanvasElement(
+        element,
+        toStringSafe(element?.id),
+        commercialViewportRatio
+      );
       return {
         left: `${normalized.x}%`,
         top: `${normalized.y}%`,
@@ -2130,7 +2087,11 @@ export default function AdminPage() {
       if (!rect) return;
       event.preventDefault();
       event.stopPropagation();
-      const normalized = normalizeCommercialCanvasElement(element, toStringSafe(element.id));
+      const normalized = normalizeCommercialCanvasElement(
+        element,
+        toStringSafe(element.id),
+        commercialViewportRatio
+      );
       const zoneWidth = Math.max(1, toNumberSafe(canvasNode?.clientWidth, rect.width));
       const zoneHeight = Math.max(1, toNumberSafe(canvasNode?.clientHeight, rect.height));
       const baseX = normalized.x;
@@ -2201,7 +2162,11 @@ export default function AdminPage() {
         (element) => toStringSafe(element.id) === toStringSafe(elementId)
       );
       if (!target) return;
-      const normalized = normalizeCommercialCanvasElement(target, toStringSafe(target.id));
+      const normalized = normalizeCommercialCanvasElement(
+        target,
+        toStringSafe(target.id),
+        commercialViewportRatio
+      );
       if (normalized.type !== "media") return;
       const aspect = resolveMediaAspect(
         normalized.mediaAspect,
@@ -2213,21 +2178,27 @@ export default function AdminPage() {
         normalized.width,
         normalized.height
       );
-      const targetShort =
+      const safeRatio = getSafeCanvasRatio(commercialViewportRatio);
+      const sizeAtScale100 = getCommercialMediaRenderSize(
+        aspect,
+        100,
+        base,
+        normalized.width,
+        normalized.height,
+        safeRatio
+      );
+      const targetWidth =
         preset === "fitHeight"
-          ? aspect >= 1
-            ? 100
-            : 100 * aspect
-          : aspect >= 1
-            ? 100 / aspect
-            : 100;
-      const nextScale = resolveMediaScale((targetShort / Math.max(base, 0.1)) * 100);
+          ? (100 * aspect) / Math.max(safeRatio, 0.01)
+          : 100;
+      const nextScale = resolveMediaScale((targetWidth / Math.max(sizeAtScale100.width, 0.1)) * 100);
       const nextSize = getCommercialMediaRenderSize(
         aspect,
         nextScale,
         base,
         normalized.width,
-        normalized.height
+        normalized.height,
+        safeRatio
       );
       const bounds = getCommercialCanvasBounds({
         type: "media",
@@ -2248,7 +2219,11 @@ export default function AdminPage() {
         (element) => toStringSafe(element.id) === toStringSafe(elementId)
       );
       if (!target) return;
-      const normalized = normalizeCommercialCanvasElement(target, toStringSafe(target.id));
+      const normalized = normalizeCommercialCanvasElement(
+        target,
+        toStringSafe(target.id),
+        commercialViewportRatio
+      );
       if (normalized.type !== "media") return;
       const bounds = getCommercialCanvasBounds({
         type: "media",
@@ -2269,7 +2244,11 @@ export default function AdminPage() {
         (element) => toStringSafe(element.id) === toStringSafe(elementId)
       );
       if (!target) return;
-      const normalized = normalizeCommercialCanvasElement(target, toStringSafe(target.id));
+      const normalized = normalizeCommercialCanvasElement(
+        target,
+        toStringSafe(target.id),
+        commercialViewportRatio
+      );
       if (normalized.type !== "media") return;
       const bounds = getCommercialCanvasBounds({
         type: "media",
@@ -2296,7 +2275,11 @@ export default function AdminPage() {
         (element) => toStringSafe(element.id) === toStringSafe(elementId)
       );
       if (!target) return;
-      const normalized = normalizeCommercialCanvasElement(target, toStringSafe(target.id));
+      const normalized = normalizeCommercialCanvasElement(
+        target,
+        toStringSafe(target.id),
+        commercialViewportRatio
+      );
       if (normalized.type !== "media") return;
       const bounds = getCommercialCanvasBounds({
         type: "media",
@@ -2501,7 +2484,8 @@ export default function AdminPage() {
                   {toArray(activePage?.elements).map((element, index) => {
                     const normalized = normalizeCommercialCanvasElement(
                       element,
-                      `${activeProjectId}-${activePageId}-element-${index + 1}`
+                      `${activeProjectId}-${activePageId}-element-${index + 1}`,
+                      commercialViewportRatio
                     );
                     const selected = toStringSafe(normalized.id) === selectedElementId;
                     const linked = itemMapByUrl.get(toStringSafe(normalized.mediaUrl));
@@ -2602,7 +2586,8 @@ export default function AdminPage() {
                     {toArray(activePage?.elements).map((element, index) => {
                       const normalized = normalizeCommercialCanvasElement(
                         element,
-                        `${activeProjectId}-${activePageId}-element-${index + 1}`
+                        `${activeProjectId}-${activePageId}-element-${index + 1}`,
+                        commercialViewportRatio
                       );
                       const isActive = toStringSafe(normalized.id) === selectedElementId;
                       const linked = itemMapByUrl.get(toStringSafe(normalized.mediaUrl));
