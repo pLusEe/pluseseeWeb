@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import styles from "./CommercialDesign.module.css";
 import defaultSiteContent from "../../data/site-content.json";
 
@@ -219,6 +219,9 @@ export default function CommercialDesignPage() {
   const [activeSection, setActiveSection] = useState("all");
   const [items, setItems] = useState([]);
   const [commercial, setCommercial] = useState(defaultCommercial);
+  const [spineLeftPx, setSpineLeftPx] = useState(null);
+  const bookContainerRef = useRef(null);
+  const manualCanvasNodeRef = useRef(new Map());
 
   useEffect(() => {
     fetch("/api/portfolio")
@@ -317,6 +320,49 @@ export default function CommercialDesignPage() {
 
     return () => observer.disconnect();
   }, []);
+
+  const updateSpineLeft = useCallback(() => {
+    let targetNode = null;
+    const key = toStringSafe(activeSection);
+    if (key) {
+      targetNode = manualCanvasNodeRef.current.get(key) || null;
+    }
+    if (!targetNode) {
+      const first = manualCanvasNodeRef.current.values().next();
+      targetNode = first && !first.done ? first.value : null;
+    }
+    if (!targetNode) {
+      targetNode = bookContainerRef.current;
+    }
+    if (!targetNode) return;
+    const rect = targetNode.getBoundingClientRect();
+    if (!Number.isFinite(rect.left) || !Number.isFinite(rect.width) || rect.width <= 0) return;
+    setSpineLeftPx(rect.left + rect.width / 2);
+  }, [activeSection]);
+
+  useLayoutEffect(() => {
+    let frame = 0;
+    const schedule = () => {
+      if (frame) cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => updateSpineLeft());
+    };
+    schedule();
+    window.addEventListener("resize", schedule);
+    window.addEventListener("scroll", schedule, { passive: true });
+
+    let observer = null;
+    if (typeof ResizeObserver !== "undefined" && bookContainerRef.current) {
+      observer = new ResizeObserver(() => schedule());
+      observer.observe(bookContainerRef.current);
+    }
+
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("resize", schedule);
+      window.removeEventListener("scroll", schedule);
+      if (observer) observer.disconnect();
+    };
+  }, [updateSpineLeft, manualRenderedPages.length, activeSection]);
 
   const handleNavClick = (e, id) => {
     e.preventDefault();
@@ -419,12 +465,13 @@ export default function CommercialDesignPage() {
 
   return (
     <div className={styles.pageWrapper}>
-      <div className={styles.bookContainer}>
+      <div ref={bookContainerRef} className={styles.bookContainer}>
         <div className={styles.spineOverlayContainer} aria-hidden="true">
           <img
             src={commercial?.spineImageUrl || defaultCommercial.spineImageUrl}
             alt=""
             className={styles.spineMultiply}
+            style={spineLeftPx !== null ? { left: `${spineLeftPx}px` } : undefined}
             draggable="false"
           />
         </div>
@@ -461,7 +508,18 @@ export default function CommercialDesignPage() {
                 id={page.anchorId}
                 className={`${styles.spread} ${styles.manualSpread}`}
               >
-                <div className={styles.manualCanvas}>
+                <div
+                  ref={(node) => {
+                    const refKey = toStringSafe(page.anchorId);
+                    if (!refKey) return;
+                    if (node) {
+                      manualCanvasNodeRef.current.set(refKey, node);
+                    } else {
+                      manualCanvasNodeRef.current.delete(refKey);
+                    }
+                  }}
+                  className={styles.manualCanvas}
+                >
                   <div className={styles.manualLayer}>
                     {toArray(page.elements).map((element, elementIndex) =>
                       renderManualElement(page.anchorId, element, elementIndex)

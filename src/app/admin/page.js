@@ -185,8 +185,7 @@ const COMMERCIAL_TEXT_STANDARD = {
 const MIN_MEDIA_SCALE = 10;
 const MAX_MEDIA_SCALE = 1600;
 const MAX_MEDIA_SIZE = 360;
-const CANVAS_SNAP_PX = 42;
-const COMMERCIAL_SPINE_OFFSET_PERCENT = 0.5;
+const CANVAS_SNAP_PX = 30;
 const dedupeSnapTargets = (targets) => {
   const map = new Map();
   toArray(targets).forEach((target) => {
@@ -1819,7 +1818,7 @@ export default function AdminPage() {
         (element) => toStringSafe(element.id) === toStringSafe(selectedCommercialElementId)
       ) || toArray(activePage?.elements)[0] || null;
     const selectedElementId = toStringSafe(selectedElement?.id);
-    const spineCenter = clampNumber(commercialSpinePercent + COMMERCIAL_SPINE_OFFSET_PERCENT, 0, 100);
+    const spineCenter = clampNumber(commercialSpinePercent, 0, 100);
     const leftPageCenter = spineCenter / 2;
     const rightPageCenter = spineCenter + (100 - spineCenter) / 2;
 
