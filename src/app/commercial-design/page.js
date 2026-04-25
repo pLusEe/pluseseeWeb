@@ -18,10 +18,10 @@ const COMMERCIAL_PROJECTS = [
     id: "wechat-cmsc",
     navLabel: "WeChat CMSC",
     date: "2024.01",
-    title: "WeChat CMSC",
+    title: "微信支付客服中心人工客服体验改版",
     paragraphs: [
-      "该项目聚焦微信客服场景下的信息组织与视觉一致性，包含多种页面状态、操作路径与组件化表达。",
-      "设计策略强调高可读性和快速识别，在复杂业务流中维持统一的品牌节奏与交互直觉。"
+      "这里放置项目一的占位说明文字，用来模拟后续正式项目介绍的篇幅与阅读密度。你可以在这里补充项目背景、问题定义、体验目标、设计范围、核心页面以及改版前后的变化，让左侧信息区在视觉上形成更完整的段落长度与呼吸节奏。",
+      "这里继续放置第二段占位说明文字，用来模拟更详细的项目叙述内容。后续可以替换成设计方法、关键策略、交互亮点、品牌语气、测试结论与落地结果等信息，让整段文案在页面中拥有更接近最终作品集展示的体量。"
     ],
     media: WECHAT_CSC_MEDIA
   },
@@ -29,10 +29,10 @@ const COMMERCIAL_PROJECTS = [
     id: "horse-poster-260423",
     navLabel: "马年海报260423",
     date: "2024.02",
-    title: "马年海报 260423",
+    title: "微信支付马年春节商户年历海报设计",
     paragraphs: [
-      "该项目为单张纵向长图海报，聚焦节庆语境下的品牌视觉表达与内容层级设计。",
-      "我们通过大尺度构图与细节密度控制，让主视觉在不同屏幕尺寸下仍具备清晰的传播强度。"
+      "这里放置项目二的占位说明文字，用来模拟节庆海报项目在作品集中的完整文案长度。后续你可以写入海报的创意来源、文化意象、视觉风格、节日氛围、商户沟通目标以及画面层级安排，让读者更容易理解整张长图背后的设计逻辑。",
+      "这里继续放置第二段占位说明文字，用来模拟更深入的设计解释与展示说明。你可以在后续替换为构图策略、色彩设定、字体处理、延展场景、传播应用与最终呈现效果，让页面在阅读上更接近最终定稿时的完整状态。"
     ],
     media: ["/media/images/commercial-design/马年海报260423.png"]
   },
@@ -40,10 +40,10 @@ const COMMERCIAL_PROJECTS = [
     id: "wechat-ai-ip-motion",
     navLabel: "微信经营助手IP",
     date: "2024.03",
-    title: "微信经营助手智能体验创新与IP动效设计",
+    title: "微信经营助手智能体验探索与IP动效设计",
     paragraphs: [
-      "该项目围绕产品体验创新与 IP 形象延展展开，兼顾功能性界面与叙事化动效语言。",
-      "设计重点在于建立可复用的视觉规范，让角色表达、交互反馈与品牌语气形成同一套系统。"
+      "这里放置项目三的占位说明文字，用来模拟智能体验探索与 IP 动效项目的完整项目介绍。后续你可以补入项目起点、角色设定、体验假设、交互路径、情绪目标、动效语言与系统化思考，让整段文字既能解释方法，也能呼应右侧的视觉素材与视频内容。",
+      "这里继续放置第二段占位说明文字，用来模拟更长篇幅的作品叙述内容。之后可以替换成设计验证过程、界面节奏、品牌角色延展、触点适配、细节打磨与设计总结，让这个项目在作品集里形成更有层次、更完整的阅读体验。"
     ],
     media: ["/media/images/commercial-design/微信经营助手智能体验创新与IP动效设计.png"]
   },
@@ -51,10 +51,10 @@ const COMMERCIAL_PROJECTS = [
     id: "feishu-pte",
     navLabel: "Feishu PTE",
     date: "2024.04",
-    title: "Feishu PTE",
+    title: "飞书ToB品牌传播与获客视觉设计",
     paragraphs: [
-      "该项目展示飞书相关视觉资产在不同传播触点中的应用，包括展示页面、关键信息图与投放物料。",
-      "通过统一结构与模块化样式，保障高频更新场景下的输出效率与视觉稳定性。"
+      "这里放置项目四的占位说明文字，用来模拟 ToB 品牌传播与获客视觉项目在作品集中的介绍长度。后续你可以写入目标用户、传播语境、转化场景、视觉模块、信息组织与商业传播目标，让整段说明既能服务品牌表达，也能支撑业务导向的阅读理解。",
+      "这里继续放置第二段占位说明文字，用来模拟更多关于设计系统与传播执行的描述内容。之后可以补充不同渠道适配、模块复用方式、投放节奏、品牌一致性与最终效果反馈，让页面中的文案体量和右侧图片数量更加匹配。"
     ],
     media: [
       "/media/images/commercial-design/feishu-pt1/36.png",
@@ -69,10 +69,10 @@ const COMMERCIAL_PROJECTS = [
     id: "feishu-pte2",
     navLabel: "Feishu PTE2",
     date: "2024.05",
-    title: "Feishu PTE2",
+    title: "飞书2024未来无限大会全链路视觉设计",
     paragraphs: [
-      "该项目是飞书体系的延展章节，强调更高密度画面中的信息聚焦与叙事连续性。",
-      "通过同一视觉骨架下的多组素材组织，建立从单页到序列化展示的一致阅读体验。"
+      "这里放置项目五的占位说明文字，用来模拟大会全链路视觉设计项目所需要的完整介绍篇幅。后续你可以加入大会主题、阶段节奏、主视觉系统、会前会中会后物料、空间导视、线上线下触点以及叙事结构，让项目更完整地呈现其系统性与规模感。",
+      "这里继续放置第二段占位说明文字，用来模拟更深入的活动视觉设计说明。之后可以替换成视觉延展逻辑、信息密度控制、关键节点物料、执行协作方式与设计复盘内容，让最终页面拥有更饱满、更专业的作品集阅读节奏。"
     ],
     media: [
       "/media/images/commercial-design/feishu-pt2/Frame 2036083849.png",
@@ -361,10 +361,35 @@ export default function CommercialDesignPage() {
                     })}
 
                     {project.id === "wechat-ai-ip-motion" ? (
+                      <>
+                        <video
+                          ref={(node) => setVideoRef(`${project.id}-cat-hello`, node)}
+                          key={`${project.id}-cat-hello`}
+                          src="/media/videos/cat-hello.mp4"
+                          className={styles.projectVideo}
+                          muted
+                          loop
+                          playsInline
+                          preload="metadata"
+                        />
+                        <video
+                          ref={(node) => setVideoRef(`${project.id}-payment-cat`, node)}
+                          key={`${project.id}-payment-cat`}
+                          src="/media/videos/客服支付猫动态.mp4"
+                          className={styles.projectVideo}
+                          muted
+                          loop
+                          playsInline
+                          preload="metadata"
+                        />
+                      </>
+                    ) : null}
+
+                    {project.id === "wechat-cmsc" ? (
                       <video
-                        ref={(node) => setVideoRef(`${project.id}-cat-hello`, node)}
-                        key={`${project.id}-cat-hello`}
-                        src="/media/videos/cat-hello.mp4"
+                        ref={(node) => setVideoRef(`${project.id}-service-rating`, node)}
+                        key={`${project.id}-service-rating`}
+                        src="/media/videos/客服中心人工客服评价.mp4"
                         className={styles.projectVideo}
                         muted
                         loop
