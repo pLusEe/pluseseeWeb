@@ -1,6 +1,7 @@
 ﻿import "./globals.css";
 import Link from "next/link";
 import CustomCursor from "../components/CustomCursor";
+import FloatingAIChat from "../components/FloatingAIChat";
 import LoadingScreen from "../components/LoadingScreen";
 
 function NavFlipLabel({ en, zh }) {
@@ -65,6 +66,7 @@ export default function RootLayout({ children }) {
           </header>
 
           <main className="main-content">{children}</main>
+          <FloatingAIChat />
         </div>
       </body>
     </html>

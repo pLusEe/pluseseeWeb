@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import styles from "./AIChatSection.module.css";
 
-const BOT_AVATAR = "P";
 const DEFAULT_HERO_VIDEO_URL = "/media/videos/logo.webm";
 const DEFAULT_INPUT_PLACEHOLDER = "可以问我简历、作品、服务范围、合作方式等问题";
 
@@ -104,7 +103,6 @@ export default function AIChatSection({
             <div className={styles.messagesList}>
               {messages.map((msg, i) => (
                 <div key={i} className={`${styles.messageRow} ${msg.role === "user" ? styles.userRow : styles.botRow}`}>
-                  {msg.role === "bot" && <div className={styles.avatar}>{BOT_AVATAR}</div>}
                   <div className={`${styles.bubble} ${msg.role === "user" ? styles.userBubble : styles.botBubble}`}>
                     {msg.role === "bot" ? (msg.displayText ?? msg.text) : msg.text}
                     {msg.role === "bot" && typingIndex === i && msg.displayText !== msg.text && (
@@ -116,7 +114,6 @@ export default function AIChatSection({
 
               {loading && (
                 <div className={`${styles.messageRow} ${styles.botRow}`}>
-                  <div className={styles.avatar}>{BOT_AVATAR}</div>
                   <div className={`${styles.bubble} ${styles.botBubble} ${styles.loadingBubble}`}>
                     <span className={styles.dot} />
                     <span className={styles.dot} />
@@ -145,11 +142,7 @@ export default function AIChatSection({
               onClick={sendMessage}
               disabled={!input.trim() || loading}
               aria-label="Send"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M7 11L12 6L17 11M12 18V7" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+            />
           </div>
         </div>
       </div>

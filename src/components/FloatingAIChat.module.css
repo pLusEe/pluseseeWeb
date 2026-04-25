@@ -1,0 +1,422 @@
+.floatingChat {
+  position: fixed;
+  left: clamp(18px, 2.6vw, 34px);
+  bottom: clamp(56px, 8vh, 92px);
+  width: 50px;
+  height: 50px;
+  z-index: 6000;
+  display: block;
+  font-family: var(--font-sans, inherit);
+}
+
+.dragged {
+  right: auto;
+  bottom: auto;
+}
+
+.panel {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 10px);
+  width: min(390px, calc(100vw - 32px));
+  height: min(520px, calc(100vh - 104px));
+  min-height: 360px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 38px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(16px);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transform-origin: left bottom;
+  transition: opacity 180ms ease, transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.open .panel {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.panelActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 2px;
+  min-height: 36px;
+  padding: 8px 10px 0;
+}
+
+.iconButton,
+.closeButton {
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #9a9a9a;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.iconButton svg {
+  width: 18px;
+  height: 18px;
+}
+
+.closeButton span,
+.launchClose {
+  width: 14px;
+  height: 14px;
+  position: relative;
+}
+
+.closeButton span::before,
+.closeButton span::after,
+.launchClose::before,
+.launchClose::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 1px;
+  width: 12px;
+  height: 1.5px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.closeButton span::before,
+.launchClose::before {
+  transform: rotate(45deg);
+}
+
+.closeButton span::after,
+.launchClose::after {
+  transform: rotate(-45deg);
+}
+
+.iconButton:hover,
+.iconButton:focus-visible,
+.closeButton:hover,
+.closeButton:focus-visible {
+  background: #f1f1f1;
+  color: #555;
+  outline: none;
+}
+
+.messagesArea {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  padding: 8px 18px 10px;
+  scrollbar-width: none;
+}
+
+.messagesArea::-webkit-scrollbar {
+  display: none;
+}
+
+.emptyState {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  color: #111;
+}
+
+.emptyState p {
+  max-width: 240px;
+  font-size: 1.08rem;
+  line-height: 1.25;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.quickPrompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.quickPrompts button {
+  min-height: 31px;
+  border: 0;
+  border-radius: 999px;
+  background: #f4f4f4;
+  color: #555;
+  padding: 7px 11px;
+  font: inherit;
+  font-size: 0.76rem;
+  line-height: 1.2;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.quickPrompts button:hover,
+.quickPrompts button:focus-visible {
+  background: #ececec;
+  color: #111;
+  outline: none;
+}
+
+.messageRow {
+  display: flex;
+  align-items: flex-start;
+}
+
+.botRow {
+  align-self: flex-start;
+  padding-right: 28px;
+}
+
+.userRow {
+  align-self: flex-end;
+  flex-direction: row-reverse;
+  padding-left: 28px;
+}
+
+.bubble {
+  max-width: 100%;
+  padding: 10px 14px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  font-weight: 400;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.botBubble {
+  background: transparent;
+  color: #111;
+  padding: 8px 0;
+}
+
+.userBubble {
+  background: #f4f4f4;
+  color: #111;
+}
+
+.loadingBubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 10px 0;
+}
+
+.loadingBubble span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #999;
+  animation: floatChatBounce 1.4s ease infinite;
+}
+
+.loadingBubble span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loadingBubble span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.caret {
+  margin-left: 1px;
+  opacity: 0.5;
+  animation: floatChatBlink 1s step-end infinite;
+}
+
+.inputArea {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  padding: 8px 14px 14px;
+}
+
+.inputBox {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  background: #f4f4f4;
+  border-radius: 26px;
+  padding: 8px 10px 8px 20px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.inputBox:focus-within {
+  background: #fff;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+}
+
+.textarea {
+  flex: 1;
+  max-height: 120px;
+  min-height: 32px;
+  resize: none;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #000;
+  margin: 0;
+  padding: 5px 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+  font: inherit;
+  font-size: 0.92rem;
+  line-height: 22px;
+}
+
+.textarea::-webkit-scrollbar {
+  display: none;
+}
+
+.textarea::placeholder {
+  color: #888;
+}
+
+.sendButton,
+.launcher {
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sendButton {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #d4d4d4;
+  color: #fff;
+  padding: 0;
+  transition: background 0.2s;
+}
+
+.sendButton::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.sendButton:disabled {
+  cursor: not-allowed;
+}
+
+.sendActive {
+  background: #777;
+}
+
+.sendActive:hover,
+.sendActive:focus-visible {
+  background: #555;
+  outline: none;
+}
+
+.launcher {
+  width: 50px;
+  height: 50px;
+  border-radius: 999px;
+  background: #f3f2f0;
+  color: #000;
+  gap: 0;
+  overflow: hidden;
+  padding: 0;
+  touch-action: none;
+  user-select: none;
+  box-shadow: none;
+  transition: width 220ms cubic-bezier(0.22, 1, 0.36, 1), background 180ms ease,
+    color 180ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+.launcher svg {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+}
+
+.launcher:hover,
+.launcher:focus-visible {
+  width: 84px;
+  gap: 8px;
+  padding: 0 14px;
+  background: #ecebea;
+  color: #000;
+  outline: none;
+  transform: translateY(-1px);
+  box-shadow: none;
+}
+
+.launchText {
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
+  transition: max-width 180ms ease, opacity 160ms ease;
+}
+
+.launcher:hover .launchText,
+.launcher:focus-visible .launchText {
+  max-width: 24px;
+  opacity: 1;
+}
+
+@keyframes floatChatBounce {
+  0%,
+  80%,
+  100% {
+    opacity: 0.4;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes floatChatBlink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .floatingChat {
+    left: 12px;
+    bottom: 56px;
+    width: 48px;
+    height: 48px;
+  }
+
+  .panel {
+    width: calc(100vw - 24px);
+    height: min(520px, calc(100vh - 96px));
+    min-height: 340px;
+  }
+
+  .launcher {
+    width: 48px;
+    height: 48px;
+  }
+
+  .launcher:hover,
+  .launcher:focus-visible {
+    width: 80px;
+  }
+}
