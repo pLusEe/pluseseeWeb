@@ -17,6 +17,7 @@ const COMMERCIAL_PROJECTS = [
   {
     id: "wechat-cmsc",
     navLabel: "WeChat CMSC",
+    date: "2024.01",
     title: "WeChat CMSC",
     paragraphs: [
       "该项目聚焦微信客服场景下的信息组织与视觉一致性，包含多种页面状态、操作路径与组件化表达。",
@@ -27,6 +28,7 @@ const COMMERCIAL_PROJECTS = [
   {
     id: "horse-poster-260423",
     navLabel: "马年海报260423",
+    date: "2024.02",
     title: "马年海报 260423",
     paragraphs: [
       "该项目为单张纵向长图海报，聚焦节庆语境下的品牌视觉表达与内容层级设计。",
@@ -37,6 +39,7 @@ const COMMERCIAL_PROJECTS = [
   {
     id: "wechat-ai-ip-motion",
     navLabel: "微信经营助手IP",
+    date: "2024.03",
     title: "微信经营助手智能体验创新与IP动效设计",
     paragraphs: [
       "该项目围绕产品体验创新与 IP 形象延展展开，兼顾功能性界面与叙事化动效语言。",
@@ -47,6 +50,7 @@ const COMMERCIAL_PROJECTS = [
   {
     id: "feishu-pte",
     navLabel: "Feishu PTE",
+    date: "2024.04",
     title: "Feishu PTE",
     paragraphs: [
       "该项目展示飞书相关视觉资产在不同传播触点中的应用，包括展示页面、关键信息图与投放物料。",
@@ -64,6 +68,7 @@ const COMMERCIAL_PROJECTS = [
   {
     id: "feishu-pte2",
     navLabel: "Feishu PTE2",
+    date: "2024.05",
     title: "Feishu PTE2",
     paragraphs: [
       "该项目是飞书体系的延展章节，强调更高密度画面中的信息聚焦与叙事连续性。",
@@ -81,6 +86,7 @@ export default function CommercialDesignPage() {
   const [activeProjectId, setActiveProjectId] = useState(COMMERCIAL_PROJECTS[0].id);
   const [spineLeftPx, setSpineLeftPx] = useState(null);
   const sectionRefMap = useRef(new Map());
+  const videoRefMap = useRef(new Map());
   const leftPanelRef = useRef(null);
   const rightColumnRef = useRef(null);
 
@@ -174,6 +180,38 @@ export default function CommercialDesignPage() {
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const video = entry.target;
+          if (!(video instanceof HTMLVideoElement)) return;
+
+          if (entry.isIntersecting) {
+            const playPromise = video.play();
+            if (playPromise && typeof playPromise.catch === "function") {
+              playPromise.catch(() => {});
+            }
+            return;
+          }
+
+          video.pause();
+          try {
+            video.currentTime = 0;
+          } catch {}
+        });
+      },
+      {
+        root: null,
+        rootMargin: "-12% 0px -12% 0px",
+        threshold: 0.35
+      }
+    );
+
+    videoRefMap.current.forEach((node) => observer.observe(node));
+    return () => observer.disconnect();
+  }, []);
+
   useLayoutEffect(() => {
     let frame = 0;
     const schedule = () => {
@@ -206,6 +244,15 @@ export default function CommercialDesignPage() {
       sectionRefMap.current.set(projectId, node);
     } else {
       sectionRefMap.current.delete(projectId);
+    }
+  }, []);
+
+  const setVideoRef = useCallback((mediaKey, node) => {
+    if (!mediaKey) return;
+    if (node) {
+      videoRefMap.current.set(mediaKey, node);
+    } else {
+      videoRefMap.current.delete(mediaKey);
     }
   }, []);
 
@@ -258,7 +305,7 @@ export default function CommercialDesignPage() {
                 exit={{ opacity: 0, y: -22 }}
                 transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
               >
-                <p className={styles.kicker}>Commercial Design</p>
+                <p className={styles.kicker}>{activeProject.date}</p>
                 <h2 className={styles.projectTitle}>{activeProject.title}</h2>
                 <div className={styles.projectCopy}>
                   {activeProject.paragraphs.map((paragraph, idx) => (
@@ -290,10 +337,10 @@ export default function CommercialDesignPage() {
                       if (isVideoUrl(src)) {
                         return (
                           <video
+                            ref={(node) => setVideoRef(mediaKey, node)}
                             key={mediaKey}
                             src={src}
                             className={styles.projectVideo}
-                            autoPlay
                             muted
                             loop
                             playsInline
@@ -312,6 +359,19 @@ export default function CommercialDesignPage() {
 
                       return <img key={mediaKey} src={src} alt={project.title} className={styles.projectImage} />;
                     })}
+
+                    {project.id === "wechat-ai-ip-motion" ? (
+                      <video
+                        ref={(node) => setVideoRef(`${project.id}-cat-hello`, node)}
+                        key={`${project.id}-cat-hello`}
+                        src="/media/videos/cat-hello.mp4"
+                        className={styles.projectVideo}
+                        muted
+                        loop
+                        playsInline
+                        preload="metadata"
+                      />
+                    ) : null}
                   </div>
                 </section>
 

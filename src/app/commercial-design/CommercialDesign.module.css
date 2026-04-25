@@ -37,8 +37,9 @@
   top: 0;
   height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: flex-start;
+  justify-content: flex-start;
+  padding-top: 6.2rem;
   z-index: 35;
 }
 
@@ -81,7 +82,7 @@
 }
 
 .navLabel {
-  display: block;
+  display: none;
   font-size: 0.73rem;
   font-weight: 600;
   letter-spacing: 0.01em;
@@ -147,10 +148,10 @@
 
 .projectTitle {
   margin: 1.15rem 0 1.2rem;
-  font-size: clamp(1.6rem, 2.35vw, 2.25rem);
-  font-weight: 550;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  font-size: clamp(1.08rem, 1.48vw, 1.28rem);
+  font-weight: 610;
+  letter-spacing: -0.012em;
+  line-height: 1.18;
   color: #222222;
 }
 
