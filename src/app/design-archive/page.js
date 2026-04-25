@@ -144,6 +144,7 @@ export default function PersonalDesignLibraryPage() {
   });
   const [cards, setCards] = useState([]);
   const [libraryConfig, setLibraryConfig] = useState(DEFAULT_LIBRARY_CONFIG);
+  const [fallingActive, setFallingActive] = useState(false);
 
   useEffect(() => {
     fetch("/api/content")
@@ -224,8 +225,8 @@ export default function PersonalDesignLibraryPage() {
 
     const width = stage.clientWidth;
     const height = stage.clientHeight;
-    const base = clamp(width * 0.2, 150, 228);
-    const gap = clamp(width * 0.018, 10, 18);
+    const base = clamp(width * 0.17, 128, 196);
+    const gap = clamp(width * 0.012, 7, 12);
     let cursor = clamp(width * 0.04, 12, 34);
 
     const next = fallingImages.map((item, index) => {
@@ -263,11 +264,29 @@ export default function PersonalDesignLibraryPage() {
     setCards(next);
   }, [fallingImages]);
 
-  useEffect(() => {
-    buildCards();
-    window.addEventListener("resize", buildCards);
-    return () => window.removeEventListener("resize", buildCards);
+  const triggerFallingPreview = useCallback(() => {
+    if (cardsRef.current.length > 0) return;
+    dragRef.current = {
+      id: null,
+      offsetX: 0,
+      offsetY: 0,
+      lastTime: 0,
+      vx: 0,
+      vy: 0,
+    };
+    setFallingActive(true);
+    window.requestAnimationFrame(buildCards);
   }, [buildCards]);
+
+  useEffect(() => {
+    if (!fallingActive) return;
+    const frame = window.requestAnimationFrame(buildCards);
+    window.addEventListener("resize", buildCards);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", buildCards);
+    };
+  }, [buildCards, fallingActive]);
 
   useEffect(() => {
     const onPointerMove = (event) => {
@@ -285,7 +304,7 @@ export default function PersonalDesignLibraryPage() {
       const dt = Math.max(0.001, (now - drag.lastTime) / 1000);
 
       const x = clamp(local.x - drag.offsetX, 0, stage.clientWidth - card.w);
-      const y = clamp(local.y - drag.offsetY, -card.h * 1.4, stage.clientHeight - card.h);
+      const y = clamp(local.y - drag.offsetY, -card.h * 1.4, stage.clientHeight - card.h - 24);
 
       drag.vx = (x - card.x) / dt;
       drag.vy = (y - card.y) / dt;
@@ -360,7 +379,7 @@ export default function PersonalDesignLibraryPage() {
           let vx = card.vx;
           let vy = card.vy + gravity * dt;
 
-          const floor = height - card.h;
+          const floor = height - card.h - 24;
           const maxX = width - card.w;
 
           if (x < 0) {
@@ -425,8 +444,18 @@ export default function PersonalDesignLibraryPage() {
       <main className={styles.main}>
         <section className={styles.books}>
           <article className={`${styles.book} ${styles.bookWithPreview}`}>
-            <div className={styles.coverStage}>
-              <Link href={book.href} className={`${styles.coverLink} ${styles.coverTrigger}`}>
+            <div
+              className={styles.coverStage}
+              onPointerEnter={triggerFallingPreview}
+              onPointerOver={triggerFallingPreview}
+              onMouseEnter={triggerFallingPreview}
+              onMouseOver={triggerFallingPreview}
+              onFocus={triggerFallingPreview}
+            >
+              <Link
+                href={book.href}
+                className={`${styles.coverLink} ${styles.coverTrigger}`}
+              >
                 <div className={styles.coverWrap}>
                   <BookletCanvas coverUrl={book.cover} />
                 </div>
@@ -461,6 +490,7 @@ export default function PersonalDesignLibraryPage() {
                     />
                   </div>
                 ))}
+                {cards.length > 0 && <span className={styles.fallStageCaption}>Printed materials</span>}
               </div>
             </div>
 

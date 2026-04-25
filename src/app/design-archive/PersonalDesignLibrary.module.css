@@ -137,6 +137,23 @@
   pointer-events: none;
 }
 
+.fallStageCaption {
+  position: absolute;
+  left: 0;
+  bottom: -0.15rem;
+  width: 100%;
+  display: block;
+  text-align: left;
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #111;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 .fallCardRotated .fallImage {
   position: absolute;
   left: 0;
