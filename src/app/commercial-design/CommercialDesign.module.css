@@ -1,28 +1,16 @@
 .pageWrapper {
-  background-color: #ffffff;
   min-height: 100vh;
-  padding: 0;
-  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  color: #111;
-  position: relative;
-  --page-gutter: 4rem;
-  --sidebar-safe: calc(160px + 2rem);
-}
-
-.bookContainer {
-  position: relative;
-  width: 100%;
   background-color: #ffffff;
-  display: flex;
-  flex-direction: column;
+  color: #111111;
+  font-family: "DM Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  position: relative;
 }
 
-/* Center crease overlay, matching the fixed PNG treatment used in the reference */
 .spineOverlayContainer {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  z-index: 50;
+  z-index: 70;
   mix-blend-mode: multiply;
 }
 
@@ -36,105 +24,85 @@
   max-width: none;
 }
 
-/* Sidebar navigation */
-.sidebar {
-  position: fixed;
-  top: 6rem;
-  left: 3.5rem;
-  z-index: 80;
-  width: 140px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  line-height: 1.4;
-  letter-spacing: 0.02em;
+.layout {
+  display: grid;
+  grid-template-columns: 88px minmax(300px, 23vw) 22px minmax(0, 1fr);
+  width: 100%;
+  align-items: start;
 }
 
-.navGroup {
-  margin-bottom: 2rem;
+.navRail {
+  grid-column: 1;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 35;
 }
 
-.navTitle {
-  font-weight: 600;
-  margin-bottom: 0.3rem;
-  color: #000;
-}
-
-.navList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.navInner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  width: 100%;
+  padding-left: 0.75rem;
 }
 
 .navItem {
-  margin-bottom: 0.25rem;
-}
-
-.navLink {
-  text-decoration: none;
-  color: #777;
-  transition: color 0.2s;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #7a7a7a;
+  text-align: left;
   cursor: pointer;
+  padding: 0.18rem 0.55rem;
+  border-left: 2px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
 }
 
-.navLink:hover {
-  color: #000;
+.navItem:hover {
+  color: #1d1d1d;
 }
 
-.navLinkActive {
-  color: #000;
-  font-weight: 600;
+.navItemActive {
+  color: #111111;
+  border-left-color: #111111;
 }
 
-.navExtra {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-top: 1rem;
-  font-size: 0.75rem;
-  color: #777;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.navExtra:hover {
-  color: #000;
-}
-
-/* Editorial Spreads */
-.spread {
-  display: flex;
-  flex-direction: row;
-  width: 100%;
-  min-height: 100vh;
-  position: relative;
-  border-bottom: 1px solid rgba(0,0,0,0.03); /* subtle separator between long sections if needed, or none */
-}
-
-.manualSpread {
+.navIndex {
   display: block;
+  font-size: 0.56rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  margin-bottom: 0.2rem;
 }
 
-.manualCanvas {
-  position: relative;
-  width: 100%;
-  min-height: 100vh;
-  background: rgba(255, 255, 255, 0.94);
-  overflow: hidden;
+.navLabel {
+  display: block;
+  font-size: 0.73rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
 }
 
-.manualCanvas::before,
-.manualCanvas::after {
+.leftPanel {
+  grid-column: 2;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 20;
+  isolation: isolate;
+}
+
+.leftPanel::after {
   content: "";
   position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 50%;
+  inset: 0;
   pointer-events: none;
-  z-index: 3;
-}
-
-.manualCanvas::before {
-  left: 0;
+  z-index: 8;
   background:
     linear-gradient(
       270deg,
@@ -160,125 +128,61 @@
     );
 }
 
-.manualCanvas::after {
-  right: 0;
-  background:
-    linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.015) 0%,
-      rgba(255, 255, 255, 0.03) 0.25%,
-      rgba(255, 255, 255, 0.065) 0.55%,
-      rgba(255, 255, 255, 0.11) 0.9%,
-      rgba(255, 255, 255, 0.17) 1.5%,
-      rgba(255, 255, 255, 0.22) 2%,
-      rgba(255, 255, 255, 0.16) 2.6%,
-      rgba(255, 255, 255, 0.11) 3.3%,
-      rgba(255, 255, 255, 0.085) 4.1%,
-      rgba(255, 255, 255, 0.065) 5%,
-      rgba(255, 255, 255, 0.045) 6%,
-      rgba(255, 255, 255, 0.03) 7.1%,
-      rgba(255, 255, 255, 0.02) 8.3%,
-      rgba(255, 255, 255, 0.012) 9.6%,
-      rgba(255, 255, 255, 0.006) 10.8%,
-      rgba(255, 255, 255, 0.0035) 12%,
-      rgba(255, 255, 255, 0.002) 13.4%,
-      rgba(255, 255, 255, 0.001) 14.8%,
-      rgba(255, 255, 255, 0) 16.2%
-    );
+.leftPanelInner {
+  padding: 6.2rem 2.2rem 2rem 1.4rem;
+  max-width: 450px;
 }
 
-.manualLayer {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  pointer-events: none;
-}
-
-.manualElement {
-  position: absolute;
-  overflow: hidden;
-}
-
-.manualMedia {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: contain;
-}
-
-.manualText {
-  width: 100%;
-  height: 100%;
-  padding: 0.8rem;
-  white-space: pre-wrap;
-  overflow: hidden;
-  line-height: 1.5;
-}
-
-.manualAudioWrap {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  background: rgba(245, 247, 250, 0.9);
-}
-
-.manualAudio {
+.projectMetaMotion {
   width: 100%;
 }
 
-/* Pages */
-.leftPage, .rightPage {
-  flex: 0 0 50%;
-  max-width: 50%;
-  min-width: 0;
-  box-sizing: border-box;
-  position: relative;
+.kicker {
+  margin: 0;
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #8a8a8a;
+}
+
+.projectTitle {
+  margin: 1.15rem 0 1.2rem;
+  font-size: clamp(1.6rem, 2.35vw, 2.25rem);
+  font-weight: 550;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: #222222;
+}
+
+.projectCopy {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  isolation: isolate;
-  background-color: rgba(255, 255, 255, 0.68);
+  gap: 1rem;
 }
 
-.leftPage::before,
-.rightPage::before {
+.projectCopy p {
+  margin: 0;
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: #7a7a7a;
+}
+
+.rightColumn {
+  grid-column: 4;
+  min-height: 100vh;
+  padding-bottom: 3rem;
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.rightColumn::before {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 3;
-}
-
-.leftPage::before {
-  background:
-    linear-gradient(
-      270deg,
-      rgba(255, 255, 255, 0.015) 0%,
-      rgba(255, 255, 255, 0.03) 0.25%,
-      rgba(255, 255, 255, 0.065) 0.55%,
-      rgba(255, 255, 255, 0.11) 0.9%,
-      rgba(255, 255, 255, 0.17) 1.5%,
-      rgba(255, 255, 255, 0.22) 2%,
-      rgba(255, 255, 255, 0.16) 2.6%,
-      rgba(255, 255, 255, 0.11) 3.3%,
-      rgba(255, 255, 255, 0.085) 4.1%,
-      rgba(255, 255, 255, 0.065) 5%,
-      rgba(255, 255, 255, 0.045) 6%,
-      rgba(255, 255, 255, 0.03) 7.1%,
-      rgba(255, 255, 255, 0.02) 8.3%,
-      rgba(255, 255, 255, 0.012) 9.6%,
-      rgba(255, 255, 255, 0.006) 10.8%,
-      rgba(255, 255, 255, 0.0035) 12%,
-      rgba(255, 255, 255, 0.002) 13.4%,
-      rgba(255, 255, 255, 0.001) 14.8%,
-      rgba(255, 255, 255, 0) 16.2%
-    );
-}
-
-.rightPage::before {
+  z-index: 8;
   background:
     linear-gradient(
       90deg,
@@ -304,197 +208,138 @@
     );
 }
 
-/* General padding for content ensuring sidebar space on the left */
-.leftPage {
-  padding: 6rem var(--page-gutter) 6rem var(--sidebar-safe);
+.projectSection {
+  min-height: auto;
+  scroll-margin-top: 0;
+  width: 100%;
 }
 
-.rightPage {
-  padding: 6rem var(--sidebar-safe) 6rem var(--page-gutter);
+.projectSection + .projectSection {
+  padding-top: 0;
 }
 
-/* Layout variants */
-.flushRight {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
+.projectMediaStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  z-index: 2;
+  width: 100%;
 }
 
-.flushRight img {
-  object-position: right center !important;
+.projectMediaStack > * {
+  width: 100%;
+  max-width: 100%;
+  flex: 0 0 auto;
 }
 
-.flushRight .containedImg {
-  margin-left: auto;
-  margin-right: 0;
+.projectTransition {
+  position: relative;
+  z-index: 3;
+  height: 28vh;
+  min-height: 170px;
+  background: transparent;
+}
+
+.projectImage,
+.projectVideo {
   display: block;
-  align-self: flex-end;
-  width: calc(100% - var(--sidebar-safe));
-  max-width: calc(100% - var(--sidebar-safe));
-}
-
-.flushLeft {
-  padding-left: 0 !important;
-  padding-right: 0 !important;
-}
-
-.flushLeft img {
-  object-position: left center !important;
-}
-
-.flushLeft .containedImg {
-  margin-left: 0;
-  margin-right: auto;
-  display: block;
-  align-self: flex-start;
-  width: calc(100% - var(--sidebar-safe));
-  max-width: calc(100% - var(--sidebar-safe));
-}
-
-.flexCenter {
-  align-items: center;
-  justify-content: center;
-}
-
-.fullBleed {
-  padding: 0;
-}
-
-.fullBleedImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* Guardrail: the hero image must stay center-cropped even if flush classes are added by mistake */
-.rightPage .heroRightImg {
-  object-position: center center !important;
-}
-
-.acrossSpread {
-  overflow: hidden;
-}
-
-.acrossSpreadImg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  z-index: 1;
-}
-
-.acrossSpread .leftPage,
-.acrossSpread .rightPage {
-  padding: 0;
-  background-color: transparent;
-}
-
-.containedImg {
-  width: 100%;
-  height: auto;
-  max-height: 80vh;
+  width: 100% !important;
+  max-width: none !important;
+  height: auto !important;
   object-fit: contain;
+  background: transparent;
 }
 
-.shadowedImg {
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+.audioWrap {
+  width: 100%;
+  padding: 1.2rem 1rem;
+  background: rgba(250, 250, 250, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.caption {
-  margin-top: 1.5rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  font-style: italic;
-  text-align: center;
-  color: #a89458; /* Gold tone matching the reference */
-  letter-spacing: 0.04em;
+.projectAudio {
+  width: 100%;
 }
 
-.creditBottom {
-  margin-top: auto;
-  padding-top: 2rem;
-  font-size: 0.65rem;
-  font-weight: 500;
-  line-height: 1.4;
-  color: #666;
+@media (max-width: 1180px) {
+  .layout {
+    grid-template-columns: 76px minmax(250px, 32vw) 16px minmax(0, 1fr);
+  }
+
+  .leftPanelInner {
+    padding-right: 1.3rem;
+  }
+
+  .projectCopy p {
+    font-size: 0.94rem;
+    line-height: 1.65;
+  }
 }
 
-.creditBottom strong {
-  display: block;
-  font-weight: 600;
-  color: #111;
-}
-
-/* Typography Blocks */
-.textBlock {
-  max-width: 440px;
-  margin: auto;
-}
-
-.textTitle {
-  font-size: 2.2rem;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  margin-bottom: 1.5rem;
-}
-
-.textBody {
-  font-size: 0.95rem;
-  line-height: 1.7;
-  color: #444;
-  margin-bottom: 1.5rem;
-}
-
-.projectIntroBlock {
-  max-width: 540px;
-}
-
-@media (max-width: 1024px) {
-  .pageWrapper {
-    padding: 0;
-  }
-  .sidebar {
-    display: none;
-  }
-  .spineMultiply {
-    display: none;
-  }
-  .spread {
-    flex-direction: column;
-    min-height: auto;
-    left: 0;
-  }
-  .manualSpread {
-    left: 0;
-    min-height: 88vh;
-  }
-  .manualCanvas {
-    min-height: 88vh;
-  }
-  .leftPage, .rightPage {
-    width: 100%;
-    padding: 3rem 2rem !important;
-  }
-  .fullBleed {
-    height: 60vh;
+@media (max-width: 980px) {
+  .layout {
+    grid-template-columns: 1fr;
   }
 
-  .acrossSpreadImg {
-    position: absolute;
+  .navRail,
+  .leftPanel,
+  .rightColumn {
+    grid-column: auto;
   }
 
-  .acrossSpread .leftPage,
-  .acrossSpread .rightPage {
-    padding: 0 !important;
+  .navRail {
+    position: sticky;
+    top: 0;
+    height: auto;
+    background: #ffffff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
   }
 
-  .projectIntroBlock {
+  .navInner {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 0.4rem;
+    padding: 0.65rem 0.7rem;
+  }
+
+  .navItem {
+    border-left: 0;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    padding: 0.35rem 0.45rem;
+  }
+
+  .navItemActive {
+    border-bottom-color: #111111;
+  }
+
+  .leftPanel {
+    position: relative;
+    height: auto;
+  }
+
+  .leftPanelInner {
+    padding: 1.25rem 1.1rem 1.4rem;
     max-width: none;
   }
 
-  .flushRight .containedImg,
-  .flushLeft .containedImg {
-    width: 100%;
-    max-width: 100%;
+  .leftPanel::after,
+  .rightColumn::before,
+  .spineOverlayContainer {
+    display: none;
+  }
+
+  .rightColumn {
+    padding-bottom: 1.2rem;
+  }
+
+  .projectSection {
+    min-height: auto;
+  }
+
+  .projectTransition {
+    height: 52vh;
+    min-height: 240px;
   }
 }

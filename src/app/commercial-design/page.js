@@ -1,399 +1,195 @@
-﻿"use client";
+"use client";
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import styles from "./CommercialDesign.module.css";
-import defaultSiteContent from "../../data/site-content.json";
-
-const FALLBACK_IMAGE = "/media/images/placeholder1.jpg";
-
-const getThumb = (item) => {
-  if (item?.thumbUrl) return item.thumbUrl;
-  if ((item?.mediaType || "image") === "image" && item?.mediaUrl) return item.mediaUrl;
-  if (item?.imageUrl) return item.imageUrl;
-  return FALLBACK_IMAGE;
-};
 
 const isVideoUrl = (url) => /\.(mp4|webm|mov|m4v|ogg)$/i.test(String(url || "").trim());
 const isAudioUrl = (url) => /\.(mp3|wav|ogg|aac|flac|m4a)$/i.test(String(url || "").trim());
+const toMediaSrc = (url) => encodeURI(String(url || "").trim());
 
-const toStyleObject = (value) => (value && typeof value === "object" && !Array.isArray(value) ? value : {});
-const toArray = (value, fallback = []) => (Array.isArray(value) ? value : fallback);
-const toStringSafe = (value, fallback = "") => {
-  if (typeof value === "string") return value;
-  if (value === null || value === undefined) return fallback;
-  return String(value);
-};
-const toNumberSafe = (value, fallback = 0) => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : fallback;
-};
-const clampNumber = (value, min, max) => Math.max(min, Math.min(max, value));
-const normalizeMediaType = (value) => {
-  const type = toStringSafe(value).trim().toLowerCase();
-  if (type === "image" || type === "video" || type === "audio") return type;
-  return "image";
-};
-const COMMERCIAL_TEXT_STANDARD = {
-  fontFamily: "\"Noto Sans SC\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
-  fontSize: 22,
-  lineHeight: 1.45,
-  fontWeight: 500,
-  color: "#111111",
-  textAlign: "left",
-};
-const MIN_MEDIA_SCALE = 10;
-const MAX_MEDIA_SCALE = 1600;
-const MAX_MEDIA_SIZE = 2000;
-const DEFAULT_CANVAS_RATIO = 16 / 9;
-const getSafeCanvasRatio = (rawRatio) =>
-  clampNumber(toNumberSafe(rawRatio, DEFAULT_CANVAS_RATIO), 0.4, 4);
-const resolveMediaScale = (rawScale) =>
-  clampNumber(toNumberSafe(rawScale, 100), MIN_MEDIA_SCALE, MAX_MEDIA_SCALE);
-const resolveMediaAspect = (rawAspect, rawWidth, rawHeight) => {
-  const aspect = toNumberSafe(rawAspect, 0);
-  if (aspect > 0.05) return clampNumber(aspect, 0.2, 5);
-  const width = toNumberSafe(rawWidth, 0);
-  const height = toNumberSafe(rawHeight, 0);
-  if (width > 0 && height > 0) return clampNumber(width / height, 0.2, 5);
-  return 1;
-};
-const resolveMediaBase = (rawBase, rawWidth, rawHeight) => {
-  const parsed = toNumberSafe(rawBase, 0);
-  if (parsed > 1) return clampNumber(parsed, 10, 48);
-  const width = clampNumber(toNumberSafe(rawWidth, 84), 5, 100);
-  const height = clampNumber(toNumberSafe(rawHeight, 84), 5, 100);
-  return clampNumber(Math.min(width, height) * 0.38, 10, 48);
-};
-const getCommercialMediaRenderSize = (
-  rawAspect,
-  rawScale,
-  rawBase,
-  rawWidth,
-  rawHeight,
-  canvasRatio = DEFAULT_CANVAS_RATIO
-) => {
-  const aspect = resolveMediaAspect(rawAspect, rawWidth, rawHeight);
-  const safeRatio = getSafeCanvasRatio(canvasRatio);
-  const scale = resolveMediaScale(rawScale) / 100;
-  const baseShort = resolveMediaBase(rawBase, rawWidth, rawHeight) * scale;
-  const baseWidth = aspect >= 1 ? baseShort * aspect : baseShort;
-  const baseHeight = baseWidth * (safeRatio / Math.max(aspect, 0.01));
-  const boundedWidth = clampNumber(baseWidth, 2, MAX_MEDIA_SIZE);
-  const boundedHeight = clampNumber(baseHeight, 2, MAX_MEDIA_SIZE);
-  const widthScale = boundedWidth / Math.max(baseWidth, 0.01);
-  const heightScale = boundedHeight / Math.max(baseHeight, 0.01);
-  const safeScale = Math.min(widthScale, heightScale);
-  return {
-    width: clampNumber(baseWidth * safeScale, 2, MAX_MEDIA_SIZE),
-    height: clampNumber(baseHeight * safeScale, 2, MAX_MEDIA_SIZE),
-  };
-};
-const getCommercialCanvasBounds = (element) => {
-  const width = clampNumber(toNumberSafe(element?.width, 20), 2, MAX_MEDIA_SIZE);
-  const height = clampNumber(toNumberSafe(element?.height, 20), 2, MAX_MEDIA_SIZE);
-  const type = toStringSafe(element?.type).toLowerCase();
-  if (type === "media") {
-    return {
-      minX: -width,
-      maxX: 100,
-      minY: -height,
-      maxY: 100,
-    };
+const WECHAT_CSC_MEDIA = Array.from(
+  { length: 14 },
+  (_, index) => `/media/images/commercial-design/wechat-csc/客服中心${index + 1}.png`
+);
+
+const COMMERCIAL_PROJECTS = [
+  {
+    id: "wechat-cmsc",
+    navLabel: "WeChat CMSC",
+    title: "WeChat CMSC",
+    paragraphs: [
+      "该项目聚焦微信客服场景下的信息组织与视觉一致性，包含多种页面状态、操作路径与组件化表达。",
+      "设计策略强调高可读性和快速识别，在复杂业务流中维持统一的品牌节奏与交互直觉。"
+    ],
+    media: WECHAT_CSC_MEDIA
+  },
+  {
+    id: "horse-poster-260423",
+    navLabel: "马年海报260423",
+    title: "马年海报 260423",
+    paragraphs: [
+      "该项目为单张纵向长图海报，聚焦节庆语境下的品牌视觉表达与内容层级设计。",
+      "我们通过大尺度构图与细节密度控制，让主视觉在不同屏幕尺寸下仍具备清晰的传播强度。"
+    ],
+    media: ["/media/images/commercial-design/马年海报260423.png"]
+  },
+  {
+    id: "wechat-ai-ip-motion",
+    navLabel: "微信经营助手IP",
+    title: "微信经营助手智能体验创新与IP动效设计",
+    paragraphs: [
+      "该项目围绕产品体验创新与 IP 形象延展展开，兼顾功能性界面与叙事化动效语言。",
+      "设计重点在于建立可复用的视觉规范，让角色表达、交互反馈与品牌语气形成同一套系统。"
+    ],
+    media: ["/media/images/commercial-design/微信经营助手智能体验创新与IP动效设计.png"]
+  },
+  {
+    id: "feishu-pte",
+    navLabel: "Feishu PTE",
+    title: "Feishu PTE",
+    paragraphs: [
+      "该项目展示飞书相关视觉资产在不同传播触点中的应用，包括展示页面、关键信息图与投放物料。",
+      "通过统一结构与模块化样式，保障高频更新场景下的输出效率与视觉稳定性。"
+    ],
+    media: [
+      "/media/images/commercial-design/feishu-pt1/36.png",
+      "/media/images/commercial-design/feishu-pt1/Frame 1321318981.png",
+      "/media/images/commercial-design/feishu-pt1/for ppt.png",
+      "/media/images/commercial-design/feishu-pt1/Frame 2036083845.png",
+      "/media/images/commercial-design/feishu-pt1/1774436908953-___bn_3x.png",
+      "/media/images/commercial-design/feishu-pt1/d5c024f6f45a65318b9d68d0f3a486b8 1.png"
+    ]
+  },
+  {
+    id: "feishu-pte2",
+    navLabel: "Feishu PTE2",
+    title: "Feishu PTE2",
+    paragraphs: [
+      "该项目是飞书体系的延展章节，强调更高密度画面中的信息聚焦与叙事连续性。",
+      "通过同一视觉骨架下的多组素材组织，建立从单页到序列化展示的一致阅读体验。"
+    ],
+    media: [
+      "/media/images/commercial-design/feishu-pt2/Frame 2036083849.png",
+      "/media/images/commercial-design/feishu-pt2/Frame 2036083855.png",
+      "/media/images/commercial-design/feishu-pt2/Frame 2036083856.png"
+    ]
   }
-  return {
-    minX: 0,
-    maxX: 100 - width,
-    minY: 0,
-    maxY: 100 - height,
-  };
-};
-const estimateCommercialTextBoxSize = (text) => {
-  const source = toStringSafe(text).replace(/\r\n/g, "\n");
-  const lines = source.split("\n");
-  const normalizedLines = lines.length > 0 ? lines : [""];
-  const longestLine = normalizedLines.reduce(
-    (max, line) => Math.max(max, toStringSafe(line).length),
-    1
-  );
-  const width = clampNumber(26 + longestLine * 1.2, 24, 78);
-  const charsPerLine = Math.max(10, Math.floor((width - 8) / 1.15));
-  const wrappedLines = normalizedLines.reduce((sum, line) => {
-    const len = Math.max(1, toStringSafe(line).length);
-    return sum + Math.max(1, Math.ceil(len / charsPerLine));
-  }, 0);
-  const height = clampNumber(10 + wrappedLines * 6.4, 12, 82);
-  return { width, height };
-};
-const normalizeManualElement = (rawElement, fallbackId, canvasRatio = DEFAULT_CANVAS_RATIO) => {
-  const safeRatio = getSafeCanvasRatio(canvasRatio);
-  const type = toStringSafe(rawElement?.type).toLowerCase() === "text" ? "text" : "media";
-  const page = "both";
-  const text = toStringSafe(rawElement?.text);
-  const autoTextBox = estimateCommercialTextBoxSize(text);
-  const mediaScale = type === "media" ? resolveMediaScale(rawElement?.mediaScale) : 100;
-  const mediaAspect =
-    type === "media" ? resolveMediaAspect(rawElement?.mediaAspect, rawElement?.width, rawElement?.height) : 1;
-  const mediaBase =
-    type === "media" ? resolveMediaBase(rawElement?.mediaBase, rawElement?.width, rawElement?.height) : 0;
-  const mediaSize =
-    type === "media"
-      ? getCommercialMediaRenderSize(
-          mediaAspect,
-          mediaScale,
-          mediaBase,
-          rawElement?.width,
-          rawElement?.height,
-          safeRatio
-        )
-      : null;
-  const width =
-    type === "text"
-      ? autoTextBox.width
-      : mediaSize.width;
-  const height =
-    type === "text"
-      ? autoTextBox.height
-      : mediaSize.height;
-  const bounds = getCommercialCanvasBounds({ type, width, height });
-  const x = clampNumber(toNumberSafe(rawElement?.x, 8), bounds.minX, bounds.maxX);
-  const y = clampNumber(toNumberSafe(rawElement?.y, 8), bounds.minY, bounds.maxY);
-  return {
-    id: toStringSafe(rawElement?.id, fallbackId),
-    type,
-    page,
-    x,
-    y,
-    width,
-    height,
-    zIndex: clampNumber(toNumberSafe(rawElement?.zIndex, type === "text" ? 10 : 6), 1, 99),
-    opacity: clampNumber(toNumberSafe(rawElement?.opacity, 100), 5, 100),
-    fit: "contain",
-    mediaUrl: toStringSafe(rawElement?.mediaUrl),
-    mediaType: normalizeMediaType(rawElement?.mediaType),
-    mediaScale,
-    mediaAspect,
-    mediaBase,
-    text,
-    color: COMMERCIAL_TEXT_STANDARD.color,
-    fontFamily: COMMERCIAL_TEXT_STANDARD.fontFamily,
-    fontSize: COMMERCIAL_TEXT_STANDARD.fontSize,
-    lineHeight: COMMERCIAL_TEXT_STANDARD.lineHeight,
-    fontWeight: COMMERCIAL_TEXT_STANDARD.fontWeight,
-    textAlign: COMMERCIAL_TEXT_STANDARD.textAlign,
-  };
-};
-const normalizeManualPage = (rawPage, pageIndex, projectId, canvasRatio = DEFAULT_CANVAS_RATIO) => ({
-  id: toStringSafe(rawPage?.id, `page-${pageIndex + 1}`),
-  label: toStringSafe(rawPage?.label, `页面 ${pageIndex + 1}`),
-  elements: toArray(rawPage?.elements)
-    .map((element, elementIndex) =>
-      normalizeManualElement(
-        element,
-        `${projectId}-page-${pageIndex + 1}-element-${elementIndex + 1}`,
-        canvasRatio
-      )
-    )
-    .filter((element) =>
-      element.type === "text" ? Boolean(toStringSafe(element.text).trim()) : Boolean(toStringSafe(element.mediaUrl).trim())
-    ),
-});
-const normalizeManualProject = (rawProject, index, canvasRatio = DEFAULT_CANVAS_RATIO) => ({
-  id: toStringSafe(rawProject?.id, `project-${index + 1}`),
-  label: toStringSafe(rawProject?.label, `Project ${index + 1}`),
-  pages:
-    toArray(rawProject?.pages).length > 0
-      ? toArray(rawProject?.pages).map((page, pageIndex) =>
-          normalizeManualPage(
-            page,
-            pageIndex,
-            toStringSafe(rawProject?.id, `project-${index + 1}`),
-            canvasRatio
-          )
-        )
-      : [
-          normalizeManualPage(
-            {
-              id: "page-1",
-              label: "页面 1",
-              elements: toArray(rawProject?.elements),
-            },
-            0,
-            toStringSafe(rawProject?.id, `project-${index + 1}`),
-            canvasRatio
-          ),
-        ],
-});
-
-const resolveImage = (safeItems, section, key, fallbackIndex) => {
-  const urlKey = `${key}Url`;
-  const indexKey = `${key}Index`;
-  const rawUrl = String(section?.[urlKey] || "").trim();
-  if (rawUrl) return rawUrl;
-
-  const idx = Number.isInteger(section?.[indexKey]) ? section[indexKey] : fallbackIndex;
-  return getThumb(safeItems[idx] || safeItems[fallbackIndex] || null);
-};
-
-const defaultCommercial = defaultSiteContent.commercialDesign;
+];
 
 export default function CommercialDesignPage() {
-  const [activeSection, setActiveSection] = useState("all");
-  const [items, setItems] = useState([]);
-  const [commercial, setCommercial] = useState(defaultCommercial);
+  const [activeProjectId, setActiveProjectId] = useState(COMMERCIAL_PROJECTS[0].id);
   const [spineLeftPx, setSpineLeftPx] = useState(null);
-  const [viewportRatio, setViewportRatio] = useState(DEFAULT_CANVAS_RATIO);
-  const bookContainerRef = useRef(null);
-  const manualCanvasNodeRef = useRef(new Map());
+  const sectionRefMap = useRef(new Map());
+  const leftPanelRef = useRef(null);
+  const rightColumnRef = useRef(null);
+
+  const projects = useMemo(() => COMMERCIAL_PROJECTS, []);
+
+  const updateSpineLeft = useCallback(() => {
+    const rightRect = rightColumnRef.current?.getBoundingClientRect();
+    if (!rightRect) return;
+    if (!Number.isFinite(rightRect.left)) return;
+    const scrollbarCompensation = Math.max(0, window.innerWidth - document.documentElement.clientWidth) / 2;
+    setSpineLeftPx(rightRect.left + scrollbarCompensation);
+  }, []);
 
   useEffect(() => {
-    fetch("/api/portfolio")
-      .then((r) => r.json())
-      .then((data) => setItems(Array.isArray(data) ? data : []))
-      .catch(() => setItems([]));
+    const headerNodes = Array.from(document.querySelectorAll(".logo-area, .nav")).filter(
+      (node) => node instanceof HTMLElement
+    );
+    if (headerNodes.length === 0) return;
 
-    fetch("/api/content")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.commercialDesign && typeof data.commercialDesign === "object") {
-          setCommercial({
-            ...defaultCommercial,
-            ...data.commercialDesign,
-            sections: {
-              ...defaultCommercial.sections,
-              ...(data.commercialDesign.sections || {}),
-            },
-            manualLayouts: Array.isArray(data.commercialDesign.manualLayouts)
-              ? data.commercialDesign.manualLayouts
-              : Array.isArray(defaultCommercial.manualLayouts)
-                ? defaultCommercial.manualLayouts
-                : [],
-          });
-        }
-      })
-      .catch(() => {});
-  }, []);
+    let hidden = false;
+    let lastScrollTop = Math.max(window.scrollY, document.documentElement.scrollTop, document.body.scrollTop);
+    let frame = 0;
 
-  useLayoutEffect(() => {
-    const syncRatio = () => {
-      if (typeof window === "undefined") return;
-      const layoutWidth = Math.max(
-        1,
-        toNumberSafe(document?.documentElement?.clientWidth, window.innerWidth)
-      );
-      const layoutHeight = Math.max(1, toNumberSafe(window.innerHeight, 1));
-      setViewportRatio(getSafeCanvasRatio(layoutWidth / layoutHeight));
+    const setHidden = (nextHidden) => {
+      if (hidden === nextHidden) return;
+      hidden = nextHidden;
+      headerNodes.forEach((node) => {
+        node.style.opacity = nextHidden ? "0" : "1";
+        node.style.transform = nextHidden ? "translate3d(0, -40px, 0)" : "translate3d(0, 0, 0)";
+        node.style.pointerEvents = nextHidden ? "none" : "auto";
+      });
     };
-    syncRatio();
-    window.addEventListener("resize", syncRatio);
-    return () => window.removeEventListener("resize", syncRatio);
+
+    const applyByScrollDirection = () => {
+      const scrollTop = Math.max(window.scrollY, document.documentElement.scrollTop, document.body.scrollTop);
+      const delta = scrollTop - lastScrollTop;
+      if (scrollTop <= 8) {
+        setHidden(false);
+      } else if (delta > 1.2) {
+        setHidden(true);
+      } else if (delta < -1.2) {
+        setHidden(false);
+      }
+      lastScrollTop = scrollTop;
+      frame = 0;
+    };
+
+    const onScroll = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(applyByScrollDirection);
+    };
+
+    headerNodes.forEach((node) => {
+      node.style.transition = "transform 560ms cubic-bezier(0.22, 1, 0.36, 1), opacity 560ms cubic-bezier(0.22, 1, 0.36, 1)";
+      node.style.willChange = "transform, opacity";
+    });
+    setHidden(false);
+
+    document.addEventListener("scroll", onScroll, { passive: true, capture: true });
+
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      document.removeEventListener("scroll", onScroll, true);
+      headerNodes.forEach((node) => {
+        node.style.opacity = "";
+        node.style.transform = "";
+        node.style.pointerEvents = "";
+        node.style.transition = "";
+        node.style.willChange = "";
+      });
+    };
   }, []);
-
-  const safeItems = useMemo(() => {
-    if (Array.isArray(items) && items.length > 0) return items;
-    return [{ title: "Placeholder", mediaUrl: FALLBACK_IMAGE, thumbUrl: FALLBACK_IMAGE }];
-  }, [items]);
-
-  const sections = commercial?.sections || defaultCommercial.sections;
-  const manualProjects = useMemo(
-    () =>
-      toArray(commercial?.manualLayouts).map((project, index) =>
-        normalizeManualProject(project, index, viewportRatio)
-      ),
-    [commercial?.manualLayouts, viewportRatio]
-  );
-
-  const navItems =
-    manualProjects.length > 0
-      ? manualProjects.map((project, index) => ({
-          id: toStringSafe(project.id, `project-${index + 1}`),
-          label: toStringSafe(project.label, `Project ${index + 1}`),
-        }))
-      : Array.isArray(commercial?.navItems) && commercial.navItems.length > 0
-        ? commercial.navItems
-        : defaultCommercial.navItems;
-  const activeSectionId = navItems.some((item) => toStringSafe(item?.id) === toStringSafe(activeSection))
-    ? activeSection
-    : toStringSafe(navItems[0]?.id, "all");
-  const activeNavId =
-    navItems.find((item) => toStringSafe(item?.id) === toStringSafe(activeSectionId))?.id ||
-    navItems.find((item) => toStringSafe(activeSectionId).startsWith(`${toStringSafe(item?.id)}--page-`))?.id ||
-    toStringSafe(navItems[0]?.id, "all");
-  const manualRenderedPages = manualProjects.flatMap((project, projectIndex) => {
-    const projectId = toStringSafe(project.id, `project-${projectIndex + 1}`);
-    const pages = toArray(project.pages);
-    return pages.map((page, pageIndex) => ({
-      projectId,
-      pageId: toStringSafe(page.id, `page-${pageIndex + 1}`),
-      anchorId: pageIndex === 0 ? projectId : `${projectId}--page-${pageIndex + 1}`,
-      elements: toArray(page.elements),
-    }));
-  });
-
-  const allHero = resolveImage(safeItems, sections.all, "rightImage", 0);
-  const allNavTitle =
-    navItems.find((item) => String(item?.id || "").trim() === "all")?.label || "Project 1";
-  const allTitle = String(sections?.all?.title || allNavTitle);
-  const allBody = String(sections?.all?.body || "");
-  const sitesLeft = resolveImage(safeItems, sections.sitesInUse, "leftImage", 1);
-  const sitesRight = resolveImage(safeItems, sections.sitesInUse, "rightImage", 2);
-  const graphicRight = resolveImage(safeItems, sections.graphicDesign, "rightImage", 3);
-  const styleLeft = resolveImage(safeItems, sections.style, "leftImage", 4);
-  const acrossImage = resolveImage(safeItems, sections.acrossSpread, "image", 5);
-  const archRight = resolveImage(safeItems, sections.archDesign, "rightImage", 0);
-  const artLeft = resolveImage(safeItems, sections.art, "leftImage", 1);
-  const artRight = resolveImage(safeItems, sections.art, "rightImage", 2);
-  const photoLeft = resolveImage(safeItems, sections.photo, "leftImage", 3);
-  const shopsRight = resolveImage(safeItems, sections.shops, "rightImage", 4);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) setActiveSection(entry.target.id);
+          if (!entry.isIntersecting) return;
+          const nextId = String(entry.target.getAttribute("data-project-id") || "");
+          if (nextId) setActiveProjectId(nextId);
         });
       },
-      { rootMargin: "-40% 0px -40% 0px" }
+      {
+        root: null,
+        rootMargin: "-45% 0px -45% 0px",
+        threshold: 0
+      }
     );
 
-    const spreads = document.querySelectorAll(`.${styles.spread}`);
-    spreads.forEach((section) => observer.observe(section));
-
+    sectionRefMap.current.forEach((node) => observer.observe(node));
     return () => observer.disconnect();
   }, []);
-
-  const updateSpineLeft = useCallback(() => {
-    let targetNode = null;
-    const key = toStringSafe(activeSection);
-    if (key) {
-      targetNode = manualCanvasNodeRef.current.get(key) || null;
-    }
-    if (!targetNode) {
-      const first = manualCanvasNodeRef.current.values().next();
-      targetNode = first && !first.done ? first.value : null;
-    }
-    if (!targetNode) {
-      targetNode = bookContainerRef.current;
-    }
-    if (!targetNode) return;
-    const rect = targetNode.getBoundingClientRect();
-    if (!Number.isFinite(rect.left) || !Number.isFinite(rect.width) || rect.width <= 0) return;
-    setSpineLeftPx(rect.left + rect.width / 2);
-  }, [activeSection]);
 
   useLayoutEffect(() => {
     let frame = 0;
     const schedule = () => {
       if (frame) cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => updateSpineLeft());
+      frame = requestAnimationFrame(updateSpineLeft);
     };
     schedule();
+
     window.addEventListener("resize", schedule);
     window.addEventListener("scroll", schedule, { passive: true });
 
     let observer = null;
-    if (typeof ResizeObserver !== "undefined" && bookContainerRef.current) {
-      observer = new ResizeObserver(() => schedule());
-      observer.observe(bookContainerRef.current);
+    if (typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(schedule);
+      if (leftPanelRef.current) observer.observe(leftPanelRef.current);
+      if (rightColumnRef.current) observer.observe(rightColumnRef.current);
     }
 
     return () => {
@@ -402,336 +198,133 @@ export default function CommercialDesignPage() {
       window.removeEventListener("scroll", schedule);
       if (observer) observer.disconnect();
     };
-  }, [updateSpineLeft, manualRenderedPages.length, activeSection]);
+  }, [updateSpineLeft, activeProjectId]);
 
-  const handleNavClick = (e, id) => {
-    e.preventDefault();
-    const element = document.getElementById(id);
-    if (element) element.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const renderMedia = (url, alt, className, style) => {
-    if (isVideoUrl(url)) {
-      return (
-        <video
-          src={url}
-          className={className}
-          style={style}
-          autoPlay
-          loop
-          muted
-          playsInline
-          preload="metadata"
-        />
-      );
+  const setSectionRef = useCallback((projectId, node) => {
+    if (!projectId) return;
+    if (node) {
+      sectionRefMap.current.set(projectId, node);
+    } else {
+      sectionRefMap.current.delete(projectId);
     }
-    return <img src={url} alt={alt} className={className} style={style} />;
-  };
+  }, []);
 
-  const renderManualElement = (projectId, element, index) => {
-    const width = toNumberSafe(element.width, 44);
-    const height = toNumberSafe(element.height, 44);
-    const style = {
-      left: `${element.x}%`,
-      top: `${element.y}%`,
-      width: `${width}%`,
-      height: `${height}%`,
-      zIndex: element.zIndex,
-      opacity: element.opacity / 100,
-    };
+  const jumpToProject = useCallback((projectId) => {
+    const target = sectionRefMap.current.get(projectId);
+    if (!target) return;
+    setActiveProjectId(projectId);
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
 
-    if (element.type === "text") {
-      return (
-        <div
-          key={`manual-text-${projectId}-${element.id}-${index}`}
-          className={styles.manualElement}
-          style={style}
-        >
-          <div
-            className={styles.manualText}
-            style={{
-              color: element.color,
-              fontFamily: element.fontFamily,
-              fontSize: `${element.fontSize / 16}rem`,
-              lineHeight: element.lineHeight,
-              fontWeight: element.fontWeight,
-              textAlign: element.textAlign,
-            }}
-          >
-            {toStringSafe(element.text)}
-          </div>
-        </div>
-      );
-    }
-
-    if (element.mediaType === "video" || isVideoUrl(element.mediaUrl)) {
-      return (
-        <div key={`manual-video-${projectId}-${element.id}-${index}`} className={styles.manualElement} style={style}>
-          <video
-            src={element.mediaUrl}
-            className={styles.manualMedia}
-            style={{ objectFit: "contain" }}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-          />
-        </div>
-      );
-    }
-
-    if (element.mediaType === "audio" || isAudioUrl(element.mediaUrl)) {
-      return (
-        <div key={`manual-audio-${projectId}-${element.id}-${index}`} className={styles.manualElement} style={style}>
-          <div className={styles.manualAudioWrap}>
-            <audio src={element.mediaUrl} controls className={styles.manualAudio} />
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <div key={`manual-image-${projectId}-${element.id}-${index}`} className={styles.manualElement} style={style}>
-        <img
-          src={toStringSafe(element.mediaUrl) || FALLBACK_IMAGE}
-          alt={toStringSafe(element.text, "Commercial media")}
-          className={styles.manualMedia}
-          style={{ objectFit: "contain" }}
-        />
-      </div>
-    );
-  };
+  const activeProject = projects.find((project) => project.id === activeProjectId) || projects[0];
 
   return (
     <div className={styles.pageWrapper}>
-      <div ref={bookContainerRef} className={styles.bookContainer}>
-        <div className={styles.spineOverlayContainer} aria-hidden="true">
-          <img
-            src={commercial?.spineImageUrl || defaultCommercial.spineImageUrl}
-            alt=""
-            className={styles.spineMultiply}
-            style={spineLeftPx !== null ? { left: `${spineLeftPx}px` } : undefined}
-            draggable="false"
-          />
-        </div>
+      <div className={styles.spineOverlayContainer} aria-hidden="true">
+        <img
+          src="/ui/crease-multiply2.png"
+          alt=""
+          className={styles.spineMultiply}
+          style={spineLeftPx !== null ? { left: `${spineLeftPx}px` } : undefined}
+          draggable="false"
+        />
+      </div>
 
-        <aside className={styles.sidebar}>
-          <div className={styles.navGroup}>
-            <div className={styles.navTitle}>User Work</div>
-            <ul className={styles.navList}>
-              {navItems.map((item) => (
-                <li key={item.id} className={styles.navItem}>
-                  <a
-                    href={`#${item.id}`}
-                    className={`${styles.navLink} ${activeNavId === item.id ? styles.navLinkActive : ""}`}
-                    onClick={(e) => handleNavClick(e, item.id)}
-                  >
-                    {item.label}
-                  </a>
-                </li>
-              ))}
-            </ul>
-            {manualProjects.length === 0 ? (
-              <a href="#extra" className={styles.navExtra}>
-                {sections?.extra?.linkLabel || "Extra Material"} <span>→</span>
-              </a>
-            ) : null}
+      <div className={styles.layout}>
+        <aside className={styles.navRail} aria-label="Project navigation">
+          <div className={styles.navInner}>
+            {projects.map((project, index) => (
+              <button
+                key={project.id}
+                type="button"
+                className={`${styles.navItem} ${activeProject.id === project.id ? styles.navItemActive : ""}`}
+                onClick={() => jumpToProject(project.id)}
+              >
+                <span className={styles.navIndex}>{String(index + 1).padStart(2, "0")}</span>
+                <span className={styles.navLabel}>{project.navLabel}</span>
+              </button>
+            ))}
           </div>
         </aside>
 
-        {manualProjects.length > 0 ? (
-          <>
-            {manualRenderedPages.map((page, pageIndex) => (
-              <section
-                key={`manual-spread-${page.projectId}-${page.pageId}-${pageIndex}`}
-                id={page.anchorId}
-                className={`${styles.spread} ${styles.manualSpread}`}
+        <aside ref={leftPanelRef} className={styles.leftPanel}>
+          <div className={styles.leftPanelInner}>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={activeProject.id}
+                className={styles.projectMetaMotion}
+                initial={{ opacity: 0, y: 22 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -22 }}
+                transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
               >
-                <div
-                  ref={(node) => {
-                    const refKey = toStringSafe(page.anchorId);
-                    if (!refKey) return;
-                    if (node) {
-                      manualCanvasNodeRef.current.set(refKey, node);
-                    } else {
-                      manualCanvasNodeRef.current.delete(refKey);
-                    }
-                  }}
-                  className={styles.manualCanvas}
-                >
-                  <div className={styles.manualLayer}>
-                    {toArray(page.elements).map((element, elementIndex) =>
-                      renderManualElement(page.anchorId, element, elementIndex)
-                    )}
-                  </div>
-                </div>
-              </section>
-            ))}
-          </>
-        ) : (
-          <>
-        <section id="all" className={styles.spread}>
-          <div className={`${styles.leftPage} ${styles.flexCenter}`}>
-            <div className={`${styles.textBlock} ${styles.projectIntroBlock}`}>
-              <h2 className={styles.textTitle}>{allTitle}</h2>
-              {allBody ? <p className={styles.textBody}>{allBody}</p> : null}
-            </div>
-          </div>
-          <div className={`${styles.rightPage} ${styles.flexCenter} ${styles.flushLeft}`}>
-            {renderMedia(
-              allHero,
-              allTitle,
-              styles.containedImg,
-              toStyleObject(sections?.all?.rightImageStyle)
-            )}
-          </div>
-        </section>
-
-        <section id="sites-in-use" className={styles.spread}>
-          <div className={`${styles.leftPage} ${styles.flexCenter} ${styles.flushRight}`}>
-            {renderMedia(
-              sitesLeft,
-              "Project 2 Left",
-              styles.containedImg,
-              toStyleObject(sections?.sitesInUse?.leftImageStyle)
-            )}
-          </div>
-          <div className={`${styles.rightPage} ${styles.flexCenter} ${styles.flushLeft}`}>
-            {renderMedia(
-              sitesRight,
-              "Project 2 Right",
-              styles.containedImg,
-              toStyleObject(sections?.sitesInUse?.rightImageStyle)
-            )}
-          </div>
-        </section>
-
-        <section id="graphic-design" className={styles.spread}>
-          <div className={`${styles.leftPage} ${styles.flexCenter}`}>
-            <div className={styles.textBlock}>
-              <h2 className={styles.textTitle}>{sections?.graphicDesign?.title || "Graphic & Print"}</h2>
-              <p className={styles.textBody}>{sections?.graphicDesign?.body1 || ""}</p>
-              {sections?.graphicDesign?.body2 ? <p className={styles.textBody}>{sections.graphicDesign.body2}</p> : null}
-              {sections?.graphicDesign?.credit ? (
-                <div className={styles.creditBottom}>{sections.graphicDesign.credit}</div>
-              ) : null}
-            </div>
-          </div>
-          <div className={`${styles.rightPage} ${styles.fullBleed}`}>
-            {renderMedia(
-              graphicRight,
-              "Project 4",
-              styles.fullBleedImg,
-              toStyleObject(sections?.graphicDesign?.rightImageStyle)
-            )}
-          </div>
-        </section>
-
-        <section id="style" className={styles.spread}>
-          <div className={`${styles.leftPage} ${styles.fullBleed} ${styles.flushRight}`}>
-            {renderMedia(
-              styleLeft,
-              "Project 5",
-              styles.fullBleedImg,
-              toStyleObject(sections?.style?.leftImageStyle)
-            )}
-            {sections?.style?.overlayText ? (
-              <div style={{ position: "absolute", ...toStyleObject(sections?.style?.overlayStyle) }}>
-                {String(sections.style.overlayText)
-                  .split("\n")
-                  .map((line, idx) => (
-                    <div key={`${line}-${idx}`}>{line}</div>
+                <p className={styles.kicker}>Commercial Design</p>
+                <h2 className={styles.projectTitle}>{activeProject.title}</h2>
+                <div className={styles.projectCopy}>
+                  {activeProject.paragraphs.map((paragraph, idx) => (
+                    <p key={`${paragraph}-${idx}`}>{paragraph}</p>
                   ))}
-              </div>
-            ) : null}
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
-          <div className={styles.rightPage}></div>
-        </section>
+        </aside>
 
-        <section id="across-spread" className={`${styles.spread} ${styles.acrossSpread}`}>
-          {renderMedia(
-            acrossImage,
-            "Across spread project",
-            styles.acrossSpreadImg,
-            toStyleObject(sections?.acrossSpread?.imageStyle)
-          )}
-          <div className={styles.leftPage}></div>
-          <div className={styles.rightPage}></div>
-        </section>
+        <main ref={rightColumnRef} className={styles.rightColumn}>
+          {projects.map((project, projectIndex) => {
+            const nextProject = projects[projectIndex + 1];
+            const transitionId = nextProject ? `${project.id}-to-${nextProject.id}` : "";
 
-        <section id="arch-design" className={styles.spread}>
-          <div className={`${styles.leftPage} ${styles.flexCenter}`}>
-            <div className={styles.textBlock}>
-              <h2 className={styles.textTitle}>{sections?.archDesign?.title || "Architecture & Space"}</h2>
-              <p className={styles.textBody}>{sections?.archDesign?.body || ""}</p>
-            </div>
-          </div>
-          <div className={`${styles.rightPage} ${styles.flexCenter} ${styles.flushLeft}`}>
-            {renderMedia(
-              archRight,
-              "Project Arch",
-              styles.containedImg,
-              toStyleObject(sections?.archDesign?.rightImageStyle)
-            )}
-          </div>
-        </section>
+            return (
+              <Fragment key={project.id}>
+                <section
+                  ref={(node) => setSectionRef(project.id, node)}
+                  data-project-id={project.id}
+                  id={`project-${project.id}`}
+                  className={styles.projectSection}
+                >
+                  <div className={styles.projectMediaStack}>
+                    {project.media.map((url, index) => {
+                      const src = toMediaSrc(url);
+                      const mediaKey = `${project.id}-${index}-${src}`;
+                      if (isVideoUrl(src)) {
+                        return (
+                          <video
+                            key={mediaKey}
+                            src={src}
+                            className={styles.projectVideo}
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            preload="metadata"
+                          />
+                        );
+                      }
 
-        <section id="art" className={styles.spread}>
-          <div className={`${styles.leftPage} ${styles.flexCenter} ${styles.flushRight}`}>
-            {renderMedia(
-              artLeft,
-              "Project Art",
-              `${styles.containedImg} ${styles.shadowedImg}`,
-              toStyleObject(sections?.art?.leftImageStyle)
-            )}
-          </div>
-          <div className={`${styles.rightPage} ${styles.flexCenter} ${styles.flushLeft}`}>
-            {renderMedia(
-              artRight,
-              "Project Art Right",
-              `${styles.containedImg} ${styles.shadowedImg}`,
-              toStyleObject(sections?.art?.rightImageStyle)
-            )}
-          </div>
-        </section>
+                      if (isAudioUrl(src)) {
+                        return (
+                          <div key={mediaKey} className={styles.audioWrap}>
+                            <audio src={src} controls className={styles.projectAudio} />
+                          </div>
+                        );
+                      }
 
-        <section id="photo" className={styles.spread}>
-          <div className={`${styles.leftPage} ${styles.flexCenter} ${styles.flushRight}`}>
-            {renderMedia(
-              photoLeft,
-              "Project Photo",
-              styles.containedImg,
-              toStyleObject(sections?.photo?.leftImageStyle)
-            )}
-          </div>
-          <div className={styles.rightPage}></div>
-        </section>
+                      return <img key={mediaKey} src={src} alt={project.title} className={styles.projectImage} />;
+                    })}
+                  </div>
+                </section>
 
-        <section id="shops" className={styles.spread}>
-          <div className={styles.leftPage}></div>
-          <div className={`${styles.rightPage} ${styles.flexCenter} ${styles.flushLeft}`}>
-            {renderMedia(
-              shopsRight,
-              "Project Shop",
-              `${styles.containedImg} ${styles.shadowedImg}`,
-              toStyleObject(sections?.shops?.rightImageStyle)
-            )}
-            {sections?.shops?.caption ? <div className={styles.caption}>{sections.shops.caption}</div> : null}
-          </div>
-        </section>
-
-        <section id="extra" className={styles.spread}>
-          <div className={`${styles.leftPage} ${styles.flexCenter}`}>
-            <div className={styles.textBlock}>
-              <h2 className={styles.textTitle}>{sections?.extra?.title || "Extra Material"}</h2>
-              <p className={styles.textBody}>{sections?.extra?.body || ""}</p>
-            </div>
-          </div>
-          <div className={`${styles.rightPage} ${styles.flexCenter}`}></div>
-        </section>
-          </>
-        )}
+                {nextProject ? (
+                  <div
+                    className={styles.projectTransition}
+                    aria-hidden="true"
+                  />
+                ) : null}
+              </Fragment>
+            );
+          })}
+        </main>
       </div>
     </div>
   );
