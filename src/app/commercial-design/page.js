@@ -256,14 +256,31 @@ export default function CommercialDesignPage() {
     }
   }, []);
 
-  const jumpToProject = useCallback((projectId) => {
+  const jumpToProject = useCallback((projectId, behavior = "smooth") => {
     const target = sectionRefMap.current.get(projectId);
     if (!target) return;
     setActiveProjectId(projectId);
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    target.scrollIntoView({ behavior, block: "start" });
   }, []);
 
   const activeProject = projects.find((project) => project.id === activeProjectId) || projects[0];
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const requestedProjectId = searchParams.get("project");
+    const hashTarget = decodeURIComponent(window.location.hash || "")
+      .replace(/^#project-/, "")
+      .trim();
+    const nextProjectId = requestedProjectId || hashTarget;
+    if (!nextProjectId) return;
+    if (!projects.some((project) => project.id === nextProjectId)) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      jumpToProject(nextProjectId, "auto");
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [jumpToProject, projects]);
 
   return (
     <div className={styles.pageWrapper}>

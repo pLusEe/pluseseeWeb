@@ -13,11 +13,8 @@ export default function CustomCursor() {
     const handleMouseMove = (e) => {
       setPosition({ x: e.clientX, y: e.clientY });
       if (!isVisible) setIsVisible(true);
-    };
-
-    const handleMouseOver = (e) => {
-      // Data-hover text (large black circle) takes priority
-      const hoverTextTarget = e.target.closest("[data-hover-text]");
+      const target = document.elementFromPoint(e.clientX, e.clientY);
+      const hoverTextTarget = target?.closest?.("[data-hover-text]");
       if (hoverTextTarget) {
         setHoverData({
           active: true,
@@ -26,18 +23,15 @@ export default function CustomCursor() {
         setIsClickable(false);
       } else {
         setHoverData({ active: false, text: "" });
-        // Check for general clickable elements for hollow circle
-        const clickableTarget = e.target.closest("a, button, [role='button']");
+        const clickableTarget = target?.closest?.("a, button, [role='button'], [data-cursor-clickable='true']");
         setIsClickable(!!clickableTarget);
       }
     };
 
     window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseover", handleMouseOver);
 
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseover", handleMouseOver);
     };
   }, []);
 

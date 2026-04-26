@@ -506,6 +506,21 @@ export default function PersonalDesignPage() {
     [updateZIndexes]
   );
 
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const frameParam = Number(searchParams.get("frame"));
+    if (!Number.isFinite(frameParam) || frameParam < 2) return;
+    if (pages.length === 0) return;
+
+    const sheetIndex = Math.max(0, Math.floor((frameParam - 2) / 2));
+    const targetStart = sheetIndex * 2 + 1;
+    const raf = window.requestAnimationFrame(() => {
+      jumpToPage(targetStart);
+    });
+
+    return () => window.cancelAnimationFrame(raf);
+  }, [jumpToPage, pages.length]);
+
   return (
     <div className={styles.bookPage}>
       <div className={styles.gridBg} />

@@ -20,6 +20,62 @@ const getThumb = (item) => {
   return "/media/images/placeholder1.jpg";
 };
 
+const normalizeMediaPath = (value) => decodeURIComponent(String(value || "")).toLowerCase();
+
+const resolveItemTarget = (item) => {
+  const mediaPath = normalizeMediaPath(item?.mediaUrl || item?.imageUrl || item?.thumbUrl);
+  if (!mediaPath) return null;
+
+  if (mediaPath.includes("/media/images/commercial-design/")) {
+    if (mediaPath.includes("/wechat-csc/") || mediaPath.includes("客服中心")) {
+      return "/commercial-design#project-wechat-cmsc";
+    }
+    if (mediaPath.includes("马年海报260423")) {
+      return "/commercial-design#project-horse-poster-260423";
+    }
+    if (mediaPath.includes("微信经营助手智能体验创新与ip动效设计")) {
+      return "/commercial-design#project-wechat-ai-ip-motion";
+    }
+    if (mediaPath.includes("/feishu-pt1/")) {
+      return "/commercial-design#project-feishu-pte";
+    }
+    if (mediaPath.includes("/feishu-pt2/")) {
+      return "/commercial-design#project-feishu-pte2";
+    }
+  }
+
+  if (mediaPath.includes("/media/images/archive/")) {
+    const match = mediaPath.match(/frame\s+(\d+)\.png$/i);
+    if (!match) return "/design-archive/2019-2024";
+    return `/design-archive/2019-2024?frame=${match[1]}`;
+  }
+
+  return null;
+};
+
+const resolveJumpTarget = (item) => {
+  const mediaPath = normalizeMediaPath(item?.mediaUrl || item?.imageUrl || item?.thumbUrl);
+  if (!mediaPath) return null;
+
+  if (mediaPath.includes("/media/images/commercial-design/")) {
+    if (mediaPath.includes("/wechat-csc/") || mediaPath.includes("客服中心")) {
+      return "/commercial-design#project-wechat-cmsc";
+    }
+    if (mediaPath.includes("马年海报260423")) {
+      return "/commercial-design#project-horse-poster-260423";
+    }
+    if (mediaPath.includes("/feishu-pt1/")) {
+      return "/commercial-design#project-feishu-pte";
+    }
+    if (mediaPath.includes("/feishu-pt2/")) {
+      return "/commercial-design#project-feishu-pte2";
+    }
+    return "/commercial-design#project-wechat-ai-ip-motion";
+  }
+
+  return resolveItemTarget(item);
+};
+
 const TAG_LABELS = {
   home: "2.1 首页圆环",
   commercial: "2.2 商业设计",
@@ -142,7 +198,19 @@ const prepareTexture = (texture, item) => {
 
 const angularDelta = (a, b) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
 
-function Card({ index, texture, angle, radius, selected, hovered, selectedMode, title, onSelect, onHover }) {
+function Card({
+  index,
+  texture,
+  angle,
+  radius,
+  selected,
+  hovered,
+  selectedMode,
+  title,
+  onSelect,
+  onHover,
+  onActionHover,
+}) {
   const { camera } = useThree();
   const groupRef = useRef(null);
   const materialRef = useRef(null);
@@ -235,10 +303,18 @@ function Card({ index, texture, angle, radius, selected, hovered, selectedMode, 
       }}
       onPointerOver={(event) => {
         event.stopPropagation();
+        if (selectedMode && selected) {
+          onActionHover(true);
+          return;
+        }
         if (!selectedMode) onHover(index);
       }}
       onPointerOut={(event) => {
         event.stopPropagation();
+        if (selectedMode && selected) {
+          onActionHover(false);
+          return;
+        }
         if (!selectedMode) onHover(null);
       }}
     >
@@ -331,7 +407,15 @@ function CameraRig({ focusActive, radius }) {
   return null;
 }
 
-function RingScene({ displayItems, selectedIndex, hoveredIndex, rotationTarget, onHover, onSelect }) {
+function RingScene({
+  displayItems,
+  selectedIndex,
+  hoveredIndex,
+  rotationTarget,
+  onHover,
+  onSelect,
+  onActionHover,
+}) {
   const groupRef = useRef(null);
   const textures = useTexture(displayItems.map(getThumb));
   const { viewport, pointer } = useThree();
@@ -406,6 +490,7 @@ function RingScene({ displayItems, selectedIndex, hoveredIndex, rotationTarget, 
             title={item.title}
             onSelect={onSelect}
             onHover={onHover}
+            onActionHover={onActionHover}
           />
         ))}
       </group>
@@ -419,6 +504,7 @@ export default function RingCarousel({ items }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [rotationTarget, setRotationTarget] = useState(Math.PI / 2);
   const [scrollEnergy, setScrollEnergy] = useState(0);
+  const [selectedCardHovered, setSelectedCardHovered] = useState(false);
   const displayItems = useMemo(() => getDisplayItems(items), [items]);
   const hoveredItem = hoveredIndex !== null ? displayItems[hoveredIndex] : null;
   const selectedItem = selectedIndex !== null ? displayItems[selectedIndex] : null;
@@ -447,6 +533,7 @@ export default function RingCarousel({ items }) {
         const nextIndex = (selectedIndex + step + count) % count;
         setSelectedIndex(nextIndex);
         setHoveredIndex(nextIndex);
+        setSelectedCardHovered(false);
         return;
       }
 
@@ -499,6 +586,7 @@ export default function RingCarousel({ items }) {
       if (event.key === "Escape") {
         setSelectedIndex(null);
         setHoveredIndex(null);
+        setSelectedCardHovered(false);
       }
     };
 
@@ -509,12 +597,32 @@ export default function RingCarousel({ items }) {
   const closeExpanded = () => {
     setSelectedIndex(null);
     setHoveredIndex(null);
+    setSelectedCardHovered(false);
+  };
+
+  const handleSelect = (index) => {
+    if (selectedIndex === index) {
+      const targetUrl = resolveJumpTarget(displayItems[index]);
+      if (targetUrl) {
+        window.location.assign(targetUrl);
+      }
+      return;
+    }
+
+    setSelectedIndex(index);
+    setHoveredIndex(index);
+    setSelectedCardHovered(false);
+    setRotationTarget((current) => {
+      rotationAtSelectRef.current = current;
+      return current;
+    });
   };
 
   return (
     <div
       ref={sceneRef}
       className={styles.scene}
+      data-cursor-clickable={selectedCardHovered ? "true" : undefined}
       style={{
         opacity: 1 - scrollEnergy * 0.08,
       }}
@@ -536,14 +644,8 @@ export default function RingCarousel({ items }) {
             hoveredIndex={hoveredIndex}
             rotationTarget={rotationTarget}
             onHover={setHoveredIndex}
-            onSelect={(index) => {
-              setSelectedIndex(index);
-              setHoveredIndex(index);
-              setRotationTarget((current) => {
-                rotationAtSelectRef.current = current;
-                return current;
-              });
-            }}
+            onSelect={handleSelect}
+            onActionHover={setSelectedCardHovered}
           />
         </Canvas>
       </div>
