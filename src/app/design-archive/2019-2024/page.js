@@ -25,6 +25,11 @@ const getThumb = (item) => {
 
 const toSafeUrl = (url) => encodeURI(url || "");
 const DEFAULT_BOOK_CONFIG = defaultSiteContent.personalDesign.book2019;
+const ARCHIVE_FRAME_COUNT = 80;
+const ARCHIVE_PAGE_IMAGES = Array.from(
+  { length: ARCHIVE_FRAME_COUNT - 1 },
+  (_, index) => `/media/images/archive/Frame ${index + 2}.png`
+);
 
 const normalizeTags = (rawCategories, rawCategory) => {
   const source = [];
@@ -92,8 +97,33 @@ export default function PersonalDesignPage() {
 
   const pageItems = orderedByConfigIds.length > 0 ? orderedByConfigIds : personalItems.length > 0 ? personalItems : items;
   const safeItems = pageItems.length > 0 ? pageItems : [{ id: "placeholder", title: "Placeholder" }];
+  const firstLeftPageImage = toSafeUrl(ARCHIVE_PAGE_IMAGES[0] || "");
 
   const pages = useMemo(() => {
+    if (ARCHIVE_PAGE_IMAGES.length > 0) {
+      const sheetImages = ARCHIVE_PAGE_IMAGES.slice(1);
+      const result = [];
+      for (let i = 0; i < sheetImages.length; i += 2) {
+        const frontImage = sheetImages[i];
+        const backImage = sheetImages[i + 1] || "";
+        result.push({
+          front: {
+            title: "",
+            text: "",
+            background: toSafeUrl(frontImage),
+            pageNum: i + 2,
+          },
+          back: {
+            title: "",
+            text: "",
+            background: toSafeUrl(backImage),
+            pageNum: i + 3,
+          },
+        });
+      }
+      return result;
+    }
+
     if (orderedByConfigIds.length > 0) {
       const result = [];
       for (let i = 0; i < orderedByConfigIds.length; i += 2) {
@@ -237,7 +267,7 @@ export default function PersonalDesignPage() {
       pageEls[lastTurned].classList.add(styles.pageActive);
     }
 
-    const totalPages = pageEls.length * 2;
+    const totalPages = pageEls.length * 2 + 1;
     const spreadStart = firstUnturned === -1 ? Math.max(1, totalPages - 1) : firstUnturned * 2 + 1;
     setCurrentSpreadStart(spreadStart);
 
@@ -517,32 +547,35 @@ export default function PersonalDesignPage() {
         </aside>
 
         <div className={styles.pagesStage}>
+          <div className={styles.staticLeftPage} aria-hidden="true">
+            {firstLeftPageImage ? (
+              <img src={firstLeftPageImage} alt="" className={styles.pageImage} draggable={false} />
+            ) : null}
+          </div>
           <div ref={bookRef} className={styles.book}>
             {pages.map((page, idx) => (
               <div key={`page-${idx}`} className={styles.page} data-index={idx}>
                 <div
                   className={styles.front}
-                  style={{ backgroundImage: `url("${page.front.background}")` }}
                 >
-                  <div className={styles.pageContent}>
-                    <div className={styles.pageTitle}>{page.front.title}</div>
-                    {page.front.text && <div className={styles.pageText}>{page.front.text}</div>}
-                  </div>
-                  <span className={`${styles.pageNumber} ${styles.pageNumberRight}`}>
-                    {String(page.front.pageNum).padStart(2, "0")}
-                  </span>
+                  <img src={page.front.background} alt="" className={styles.pageImage} draggable={false} />
+                  {(page.front.title || page.front.text) && (
+                    <div className={styles.pageContent}>
+                      {page.front.title && <div className={styles.pageTitle}>{page.front.title}</div>}
+                      {page.front.text && <div className={styles.pageText}>{page.front.text}</div>}
+                    </div>
+                  )}
                 </div>
-                <div
-                  className={styles.back}
-                  style={{ backgroundImage: `url("${page.back.background}")` }}
-                >
-                  <div className={styles.pageContent}>
-                    <div className={styles.pageTitle}>{page.back.title}</div>
-                    {page.back.text && <div className={styles.pageText}>{page.back.text}</div>}
-                  </div>
-                  <span className={`${styles.pageNumber} ${styles.pageNumberLeft}`}>
-                    {String(page.back.pageNum).padStart(2, "0")}
-                  </span>
+                <div className={styles.back}>
+                  {page.back.background ? (
+                    <img src={page.back.background} alt="" className={styles.pageImage} draggable={false} />
+                  ) : null}
+                  {(page.back.title || page.back.text) && (
+                    <div className={styles.pageContent}>
+                      {page.back.title && <div className={styles.pageTitle}>{page.back.title}</div>}
+                      {page.back.text && <div className={styles.pageText}>{page.back.text}</div>}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

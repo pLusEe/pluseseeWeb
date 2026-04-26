@@ -9,7 +9,7 @@ import styles from "./PersonalDesignLibrary.module.css";
 import defaultSiteContent from "../../data/site-content.json";
 
 const MEDIA_IMAGES_BASE = "/media/images";
-const DEFAULT_BOOK_COVER = `${MEDIA_IMAGES_BASE}/youshenyouren4.jpg`;
+const DEFAULT_BOOK_COVER = `${MEDIA_IMAGES_BASE}/archive/Frame 1.png`;
 const DEFAULT_FALLBACK_IMAGE = `${MEDIA_IMAGES_BASE}/placeholder1.jpg`;
 
 const normalizeImageUrl = (url, fallback = DEFAULT_FALLBACK_IMAGE) => {
@@ -176,10 +176,7 @@ export default function PersonalDesignLibraryPage() {
       size: libraryConfig?.book?.size || DEFAULT_LIBRARY_CONFIG.book.size,
       year: libraryConfig?.book?.year || DEFAULT_LIBRARY_CONFIG.book.year,
       href: libraryConfig?.book?.href || DEFAULT_LIBRARY_CONFIG.book.href,
-      cover: normalizeImageUrl(
-        libraryConfig?.book?.coverUrl || DEFAULT_LIBRARY_CONFIG.book.coverUrl,
-        DEFAULT_BOOK_COVER
-      ),
+      cover: normalizeImageUrl(DEFAULT_BOOK_COVER, DEFAULT_BOOK_COVER),
       openLabel: libraryConfig?.book?.openLabel || DEFAULT_LIBRARY_CONFIG.book.openLabel,
     }),
     [libraryConfig]
