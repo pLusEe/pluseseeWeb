@@ -81,21 +81,34 @@ const resolveJumpTarget = (item) => {
 };
 
 const TAG_LABELS = {
-  home: "2.1 首页圆环",
-  commercial: "2.2 商业设计",
-  personalLibrary: "2.3 个人库",
-  personalBook: "2.3.1 个人设计 2019-2024",
-  bio: "2.4 Bio",
+  commercial: "commercial design",
+  personalLibrary: "design archive2019-2024",
+  personalBook: "design archive2019-2024",
 };
 
 const resolveCategoryLabel = (item) => {
-  if (Array.isArray(item?.categories) && item.categories.length > 0) {
-    const labels = item.categories
-      .map((tag) => TAG_LABELS[tag] || String(tag || ""))
-      .filter(Boolean);
-    if (labels.length > 0) return labels.join(" / ");
+  const categories = Array.isArray(item?.categories) ? item.categories : [];
+  const mediaPath = normalizeMediaPath(item?.mediaUrl || item?.imageUrl || item?.thumbUrl);
+  const category = normalizeMediaPath(item?.category);
+
+  if (
+    categories.includes("commercial") ||
+    category.includes("commercial") ||
+    mediaPath.includes("/media/images/commercial-design/") ||
+    mediaPath.includes("/media/images/thumbnail/")
+  ) {
+    return "commercial design";
   }
-  return item?.category || "work";
+
+  if (
+    categories.some((tag) => TAG_LABELS[tag] === "design archive2019-2024") ||
+    category.includes("archive") ||
+    mediaPath.includes("/media/images/archive/")
+  ) {
+    return "design archive2019-2024";
+  }
+
+  return categories.map((tag) => TAG_LABELS[tag]).find(Boolean) || "work";
 };
 
 const getDisplayItems = (items) => {
@@ -210,6 +223,7 @@ function Card({
   selected,
   hovered,
   selectedMode,
+  label,
   title,
   onSelect,
   onHover,
@@ -335,22 +349,23 @@ function Card({
           depthWrite={false}
         />
       </mesh>
-      {selectedMode && title && (
+      {selectedMode && selected && (label || title) && (
         <Html
-          position={[0, -0.42, 0]}
+          position={[0, -0.64, 0]}
           center
           style={{
             pointerEvents: 'none',
             whiteSpace: 'nowrap',
-            fontSize: '11px',
-            letterSpacing: '0.08em',
-            color: `rgba(60, 60, 60, ${selected ? 0.8 : 0.15})`,
+            color: 'rgba(60, 60, 60, 0.8)',
             fontFamily: 'inherit',
             textAlign: 'center',
             userSelect: 'none',
           }}
         >
-          {title}
+          <div className={styles.cardCaption}>
+            {label && <span className={styles.cardCaptionCategory}>{label}</span>}
+            {title && <span className={styles.cardCaptionTitle}>{title}</span>}
+          </div>
         </Html>
       )}
     </group>
@@ -491,6 +506,7 @@ function RingScene({
             selected={selectedIndex === index}
             hovered={hoveredIndex === index}
             selectedMode={selectedIndex !== null}
+            label={resolveCategoryLabel(item)}
             title={item.title}
             onSelect={onSelect}
             onHover={onHover}
@@ -511,7 +527,6 @@ export default function RingCarousel({ items }) {
   const [selectedCardHovered, setSelectedCardHovered] = useState(false);
   const displayItems = useMemo(() => getDisplayItems(items), [items]);
   const hoveredItem = hoveredIndex !== null ? displayItems[hoveredIndex] : null;
-  const selectedItem = selectedIndex !== null ? displayItems[selectedIndex] : null;
   const rotationAtSelectRef = useRef(null);
   const scrollCooldownRef = useRef(false);
 
@@ -654,18 +669,7 @@ export default function RingCarousel({ items }) {
         </Canvas>
       </div>
 
-      {selectedItem && (
-        <div className={styles.infoPanel} onClick={(event) => event.stopPropagation()}>
-          <button className={styles.backButton} type="button" onClick={closeExpanded}>
-            Exit View
-          </button>
-          <p className={styles.category}>{resolveCategoryLabel(selectedItem)}</p>
-          <h2 className={styles.title}>{selectedItem.title}</h2>
-          {selectedItem.description && <p className={styles.description}>{selectedItem.description}</p>}
-        </div>
-      )}
-
-      {!selectedItem && hoveredItem && (
+      {selectedIndex === null && hoveredItem && (
         <div className={styles.hoverLabel}>
           <span className={styles.hoverCategory}>{resolveCategoryLabel(hoveredItem)}</span>
           <span className={styles.hoverTitle}>{hoveredItem.title}</span>

@@ -12,37 +12,6 @@
   inset: 0;
 }
 
-.infoPanel {
-  position: absolute;
-  right: 6%;
-  bottom: 8%;
-  width: min(28rem, 32vw);
-  z-index: 20;
-  pointer-events: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  text-align: right;
-}
-
-.backButton {
-  border: 0;
-  background: transparent;
-  padding: 0;
-  margin: 0 0 1.15rem;
-  font-size: 0.78rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(17, 17, 17, 0.52);
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.backButton:hover {
-  color: rgba(17, 17, 17, 0.95);
-}
-
-.category,
 .hoverCategory {
   margin: 0 0 0.5rem;
   font-size: 0.72rem;
@@ -52,22 +21,31 @@
   font-weight: 700;
 }
 
-.title {
-  margin: 0;
-  font-size: clamp(2.8rem, 5.4vw, 5.2rem);
-  line-height: 0.9;
-  letter-spacing: -0.06em;
-  font-weight: 900;
-  text-transform: uppercase;
-  color: #111;
+.cardCaption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.52rem;
 }
 
-.description {
-  margin: 0.9rem 0 0;
-  font-size: 1rem;
-  line-height: 1.6;
-  color: rgba(17, 17, 17, 0.72);
-  max-width: 24rem;
+.cardCaptionCategory {
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: rgba(17, 17, 17, 0.48);
+}
+
+.cardCaptionTitle {
+  max-width: none;
+  white-space: nowrap;
+  overflow: visible;
+  font-size: clamp(0.92rem, 1.78vw, 2rem);
+  line-height: 1;
+  letter-spacing: 0;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: rgba(17, 17, 17, 0.92);
 }
 
 .hoverLabel {
@@ -84,33 +62,17 @@
 }
 
 .hoverTitle {
-  font-size: 0.95rem;
-  color: rgba(17, 17, 17, 0.84);
+  max-width: min(22rem, 72vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: rgba(17, 17, 17, 0.66);
   letter-spacing: 0.02em;
 }
 
-@media (max-width: 980px) {
-  .infoPanel {
-    right: 8%;
-    width: min(26rem, 44vw);
-  }
-}
-
 @media (max-width: 720px) {
-  .infoPanel {
-    left: 10%;
-    right: 6%;
-    bottom: 7%;
-    width: auto;
-    align-items: center;
-    text-align: center;
-    padding: 1.4rem 1.2rem 1.1rem;
-  }
-
-  .title {
-    font-size: clamp(2.2rem, 12vw, 3.8rem);
-  }
-
   .hoverLabel {
     bottom: 6%;
   }
