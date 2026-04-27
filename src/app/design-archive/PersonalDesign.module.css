@@ -6,7 +6,7 @@
   height: 100vh;
   background: #ffffff;
   font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  padding: 7.75rem 2rem 3.875rem; /* top padding for fixed header */
+  padding: 6.5rem 1.5rem 2rem; /* top padding for fixed header */
   position: relative;
   overflow: hidden;
   display: flex;
@@ -25,7 +25,7 @@
   z-index: 1;
   display: flex;
   container-type: inline-size;
-  width: min(calc(85vw - 3.4rem), calc((100vh - 11.625rem) * 1.0168));
+  width: min(calc(92vw - 2rem), calc((100vh - 8.5rem) * 1.0168));
   max-width: none;
   margin: 0 auto;
   height: auto;
