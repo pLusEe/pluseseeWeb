@@ -1,7 +1,7 @@
 [
   {
     "id": "fs-f05b6db0e14a",
-    "title": "Frame 23",
+    "title": "基于虚拟植物的数实共生地铁服务设计",
     "category": "design archive",
     "categories": [
       "personalLibrary",
@@ -12,7 +12,8 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/archive/Frame 23.png",
     "thumbUrl": "/media/images/archive/Frame 23.png",
-    "ringAspect": 0.9,
+    "targetUrl": "",
+    "ringAspect": 0.55,
     "ringCrop": {
       "focusX": 0.5,
       "focusY": 0.5,
@@ -21,7 +22,7 @@
   },
   {
     "id": "fs-93f64201f8fb",
-    "title": "Frame 64",
+    "title": "音乐节移动应用交互设计",
     "category": "design archive",
     "categories": [
       "personalLibrary",
@@ -32,7 +33,8 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/archive/Frame 64.png",
     "thumbUrl": "/media/images/archive/Frame 64.png",
-    "ringAspect": 0.9,
+    "targetUrl": "",
+    "ringAspect": 0.71,
     "ringCrop": {
       "focusX": 0.5,
       "focusY": 0.5,
@@ -41,7 +43,7 @@
   },
   {
     "id": "fs-249b87557b40",
-    "title": "Frame 18",
+    "title": "基于虚拟植物的数实共生地铁服务设计",
     "category": "design archive",
     "categories": [
       "personalLibrary",
@@ -52,7 +54,8 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/archive/Frame 18.png",
     "thumbUrl": "/media/images/archive/Frame 18.png",
-    "ringAspect": 0.78,
+    "targetUrl": "",
+    "ringAspect": 0.8,
     "ringCrop": {
       "focusX": 0.5,
       "focusY": 0.5,
@@ -71,6 +74,7 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/commercial-design/微信经营助手智能体验创新与IP动效设计.png",
     "thumbUrl": "/media/images/commercial-design/微信经营助手智能体验创新与IP动效设计.png",
+    "targetUrl": "",
     "ringAspect": 0.45,
     "ringCrop": {
       "focusX": 0.5,
@@ -90,6 +94,7 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/commercial-design/马年海报260423.png",
     "thumbUrl": "/media/images/commercial-design/马年海报260423.png",
+    "targetUrl": "",
     "ringAspect": 0.9,
     "ringCrop": {
       "focusX": 0.5,
@@ -99,7 +104,7 @@
   },
   {
     "id": "fs-86cb58be7407",
-    "title": "Frame 2036083849",
+    "title": "2024飞书未来无限大会视觉物料设计",
     "category": "commercial design",
     "categories": [
       "commercial"
@@ -109,9 +114,10 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/commercial-design/feishu-pt2/Frame 2036083849.png",
     "thumbUrl": "/media/images/commercial-design/feishu-pt2/Frame 2036083849.png",
-    "ringAspect": 0.9,
+    "targetUrl": "",
+    "ringAspect": 0.92,
     "ringCrop": {
-      "focusX": 0.5,
+      "focusX": 0.497,
       "focusY": 0.5,
       "zoom": 1
     }
@@ -128,6 +134,7 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/commercial-design/feishu-pt2/Frame 2036083856.png",
     "thumbUrl": "/media/images/commercial-design/feishu-pt2/Frame 2036083856.png",
+    "targetUrl": "",
     "ringAspect": 0.9,
     "ringCrop": {
       "focusX": 0.5,
@@ -147,6 +154,7 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/commercial-design/feishu-pt1/1774436908953-___bn_3x.png",
     "thumbUrl": "/media/images/commercial-design/feishu-pt1/1774436908953-___bn_3x.png",
+    "targetUrl": "",
     "ringAspect": 0.9,
     "ringCrop": {
       "focusX": 0.5,
@@ -156,7 +164,7 @@
   },
   {
     "id": "fs-632e95dec971",
-    "title": "36",
+    "title": "飞书客户logo墙设计",
     "category": "commercial design",
     "categories": [
       "commercial"
@@ -166,7 +174,8 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/commercial-design/feishu-pt1/36.png",
     "thumbUrl": "/media/images/commercial-design/feishu-pt1/36.png",
-    "ringAspect": 0.9,
+    "targetUrl": "",
+    "ringAspect": 0.69,
     "ringCrop": {
       "focusX": 0.5,
       "focusY": 0.5,
@@ -175,7 +184,7 @@
   },
   {
     "id": "fs-d9d2d4b453e5",
-    "title": "d5c024f6f45a65318b9d68d0f3a486b8 1",
+    "title": "飞书AI企业效能服务移动端H5视觉设计",
     "category": "commercial design",
     "categories": [
       "commercial"
@@ -185,7 +194,8 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/commercial-design/feishu-pt1/d5c024f6f45a65318b9d68d0f3a486b8 1.png",
     "thumbUrl": "/media/images/commercial-design/feishu-pt1/d5c024f6f45a65318b9d68d0f3a486b8 1.png",
-    "ringAspect": 0.9,
+    "targetUrl": "",
+    "ringAspect": 0.53,
     "ringCrop": {
       "focusX": 0.5,
       "focusY": 0.5,
@@ -204,6 +214,7 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/commercial-design/feishu-pt1/Frame 1321318981.png",
     "thumbUrl": "/media/images/commercial-design/feishu-pt1/Frame 1321318981.png",
+    "targetUrl": "",
     "ringAspect": 0.9,
     "ringCrop": {
       "focusX": 0.5,
@@ -223,6 +234,7 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/commercial-design/feishu-pt1/Frame 2036083845.png",
     "thumbUrl": "/media/images/commercial-design/feishu-pt1/Frame 2036083845.png",
+    "targetUrl": "",
     "ringAspect": 0.9,
     "ringCrop": {
       "focusX": 0.5,
@@ -242,6 +254,7 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/commercial-design/feishu-pt2/Frame 2036083855.png",
     "thumbUrl": "/media/images/commercial-design/feishu-pt2/Frame 2036083855.png",
+    "targetUrl": "",
     "ringAspect": 0.9,
     "ringCrop": {
       "focusX": 0.5,
@@ -261,6 +274,7 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/commercial-design/wechat-csc/客服中心1.png",
     "thumbUrl": "/media/images/commercial-design/wechat-csc/客服中心1.png",
+    "targetUrl": "",
     "ringAspect": 1.76,
     "ringCrop": {
       "focusX": 0.5,
@@ -270,7 +284,7 @@
   },
   {
     "id": "fs-0c7de57d3d90",
-    "title": "Frame 21",
+    "title": "基于虚拟植物的数实共生地铁服务设计",
     "category": "design archive",
     "categories": [
       "personalLibrary",
@@ -281,7 +295,8 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/archive/Frame 21.png",
     "thumbUrl": "/media/images/archive/Frame 21.png",
-    "ringAspect": 0.9,
+    "targetUrl": "",
+    "ringAspect": 0.51,
     "ringCrop": {
       "focusX": 0.5,
       "focusY": 0.5,
@@ -290,7 +305,7 @@
   },
   {
     "id": "fs-0f4ed85e6ba5",
-    "title": "Frame 35",
+    "title": "「三星羽绒」品牌视觉识别形象设计",
     "category": "design archive",
     "categories": [
       "personalLibrary",
@@ -301,16 +316,17 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/archive/Frame 35.png",
     "thumbUrl": "/media/images/archive/Frame 35.png",
-    "ringAspect": 0.9,
+    "targetUrl": "",
+    "ringAspect": 0.45,
     "ringCrop": {
       "focusX": 0.5,
       "focusY": 0.5,
-      "zoom": 1
+      "zoom": 1.14
     }
   },
   {
     "id": "fs-86725005ad8b",
-    "title": "Frame 42",
+    "title": "「三星羽绒」品牌视觉识别形象设计",
     "category": "design archive",
     "categories": [
       "personalLibrary",
@@ -321,6 +337,7 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/archive/Frame 42.png",
     "thumbUrl": "/media/images/archive/Frame 42.png",
+    "targetUrl": "",
     "ringAspect": 0.45,
     "ringCrop": {
       "focusX": 0.5,
@@ -330,7 +347,7 @@
   },
   {
     "id": "fs-a7fee5341f31",
-    "title": "Frame 48",
+    "title": "「三星羽绒」品牌视觉识别形象设计",
     "category": "design archive",
     "categories": [
       "personalLibrary",
@@ -341,6 +358,7 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/archive/Frame 48.png",
     "thumbUrl": "/media/images/archive/Frame 48.png",
+    "targetUrl": "",
     "ringAspect": 0.9,
     "ringCrop": {
       "focusX": 0.5,
@@ -350,7 +368,7 @@
   },
   {
     "id": "fs-15f7737dfd74",
-    "title": "Frame 66",
+    "title": "「三星羽绒」品牌视觉识别形象设计",
     "category": "design archive",
     "categories": [
       "personalLibrary",
@@ -361,7 +379,8 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/archive/Frame 66.png",
     "thumbUrl": "/media/images/archive/Frame 66.png",
-    "ringAspect": 0.9,
+    "targetUrl": "",
+    "ringAspect": 0.7,
     "ringCrop": {
       "focusX": 0.5,
       "focusY": 0.5,
@@ -381,6 +400,7 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/archive/Frame 68.png",
     "thumbUrl": "/media/images/archive/Frame 68.png",
+    "targetUrl": "",
     "ringAspect": 0.45,
     "ringCrop": {
       "focusX": 0.5,
@@ -401,6 +421,7 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/archive/Frame 12.png",
     "thumbUrl": "/media/images/archive/Frame 12.png",
+    "targetUrl": "",
     "ringAspect": 0.9,
     "ringCrop": {
       "focusX": 0.5,
@@ -410,7 +431,7 @@
   },
   {
     "id": "fs-0531cc9e000c",
-    "title": "Frame 19",
+    "title": "基于虚拟植物的数实共生地铁服务设计",
     "category": "design archive",
     "categories": [
       "personalLibrary",
@@ -421,7 +442,129 @@
     "mediaType": "image",
     "mediaUrl": "/media/images/archive/Frame 19.png",
     "thumbUrl": "/media/images/archive/Frame 19.png",
+    "targetUrl": "",
+    "ringAspect": 0.57,
+    "ringCrop": {
+      "focusX": 0.5,
+      "focusY": 0.5,
+      "zoom": 1
+    }
+  },
+  {
+    "id": "fs-f997daf0f27c",
+    "title": "飞书2024未来无限大会视觉物料设计",
+    "category": "commercial design",
+    "categories": [
+      "commercial"
+    ],
+    "description": "",
+    "date": "",
+    "mediaType": "image",
+    "mediaUrl": "/media/images/Thumbnail/commercial05-thumbnail.png",
+    "thumbUrl": "/media/images/Thumbnail/commercial05-thumbnail.png",
+    "targetUrl": "/commercial-design#project-feishu-pte2",
     "ringAspect": 0.9,
+    "ringCrop": {
+      "focusX": 0.5,
+      "focusY": 0.5,
+      "zoom": 1
+    }
+  },
+  {
+    "id": "fs-27253e48c0e9",
+    "title": "飞书ToB品牌传播与获客视觉设计",
+    "category": "commercial design",
+    "categories": [
+      "commercial"
+    ],
+    "description": "",
+    "date": "",
+    "mediaType": "image",
+    "mediaUrl": "/media/images/Thumbnail/commercial04-thumbnail.png",
+    "thumbUrl": "/media/images/Thumbnail/commercial04-thumbnail.png",
+    "targetUrl": "/commercial-design#project-feishu-pte",
+    "ringAspect": 0.72,
+    "ringCrop": {
+      "focusX": 0.5,
+      "focusY": 0.5,
+      "zoom": 1
+    }
+  },
+  {
+    "id": "fs-5aee36c35bfe",
+    "title": "微信支付客服中心人工客服体验改版",
+    "category": "commercial design",
+    "categories": [
+      "commercial"
+    ],
+    "description": "",
+    "date": "",
+    "mediaType": "image",
+    "mediaUrl": "/media/images/Thumbnail/commercial01-thumbnail.png",
+    "thumbUrl": "/media/images/Thumbnail/commercial01-thumbnail.png",
+    "targetUrl": "/commercial-design#project-wechat-cmsc",
+    "ringAspect": 1.77,
+    "ringCrop": {
+      "focusX": 0.5,
+      "focusY": 0.5,
+      "zoom": 1
+    }
+  },
+  {
+    "id": "fs-dd2dd6867961",
+    "title": "微信支付马年春节商户年历海报设计",
+    "category": "commercial design",
+    "categories": [
+      "commercial"
+    ],
+    "description": "",
+    "date": "",
+    "mediaType": "image",
+    "mediaUrl": "/media/images/Thumbnail/commercial02-thumbnail.png",
+    "thumbUrl": "/media/images/Thumbnail/commercial02-thumbnail.png",
+    "targetUrl": "/commercial-design#project-horse-poster-260423",
+    "ringAspect": 0.9,
+    "ringCrop": {
+      "focusX": 0.5,
+      "focusY": 0.5,
+      "zoom": 1
+    }
+  },
+  {
+    "id": "fs-fbb0e0ca53eb",
+    "title": "微信经营助手智能体验探索与IP动效设计",
+    "category": "commercial design",
+    "categories": [
+      "commercial"
+    ],
+    "description": "",
+    "date": "",
+    "mediaType": "image",
+    "mediaUrl": "/media/images/Thumbnail/commercial03-thumbnail.png",
+    "thumbUrl": "/media/images/Thumbnail/commercial03-thumbnail.png",
+    "targetUrl": "/commercial-design#project-wechat-ai-ip-motion",
+    "ringAspect": 0.9,
+    "ringCrop": {
+      "focusX": 0.5,
+      "focusY": 0.5,
+      "zoom": 1
+    }
+  },
+  {
+    "id": "fs-0848c6958ca5",
+    "title": "基于虚拟植物的数实共生地铁服务设计",
+    "category": "design archive",
+    "categories": [
+      "personalLibrary",
+      "personalBook"
+    ],
+    "description": "",
+    "date": "",
+    "mediaType": "image",
+    "mediaUrl": "/media/images/archive/Frame 24.png",
+    "thumbUrl": "/media/images/archive/Frame 24.png",
+    "targetUrl": "",
+    "ringAspect": 0.5,
     "ringCrop": {
       "focusX": 0.5,
       "focusY": 0.5,

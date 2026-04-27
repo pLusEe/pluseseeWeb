@@ -5,7 +5,11 @@ import Link from "next/link";
 import styles from "./Admin.module.css";
 import defaultSiteContent from "../../data/site-content.json";
 
-const IMAGE_PREFIXES = ["/media/images/commercial-design/", "/media/images/archive/"];
+const IMAGE_PREFIXES = [
+  "/media/images/commercial-design/",
+  "/media/images/archive/",
+  "/media/images/Thumbnail/",
+];
 const MIN_RING_ASPECT = 0.45;
 const MAX_RING_ASPECT = 2.2;
 const DEFAULT_RING_ASPECT = 0.9;
@@ -31,16 +35,27 @@ const isEligibleImage = (item) =>
   IMAGE_PREFIXES.some((prefix) => item.mediaUrl.startsWith(prefix));
 
 const inferCollection = (mediaUrl) =>
-  mediaUrl.startsWith("/media/images/archive/") ? "archive" : "commercial";
+  mediaUrl.startsWith("/media/images/archive/")
+    ? "archive"
+    : mediaUrl.startsWith("/media/images/Thumbnail/")
+      ? "thumbnail"
+      : "commercial";
 
 const inferCategories = (mediaUrl) =>
   inferCollection(mediaUrl) === "archive" ? ["personalLibrary", "personalBook"] : ["commercial"];
+
+const getCollectionLabel = (collection) => {
+  if (collection === "archive") return "Archive";
+  if (collection === "thumbnail") return "Thumbnail";
+  return "Commercial";
+};
 
 const normalizeEntryFromItem = (item) => ({
   id: String(item?.id || ""),
   title: String(item?.title || "").trim() || "Untitled",
   mediaUrl: String(item?.mediaUrl || "").trim(),
   thumbUrl: String(item?.thumbUrl || item?.mediaUrl || "").trim(),
+  targetUrl: String(item?.targetUrl || "").trim(),
   category: String(item?.category || "").trim(),
   categories: Array.isArray(item?.categories) && item.categories.length > 0 ? item.categories : inferCategories(String(item?.mediaUrl || "").trim()),
   collection: inferCollection(String(item?.mediaUrl || "").trim()),
@@ -56,7 +71,9 @@ const entrySnapshot = (entries) =>
   JSON.stringify(
     entries.map((entry) => ({
       id: entry.id,
+      title: entry.title,
       mediaUrl: entry.mediaUrl,
+      targetUrl: entry.targetUrl || "",
       ringAspect: Number(entry.ringAspect.toFixed(3)),
       ringCrop: {
         focusX: Number(entry.ringCrop.focusX.toFixed(4)),
@@ -326,6 +343,7 @@ export default function AdminPage() {
             mediaType: "image",
             mediaUrl: entry.mediaUrl,
             thumbUrl: entry.thumbUrl || entry.mediaUrl,
+            targetUrl: entry.targetUrl || "",
             ringAspect: entry.ringAspect,
             ringCrop: entry.ringCrop,
           })),
@@ -425,6 +443,7 @@ export default function AdminPage() {
               {[
                 { id: "all", label: "全部" },
                 { id: "commercial", label: "Commercial" },
+                { id: "thumbnail", label: "Thumbnail" },
                 { id: "archive", label: "Archive" },
               ].map((option) => (
                 <button
@@ -449,7 +468,7 @@ export default function AdminPage() {
                   <img src={item.thumbUrl || item.mediaUrl} alt={item.title} className={styles.libraryThumb} />
                   <div className={styles.libraryMeta}>
                     <strong>{item.title}</strong>
-                    <span>{item.collection === "archive" ? "Archive" : "Commercial"}</span>
+                    <span>{getCollectionLabel(item.collection)}</span>
                   </div>
                   <div className={styles.libraryActions}>
                     <button
@@ -501,7 +520,7 @@ export default function AdminPage() {
                 />
                 <div className={styles.selectedMeta}>
                   <strong>{entry.title}</strong>
-                  <span>{entry.collection === "archive" ? "Archive" : "Commercial"}</span>
+                  <span>{getCollectionLabel(entry.collection)}</span>
                 </div>
                 <div className={styles.rowActions}>
                   <button
@@ -547,7 +566,7 @@ export default function AdminPage() {
                 <div className={styles.cropPreviewHeader}>
                   <h3>裁切预览</h3>
                   <span>
-                    {currentEntry.collection === "archive" ? "Archive" : "Commercial"} / {currentEntry.title}
+                    {getCollectionLabel(currentEntry.collection)} / {currentEntry.title}
                   </span>
                 </div>
                 <CropPreview
@@ -558,6 +577,21 @@ export default function AdminPage() {
               </div>
 
               <div className={styles.controls}>
+                <label className={styles.controlBlock}>
+                  <span>圆环显示名称</span>
+                  <input
+                    className={styles.textInput}
+                    type="text"
+                    value={currentEntry.title}
+                    onChange={(event) =>
+                      setEntryAt(activeIndex, {
+                        ...currentEntry,
+                        title: event.target.value,
+                      })
+                    }
+                  />
+                </label>
+
                 <label className={styles.controlBlock}>
                   <span>卡片宽高比 {currentEntry.ringAspect.toFixed(2)}</span>
                   <input

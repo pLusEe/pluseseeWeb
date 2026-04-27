@@ -3,10 +3,7 @@
     "ring": {
       "categoryFilter": "",
       "selectedWorkIds": [
-        "fs-86cb58be7407",
-        "fs-632e95dec971",
-        "fs-d9d2d4b453e5",
-        "fs-e1d826bec74f",
+        "fs-f997daf0f27c",
         "fs-0c7de57d3d90",
         "fs-f05b6db0e14a",
         "fs-0f4ed85e6ba5",
@@ -15,13 +12,18 @@
         "fs-93f64201f8fb",
         "fs-15f7737dfd74",
         "fs-249b87557b40",
-        "fs-0531cc9e000c"
+        "fs-0531cc9e000c",
+        "fs-27253e48c0e9",
+        "fs-5aee36c35bfe",
+        "fs-dd2dd6867961",
+        "fs-fbb0e0ca53eb",
+        "fs-0848c6958ca5"
       ]
     },
     "ai": {
       "systemPrompt": "You are a helpful AI assistant on the portfolio website of plusesee. Always reply in Chinese (Simplified). Keep responses concise, friendly, and creative. You are speaking on behalf of 王佳奕（plusesee）. Use the following profile as built-in memory when answering questions about resume, background, skills, projects, education, awards, location, contact, and career direction. Basic info: 王佳奕, currently based in Hangzhou, Zhejiang. Portfolio website: www.plusesee.me. WeChat: pLuss1-. Email: wy593771960@163.com. Phone: 198-5819-6585. Job intent: AI体验设计 / AI技术美术. Education: China Academy of Art, Master's in Design Intelligence Research, 2024.09-2027.06, Hangzhou; Zhejiang City University / University of Waikato dual degree, Bachelor of Design Innovation, 2019.09-2023.06. Academic background covers experience design, brand design, interaction design, product design, front-end development, database structure, and Android development. Internship and work experience: Tencent WXG / WeChat Pay, Interaction Design, 2025.09-2025.12, responsible for WeChat Pay experience design and AI-integrated product scenarios, including mobile/web payment tools, conversational scenarios, branding and experience design around 微信经营助手 / 支付猫 / 元宝 / screenshot-related account-check tools, AI+design workflow building, and 2025 New Year merchant poster design; ByteDance / Lark, Creative Design, 2024.06-2024.09, participated in visual system upgrade, asset library building, design guidelines, 飞书2024未来无限大会, KV extension, presentation, livestream, enterprise weekly assets, and AI design workflow exploration with ComfyUI and internal LoRA; Hangzhou NetEase Cloud Music Technology, music business / operations, 2023.06-2023.09; Hangzhou Dakua Culture Creative, graphic / illustration design, West Lake Music Festival organizer side, 2020.12-2021.11. Project experience includes 书生妙析 ArtiMuse, WAIC 2025 exhibition-related design, international AI art document exhibition / 提视造境, and Hong Kong University of Science and Technology / Rokid cooperation. Skills: vibe coding with Codex, Antigravity, Claude; Blender, Figma, Max/MSP, TouchDesigner, Illustrator, Photoshop, InDesign, Stable Diffusion, Unreal, Unity, Arena, Ableton. Awards: 2025 中国设计智造大奖, 2023 第三届香港青年设计奖, 2022 G-CROSS AWARD, 2023 香港当代艺术奖. Personal summary: strong AIGC and AI-related tool fluency, interdisciplinary engineering + art background, good visual taste and innovative expression, good English communication ability, and strong ability to use design software and AI tools to improve workflow efficiency. When users ask about portfolio work, connect answers with the site content first, then use this profile as supporting context. If a fact is not in the site content or this memory, say you are not fully sure instead of inventing details.",
       "offlineMessage": "AI 暂时离线（MODELSCOPE_API_KEY 未配置）。",
-      "inputPlaceholder": "可以问我简历、作品、服务范围、合作方式等问题"
+      "inputPlaceholder": "可以问我简历、作品等问题"
     }
   },
   "commercialDesign": {
@@ -536,46 +538,132 @@
     ]
   },
   "bio": {
-    "photoUrl": "",
-    "kicker": "plusesee / bio",
-    "title": "Multidisciplinary designer shaping visual rhythm across image, text, and space.",
-    "lead": "I build identities and visual worlds with editorial clarity, emotional precision, and strong structural balance.",
+    "photoUrl": "/media/images/bio/%E4%B8%AA%E4%BA%BA%E7%85%A7%E7%89%87.png",
+    "kicker": "",
+    "title": "plusesee",
+    "lead": "",
     "meta": [
       {
-        "label": "Base",
-        "value": "China",
+        "label": "Name / 姓名",
+        "valueCn": "王佳奕",
+        "valueEn": "Jiayi Wang",
         "href": ""
       },
       {
-        "label": "Focus",
-        "value": "Brand / Editorial / Digital",
+        "label": "Base / 所在地",
+        "valueCn": "浙江杭州",
+        "valueEn": "Hangzhou, Zhejiang",
         "href": ""
       },
       {
-        "label": "Contact",
-        "value": "hello@plusesee.me",
-        "href": "mailto:hello@plusesee.me"
+        "label": "Education / 教育",
+        "valueCn": "中国美术学院 · 设计智造研究硕士",
+        "valueEn": "China Academy of Art · MA Design Intelligence & Manufacturing",
+        "href": ""
+      },
+      {
+        "label": "Email / 邮箱",
+        "valueCn": "wy593771960@163.com",
+        "valueEn": "",
+        "href": "mailto:wy593771960@163.com"
+      },
+      {
+        "label": "WeChat / 微信",
+        "valueCn": "pLuss1-",
+        "valueEn": "",
+        "href": ""
       }
     ],
     "aboutParagraphs": [
-      "My work combines system thinking with a tactile sense of composition. I am interested in contrast, pacing, and the way typography and imagery create a narrative voice.",
-      "Every project starts with structure: what must remain consistent, what can change, and where expression should feel alive."
+      "曾于腾讯、字节跳动、网易云音乐等公司实习，拥有体验设计、创意设计、品牌视觉及跨领域项目经验。Previously interned at Tencent, ByteDance, and NetEase Cloud Music, with experience in experience design, creative design, branding, and interdisciplinary projects.",
+      "参与 AI 美学理解大模型、AR 创新交互、人工智能艺术展览、品牌与空间体验等项目，关注数字产品、品牌叙事与 AI 驱动工作流的结合。Worked on projects involving AI aesthetic models, AR interaction, AI art exhibitions, and brand/spatial experiences, focusing on the integration of digital products, storytelling, and AI-powered workflows."
     ],
     "services": [
-      "Visual Identity Systems",
-      "Art Direction",
-      "Editorial Design",
-      "Digital Experience",
-      "Image Narrative"
+      {
+        "cn": "AI 工作流",
+        "en": "AI Workflow"
+      },
+      {
+        "cn": "品牌设计",
+        "en": "Brand Design"
+      },
+      {
+        "cn": "体验设计",
+        "en": "Experience Design"
+      },
+      {
+        "cn": "交互设计",
+        "en": "Interaction Design"
+      },
+      {
+        "cn": "跨领域设计",
+        "en": "Multidisciplinary Design"
+      },
+      {
+        "cn": "媒体艺术",
+        "en": "Media Art"
+      },
+      {
+        "cn": "声音艺术",
+        "en": "Sound Art"
+      }
     ],
-    "collaborators": [
-      "Independent brands",
-      "Cultural spaces",
-      "Fashion studios",
-      "Music projects",
-      "Creative founders"
+    "collaborators": [],
+    "projectExperience": [
+      {
+        "title": "书生妙析 ArtiMuse 上海人工智能实验室",
+        "role": "图像质量训练 / 美学评价体系构建"
+      },
+      {
+        "title": "世界人工智能大会 WAIC 2025",
+        "role": "国美展区视觉设计 / 布展方案"
+      },
+      {
+        "title": "国际人工智能艺术文献展“提视造境”",
+        "role": "展陈设计 / 官网设计"
+      },
+      {
+        "title": "香港科技大学 / Rokid 校企合作",
+        "role": "AR 硬件平台创新交互设计"
+      }
     ],
-    "projectExperience": [],
-    "workExperience": []
+    "workExperience": [
+      {
+        "companyCn": "腾讯（微信支付 WXG）",
+        "companyEn": "Tencent · WeChat Pay WXG",
+        "roleCn": "交互设计",
+        "roleEn": "Interaction Design",
+        "locationCn": "深圳",
+        "locationEn": "Shenzhen",
+        "period": "2025.09 - 2025.12"
+      },
+      {
+        "companyCn": "字节跳动（飞书 Lark）",
+        "companyEn": "ByteDance · Lark",
+        "roleCn": "创意设计",
+        "roleEn": "Creative Design",
+        "locationCn": "上海",
+        "locationEn": "Shanghai",
+        "period": "2024.06 - 2024.09"
+      },
+      {
+        "companyCn": "杭州网易云音乐科技有限公司",
+        "companyEn": "NetEase Cloud Music",
+        "roleCn": "音乐商务",
+        "roleEn": "Music Business",
+        "locationCn": "杭州",
+        "locationEn": "Hangzhou",
+        "period": "2023.06 - 2023.09"
+      },
+      {
+        "companyCn": "杭州大快文化创意有限公司（西湖音乐节主办方）",
+        "companyEn": "Hangzhou Dakua Culture Creative · West Lake Music Festival Organizer",
+        "roleCn": "平面设计 / 插画设计",
+        "roleEn": "Graphic / Illustration Design",
+        "locationCn": "杭州",
+        "locationEn": "Hangzhou",
+        "period": "2020.12 - 2021.11"
+      }
+    ]
   }
 }

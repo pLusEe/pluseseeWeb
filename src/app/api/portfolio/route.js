@@ -9,6 +9,28 @@ const PUBLIC_ROOT = path.join(process.cwd(), "public");
 const IMAGE_ROOT = path.join(PUBLIC_ROOT, "media", "images");
 const FALLBACK_THUMB_URL = "/media/images/placeholder1.jpg";
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".avif"]);
+const THUMBNAIL_PROJECTS = {
+  "commercial01-thumbnail": {
+    title: "微信支付客服中心人工客服体验改版",
+    targetUrl: "/commercial-design#project-wechat-cmsc",
+  },
+  "commercial02-thumbnail": {
+    title: "微信支付马年春节商户年历海报设计",
+    targetUrl: "/commercial-design#project-horse-poster-260423",
+  },
+  "commercial03-thumbnail": {
+    title: "微信经营助手智能体验探索与IP动效设计",
+    targetUrl: "/commercial-design#project-wechat-ai-ip-motion",
+  },
+  "commercial04-thumbnail": {
+    title: "飞书ToB品牌传播与获客视觉设计",
+    targetUrl: "/commercial-design#project-feishu-pte",
+  },
+  "commercial05-thumbnail": {
+    title: "飞书2024未来无限大会全链路视觉设计",
+    targetUrl: "/commercial-design#project-feishu-pte2",
+  },
+};
 
 const WORK_TAG_IDS = ["home", "commercial", "personalLibrary", "personalBook", "bio"];
 
@@ -51,7 +73,8 @@ const inferTagsFromMediaUrl = (mediaUrl) => {
 
   if (
     safe.includes("/media/images/commercial-design/") ||
-    safe.includes("/media/images/commercialdesign/")
+    safe.includes("/media/images/commercialdesign/") ||
+    safe.includes("/media/images/thumbnail/")
   ) {
     return ["commercial"];
   }
@@ -107,8 +130,17 @@ const inferTitleFromMediaUrl = (mediaUrl) => {
   const safe = sanitizeUrl(mediaUrl);
   const file = safe.split("/").pop() || "";
   const base = file.replace(/\.[^.]+$/, "");
+  const thumbnailMeta = THUMBNAIL_PROJECTS[base.toLowerCase()];
+  if (thumbnailMeta?.title) return thumbnailMeta.title;
   const title = base.replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim();
   return title || "Untitled";
+};
+
+const inferTargetUrlFromMediaUrl = (mediaUrl) => {
+  const safe = sanitizeUrl(mediaUrl);
+  const file = safe.split("/").pop() || "";
+  const base = file.replace(/\.[^.]+$/, "").toLowerCase();
+  return THUMBNAIL_PROJECTS[base]?.targetUrl || "";
 };
 
 const normalizeRingAspect = (value) => {
@@ -151,6 +183,7 @@ const normalizeItemRecord = (item = {}) => {
     mediaType,
     mediaUrl,
     thumbUrl,
+    targetUrl: sanitizeUrl(item.targetUrl) || inferTargetUrlFromMediaUrl(mediaUrl),
     ringAspect: normalizeRingAspect(item.ringAspect),
     ringCrop: normalizeRingCrop(item.ringCrop),
   };
@@ -221,6 +254,7 @@ const readFilesystemImageItems = async () => {
         mediaType: "image",
         mediaUrl,
         thumbUrl: mediaUrl,
+        targetUrl: inferTargetUrlFromMediaUrl(mediaUrl),
       });
     })
     .filter(Boolean)
@@ -285,6 +319,7 @@ export async function POST(request) {
           mediaType,
           mediaUrl,
           thumbUrl,
+          targetUrl: sanitizeUrl(rawItem?.targetUrl) || inferTargetUrlFromMediaUrl(mediaUrl),
           ringAspect: rawItem?.ringAspect,
           ringCrop: rawItem?.ringCrop,
         });
@@ -338,6 +373,7 @@ export async function POST(request) {
           mediaType,
           mediaUrl,
           thumbUrl,
+          targetUrl: sanitizeUrl(body.targetUrl) || inferTargetUrlFromMediaUrl(mediaUrl),
           ringAspect: body.ringAspect,
           ringCrop: body.ringCrop,
         });
@@ -369,6 +405,7 @@ export async function POST(request) {
         mediaType: nextMediaType,
         mediaUrl: nextMediaUrl,
         thumbUrl: nextThumbUrl,
+        targetUrl: sanitizeUrl(body.targetUrl) || previous.targetUrl || inferTargetUrlFromMediaUrl(nextMediaUrl),
         ringAspect: body.ringAspect ?? previous.ringAspect,
         ringCrop: body.ringCrop ?? previous.ringCrop,
       });
@@ -398,6 +435,7 @@ export async function POST(request) {
       mediaType: normalizedMediaType,
       mediaUrl: normalizedMediaUrl,
       thumbUrl: normalizedThumbUrl,
+      targetUrl: sanitizeUrl(body.targetUrl) || inferTargetUrlFromMediaUrl(normalizedMediaUrl),
       ringAspect: body.ringAspect,
       ringCrop: body.ringCrop,
     });

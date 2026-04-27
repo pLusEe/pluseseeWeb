@@ -397,6 +397,15 @@
   width: 100%;
 }
 
+.textInput {
+  width: 100%;
+  border: 1px solid #d8d8d1;
+  background: #fff;
+  padding: 10px 11px;
+  font-size: 13px;
+  color: #111;
+}
+
 .emptyState {
   padding: 40px 18px;
   font-size: 14px;

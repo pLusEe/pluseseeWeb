@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import styles from "./FloatingAIChat.module.css";
 
-const DEFAULT_PLACEHOLDER = "问项目、作品或合作方式";
-const QUICK_PROMPTS = ["我的实习经历", "我的专业背景", "我的联系方式"];
+const DEFAULT_PLACEHOLDER = "想了解什么问题";
+const QUICK_PROMPTS = ["你的实习经历", "你的专业背景", "你的联系方式"];
 const DRAG_THRESHOLD = 5;
 
 export default function FloatingAIChat({ inputPlaceholder = DEFAULT_PLACEHOLDER }) {

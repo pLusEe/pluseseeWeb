@@ -23,6 +23,8 @@ const getThumb = (item) => {
 const normalizeMediaPath = (value) => decodeURIComponent(String(value || "")).toLowerCase();
 
 const resolveItemTarget = (item) => {
+  if (item?.targetUrl) return item.targetUrl;
+
   const mediaPath = normalizeMediaPath(item?.mediaUrl || item?.imageUrl || item?.thumbUrl);
   if (!mediaPath) return null;
 
@@ -54,6 +56,8 @@ const resolveItemTarget = (item) => {
 };
 
 const resolveJumpTarget = (item) => {
+  if (item?.targetUrl) return item.targetUrl;
+
   const mediaPath = normalizeMediaPath(item?.mediaUrl || item?.imageUrl || item?.thumbUrl);
   if (!mediaPath) return null;
 

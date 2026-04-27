@@ -3,7 +3,8 @@
   background: #fdfdfc;
   color: #111;
   position: relative;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .gridNoise {
@@ -22,18 +23,20 @@
 .main {
   position: relative;
   z-index: 1;
-  width: min(1200px, 92vw);
+  width: max-content;
+  min-width: min(1400px, 96vw);
+  max-width: none;
   margin: 0 auto;
-  padding: 9rem 0 4rem;
+  padding: 7rem 0 4rem;
 }
 
 .hero {
   display: grid;
-  grid-template-columns: 1fr minmax(200px, 300px);
+  grid-template-columns: 1fr 180px;
   gap: 2rem;
-  align-items: start;
+  align-items: center;
   border-bottom: 1px solid rgba(0, 0, 0, 0.14);
-  padding-bottom: 2.25rem;
+  padding-bottom: 1.8rem;
 }
 
 .heroText {
@@ -42,7 +45,7 @@
 
 .heroMedia {
   justify-self: end;
-  width: 100%;
+  width: 180px;
 }
 
 .portrait {
@@ -62,11 +65,39 @@
 
 .title {
   max-width: 15ch;
-  font-size: clamp(2rem, 5vw, 4.2rem);
-  line-height: 0.95;
+  font-size: clamp(1.55rem, 3vw, 2.55rem);
+  line-height: 1;
   letter-spacing: -0.03em;
   text-transform: none;
-  margin-bottom: 1.25rem;
+  margin-bottom: 0;
+}
+
+.fallingTitle {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5em;
+  white-space: nowrap;
+}
+
+.titleChar {
+  display: inline-block;
+  transform-origin: center bottom;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  will-change: transform;
+}
+
+.titleChar:active {
+  cursor: grabbing;
+}
+
+.titleSpace {
+  width: 0.1em;
+}
+
+.titleWordGap {
+  margin-left: 0.35em;
 }
 
 .lead {
@@ -78,7 +109,7 @@
 
 .content {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: 240px 1fr;
   gap: 3rem;
   margin-top: 2.5rem;
 }
@@ -100,9 +131,10 @@
 
 .metaLabel {
   font-size: 0.68rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.15em;
-  color: #666;
+  letter-spacing: 0.12em;
+  color: #111;
 }
 
 .metaValue,
@@ -112,14 +144,33 @@
   text-decoration: none;
 }
 
+.pairedText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+}
+
+.primaryLine {
+  color: #111;
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.secondaryLine {
+  color: #666;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
 .metaLink:hover {
   text-decoration: underline;
 }
 
 .columns {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 2rem;
+  grid-template-columns: max-content minmax(max-content, 1fr) minmax(max-content, 1fr);
+  gap: 2.2rem;
+  align-items: start;
 }
 
 .block {
@@ -152,7 +203,64 @@
   font-size: 0.92rem;
   line-height: 1.75;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  padding: 0.25rem 0;
+  padding: 0.7rem 0 1rem;
+}
+
+.compactItem {
+  padding: 0.35rem 0;
+  white-space: nowrap;
+}
+
+.projectItem,
+.experienceItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.projectItem {
+  padding: 1rem 0 1.25rem;
+}
+
+.itemTopline {
+  display: grid;
+  grid-template-columns: max-content max-content;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: start;
+}
+
+.itemTopline .primaryLine,
+.itemTopline .secondaryLine,
+.projectRole {
+  white-space: nowrap;
+}
+
+.projectRole {
+  color: #111;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  text-align: right;
+}
+
+.experienceItem {
+  gap: 0.75rem;
+  padding: 1.1rem 0 1.35rem;
+}
+
+.experienceGroup {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.experienceRole {
+  min-width: 0;
+  text-align: right;
+}
+
+.experienceMeta {
+  display: flex;
+  flex-direction: column;
 }
 
 @media (max-width: 1024px) {
@@ -162,7 +270,7 @@
 
   .heroMedia {
     justify-self: start;
-    width: min(320px, 58vw);
+    width: min(180px, 58vw);
   }
 
   .content {
@@ -171,14 +279,14 @@
   }
 
   .columns {
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: max-content max-content max-content;
   }
 }
 
 @media (max-width: 720px) {
   .main {
-    width: 92vw;
-    padding-top: 8.5rem;
+    min-width: 92vw;
+    padding-top: 6.5rem;
   }
 
   .title {
@@ -186,7 +294,12 @@
   }
 
   .columns {
-    grid-template-columns: 1fr;
+    grid-template-columns: max-content;
     gap: 1.5rem;
+  }
+
+  .itemTopline {
+    grid-template-columns: max-content max-content;
+    gap: 0.75rem;
   }
 }
