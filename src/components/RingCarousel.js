@@ -325,6 +325,9 @@ function Card({
   
   const cardWidth = 0.68 * aspect;
   const cardHeight = 0.68;
+  const hitboxWidth = cardHeight * 1.35;
+  const hitboxHeight = cardHeight * 1.75;
+  const hitboxDepth = 0.72;
 
   return (
     <group
@@ -351,7 +354,7 @@ function Card({
       }}
     >
       <mesh>
-        <boxGeometry args={[cardWidth * 1.7, cardHeight * 1.75, 0.72]} />
+        <boxGeometry args={[hitboxWidth, hitboxHeight, hitboxDepth]} />
         <meshBasicMaterial
           transparent
           opacity={0}
