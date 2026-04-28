@@ -372,15 +372,23 @@
   }
 
   .info {
+    align-self: center;
+    width: min(76vw, 340px);
     margin-top: clamp(0.2rem, 1.8svh, 0.9rem);
   }
 
   .metaRow {
     font-size: clamp(0.62rem, 2.6vw, 0.72rem);
+    gap: 1rem;
+  }
+
+  .metaRow span {
+    white-space: nowrap;
   }
 
   .openBtn,
   .openDisabled {
+    align-self: center;
     font-size: clamp(0.6rem, 2.5vw, 0.7rem);
   }
 }
