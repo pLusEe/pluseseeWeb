@@ -13,6 +13,11 @@ const GROUP_POSITION = new THREE.Vector3(0, 0.4, 0);
 const MIN_CARD_ASPECT = 0.45;
 const MAX_CARD_ASPECT = 2.2;
 
+const dampAngle = (current, target, lambda, delta) => {
+  const diff = Math.atan2(Math.sin(target - current), Math.cos(target - current));
+  return THREE.MathUtils.damp(current, current + diff, lambda, delta);
+};
+
 const getThumb = (item) => {
   if (item.thumbUrl) return item.thumbUrl;
   if ((item.mediaType || "image") === "image" && item.mediaUrl) return item.mediaUrl;
@@ -273,7 +278,12 @@ function Card({
       tTint = new THREE.Color(1, 1, 1);
     }
     
-    const hoverBoost = hovered && !selected ? 1.04 : 1;
+    const hoverActive = hovered && !selectedMode;
+    if (hoverActive) {
+      tOpacity = Math.max(tOpacity, 0.98);
+    }
+
+    const hoverBoost = hoverActive ? 1.12 : 1;
     tScale *= hoverBoost;
     targetScale.current.setScalar(tScale);
 
@@ -296,10 +306,14 @@ function Card({
       mesh.parent.getWorldQuaternion(parentQuaternion.current);
       desiredQuaternion.current.copy(parentQuaternion.current).invert().multiply(camera.quaternion);
       mesh.quaternion.slerp(desiredQuaternion.current, 1 - Math.exp(-8.5 * delta));
+    } else if (hoverActive && mesh.parent) {
+      mesh.rotation.x = THREE.MathUtils.damp(mesh.rotation.x, 0, 7, delta);
+      mesh.rotation.y = dampAngle(mesh.rotation.y, -mesh.parent.rotation.y, 8.5, delta);
+      mesh.rotation.z = THREE.MathUtils.damp(mesh.rotation.z, 0, 7, delta);
     } else {
       targetRotY = angle + Math.PI / 2;
       mesh.rotation.x = THREE.MathUtils.damp(mesh.rotation.x, 0, 7, delta);
-      mesh.rotation.y = THREE.MathUtils.damp(mesh.rotation.y, targetRotY, 7, delta);
+      mesh.rotation.y = dampAngle(mesh.rotation.y, targetRotY, 7, delta);
       mesh.rotation.z = THREE.MathUtils.damp(mesh.rotation.z, 0, 7, delta);
     }
   });
@@ -336,6 +350,17 @@ function Card({
         if (!selectedMode) onHover(null);
       }}
     >
+      <mesh>
+        <boxGeometry args={[cardWidth * 1.7, cardHeight * 1.75, 0.72]} />
+        <meshBasicMaterial
+          transparent
+          opacity={0}
+          side={THREE.DoubleSide}
+          depthWrite={false}
+          depthTest={false}
+          toneMapped={false}
+        />
+      </mesh>
       <mesh>
         <planeGeometry args={[cardWidth, cardHeight]} />
         <meshBasicMaterial
